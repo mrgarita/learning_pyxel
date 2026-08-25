@@ -9,3 +9,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Pyxel 付属のサンプル集（copy_examples で展開。付属物なのでリポジトリには含めない）
+pyxel_examples/

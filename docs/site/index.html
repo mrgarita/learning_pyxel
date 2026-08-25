@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>learning_pyxel ｜ Pyxel でゲーム制作を学ぶ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">learning_</span>pyxel</h1>
+  <p>Python のゲームライブラリ Pyxel で、ゲーム制作プログラミングを一から学ぶ記録</p>
+</header>
+
+<h2>このサイトについて</h2>
+<p>
+Pyxel を使ったゲーム制作を、<b>完成版をいきなり写すのではなく</b>、いくつかのフェーズに
+分けて段階的に組み立てていく学習サイトです。各フェーズは
+<b>「考え方 → 必要な API → コード → 解説」</b> の 4 点セットで構成されています。
+コードは自分の手で入力し、実行して確かめながら進めます。
+</p>
+
+<h2>学習ステップ</h2>
+
+<div class="cards">
+
+  <a class="card" href="step0/">
+    <span class="tag">step0</span>
+    <h3>準備：星空を飛ぶ宇宙船</h3>
+    <p>環境構築と、Pyxel の機能を広く浅く体験するアニメーション作品。文字表示・図形描画・スプライト・キー入力・BGM・GitHub 公開までを一通り通す。</p>
+  </a>
+
+  <div class="card todo">
+    <span class="tag">step1</span>
+    <h3>お菓子集めゲーム</h3>
+    <p>お化けに捕まらずにどれだけお菓子を集められるかを競うゲーム。タイトル／ゲーム／ゲームオーバーの画面遷移を実装する。</p>
+  </div>
+
+  <div class="card todo">
+    <span class="tag">step2</span>
+    <h3>倉庫番</h3>
+    <p>荷物を押して所定の位置に運ぶパズル。10 ステージ制とタイトル画面を備える。</p>
+  </div>
+
+  <div class="card todo">
+    <span class="tag">step3</span>
+    <h3>縦スクロールシューティング</h3>
+    <p>3 ステージ制。中ボス・ボス、弾幕、パワーアップアイテムが登場する。</p>
+  </div>
+
+  <div class="card todo">
+    <span class="tag">step4</span>
+    <h3>未定</h3>
+    <p>step3 まで完了してからジャンルと内容を検討する。</p>
+  </div>
+
+  <a class="card" href="memo/">
+    <span class="tag">memo</span>
+    <h3>備忘録</h3>
+    <p>Python や Pyxel について出た疑問と、その答えを蓄積していくページ。</p>
+  </a>
+
+</div>
+
+<h2>開発環境</h2>
+<table>
+  <thead><tr><th>項目</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>OS</td><td>Windows 11</td></tr>
+    <tr><td>Python</td><td>3.12.10</td></tr>
+    <tr><td>Pyxel</td><td>2.9.9</td></tr>
+    <tr><td>エディタ</td><td>Visual Studio Code</td></tr>
+  </tbody>
+</table>
+
+<h3>インストール</h3>
+<pre><code>pip install pyxel</code></pre>
+
+<p>正しく入ったかは、付属のサンプルを動かして確かめられます。</p>
+<pre><code>pyxel copy_examples
+cd pyxel_examples
+pyxel run 01_hello_pyxel.py</code></pre>
+
+<div class="note">
+  <b>ウィンドウの閉じ方</b>
+  Pyxel のウィンドウは <code>Esc</code> キーで終了します。ウィンドウ右上の × でも閉じられます。
+</div>
+
+<footer class="site">
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>

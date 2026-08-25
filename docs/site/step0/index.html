@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step0 準備：星空を飛ぶ宇宙船 ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">step0 </span>準備：星空を飛ぶ宇宙船</h1>
+  <p>Pyxel の機能を広く浅く体験する、最初のアニメーション作品</p>
+</header>
+
+<p class="crumb"><a href="../">← 目次にもどる</a></p>
+
+<h2>1. 完成イメージ</h2>
+
+<p>
+真っ暗な宇宙空間を、星が手前へ流れていきます。画面中央下に自作のドット絵の宇宙船がいて、
+矢印キーで上下左右に動かせます。画面上部にはタイトル文字、そして BGM が流れ続けます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 340 270" role="img" aria-label="完成イメージ：星が流れる宇宙空間を宇宙船が飛ぶ画面">
+  <rect x="10" y="10" width="320" height="240" fill="#10121c" stroke="#3b4166" stroke-width="2" rx="3"/>
+
+  <g fill="#e8f0ff">
+    <rect x="46"  y="42"  width="2" height="2"/>
+    <rect x="118" y="30"  width="2" height="2"/>
+    <rect x="196" y="58"  width="2" height="2"/>
+    <rect x="284" y="46"  width="2" height="2"/>
+    <rect x="70"  y="104" width="2" height="2"/>
+    <rect x="242" y="118" width="2" height="2"/>
+    <rect x="150" y="150" width="2" height="2"/>
+    <rect x="300" y="176" width="2" height="2"/>
+  </g>
+  <g fill="#9aa4c4">
+    <rect x="86"  y="72"  width="4" height="4"/>
+    <rect x="220" y="88"  width="4" height="4"/>
+    <rect x="52"  y="164" width="4" height="4"/>
+    <rect x="268" y="206" width="4" height="4"/>
+    <rect x="160" y="196" width="4" height="4"/>
+  </g>
+  <g stroke="#3b4166" stroke-width="2" stroke-linecap="square">
+    <line x1="88"  y1="60"  x2="88"  y2="70"/>
+    <line x1="222" y1="76"  x2="222" y2="86"/>
+    <line x1="54"  y1="152" x2="54"  y2="162"/>
+    <line x1="270" y1="194" x2="270" y2="204"/>
+  </g>
+
+  <text x="170" y="42" fill="#ffcc44" font-family="Consolas, monospace" font-size="15"
+        text-anchor="middle" letter-spacing="2">STAR VOYAGER</text>
+
+  <g transform="translate(154, 186)">
+    <rect x="14" y="0"  width="4"  height="4"  fill="#e8f0ff"/>
+    <rect x="10" y="4"  width="12" height="4"  fill="#e8f0ff"/>
+    <rect x="6"  y="8"  width="20" height="4"  fill="#45b0e8"/>
+    <rect x="2"  y="12" width="28" height="4"  fill="#45b0e8"/>
+    <rect x="0"  y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="24" y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="12" y="16" width="8"  height="4"  fill="#232840"/>
+    <rect x="12" y="20" width="8"  height="4"  fill="#ffcc44"/>
+    <rect x="14" y="24" width="4"  height="4"  fill="#ff6b97"/>
+  </g>
+
+  <g stroke="#2ee6a8" stroke-width="1.5" fill="none" opacity=".8">
+    <path d="M146 196 l-12 0 M138 192 l-4 4 4 4"/>
+    <path d="M194 196 l12 0  M202 192 l4 4 -4 4"/>
+  </g>
+</svg>
+</div>
+<figcaption>完成イメージ（実際の画面は 160×120 ドット。図は概念図です）</figcaption>
+</figure>
+
+<div class="note">
+  <b>作品の規模感</b>
+  最終的なコードはおよそ 60〜80 行です。8 つのフェーズに分け、1 フェーズあたり
+  10 行前後ずつ書き足していきます。各フェーズの終わりで必ず一度実行し、
+  動くことを確かめてから次に進みます。
+</div>
+
+<h2>2. この step で学ぶ技術項目</h2>
+
+<table>
+  <thead><tr><th>分類</th><th>項目</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="3">Pyxel の骨格</td><td>アプリの起動と終了（<code>pyxel.init</code> / <code>pyxel.run</code>）</td><td>1</td></tr>
+    <tr><td>毎フレーム呼ばれる 2 つの処理（更新と描画）</td><td>1</td></tr>
+    <tr><td>画面座標系（左上が原点）と 16 色パレット</td><td>1・2</td></tr>
+    <tr><td rowspan="2">描画</td><td>文字の描画（<code>pyxel.text</code>）</td><td>2</td></tr>
+    <tr><td>図形の描画（<code>pyxel.pset</code> / <code>rect</code> / <code>circ</code>）</td><td>3</td></tr>
+    <tr><td rowspan="2">アニメーション</td><td>座標を毎フレーム更新して動かす考え方</td><td>3</td></tr>
+    <tr><td>画面外に出たものを再利用する（ループさせる）</td><td>3</td></tr>
+    <tr><td rowspan="3">素材づくり</td><td>リソースエディタの操作（<code>pyxel edit</code>）</td><td>4・7</td></tr>
+    <tr><td>イメージバンクとリソースファイル（<code>.pyxres</code>）</td><td>4・5</td></tr>
+    <tr><td>スプライトの転送と透明色（<code>pyxel.blt</code>）</td><td>5</td></tr>
+    <tr><td>入力</td><td>キー入力の判定（<code>pyxel.btn</code> / <code>btnp</code>）</td><td>6</td></tr>
+    <tr><td rowspan="2">サウンド</td><td>サウンドとミュージックの作成</td><td>7</td></tr>
+    <tr><td>BGM の再生とループ（<code>pyxel.playm</code>）</td><td>7</td></tr>
+    <tr><td rowspan="2">公開</td><td>アプリのパッケージ化（<code>pyxel package</code>）</td><td>8</td></tr>
+    <tr><td>HTML 化して Web 公開（<code>pyxel app2html</code>）</td><td>8</td></tr>
+  </tbody>
+</table>
+
+<h3>あわせて新しく出てくる Python の概念</h3>
+
+<p>
+これまでの「順次・反復・分岐・リスト・モジュール」に加えて、この step では次の 2 つが
+新しく登場します。<b>出てきたフェーズで、必要になった理由とセットで解説します。</b>
+</p>
+
+<table>
+  <thead><tr><th>概念</th><th>なぜ必要になるか</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>リストの中のリスト<br>（二次元リスト）</td>
+      <td>星 1 個ごとに「x 座標・y 座標・速さ」の 3 つをまとめて持たせるため。</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>クラス<br>（<code>class</code> / <code>__init__</code> / <code>self</code>）</td>
+      <td>宇宙船の位置や星の一覧など「ゲームが覚えておくデータ」が増えてくると、関数の外に変数を置く書き方では管理しきれなくなるため。フェーズ 3 まではあえて関数だけで書き、限界を体感してから導入します。</td>
+      <td>4</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. 先に押さえておきたい 2 つの土台</h2>
+
+<h3>土台 1：画面の座標系</h3>
+
+<p>
+Pyxel の画面は、数学のグラフと違って <b>左上が原点 (0, 0)</b> です。
+x は右へ、y は<b>下へ</b>増えます。「y を増やすと下に動く」ことに慣れるのが最初の関門です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 420 250" role="img" aria-label="Pyxel の画面座標系。左上が原点で x は右、y は下に増える">
+  <rect x="60" y="40" width="280" height="180" fill="#10121c" stroke="#3b4166" stroke-width="2"/>
+  <g stroke="#232840" stroke-width="1">
+    <line x1="130" y1="40" x2="130" y2="220"/>
+    <line x1="200" y1="40" x2="200" y2="220"/>
+    <line x1="270" y1="40" x2="270" y2="220"/>
+    <line x1="60" y1="85"  x2="340" y2="85"/>
+    <line x1="60" y1="130" x2="340" y2="130"/>
+    <line x1="60" y1="175" x2="340" y2="175"/>
+  </g>
+
+  <circle cx="60" cy="40" r="4" fill="#ffcc44"/>
+  <text x="52" y="30" fill="#ffcc44" font-family="Consolas, monospace" font-size="13" text-anchor="end">(0, 0) 原点</text>
+
+  <line x1="60" y1="40" x2="330" y2="40" stroke="#45b0e8" stroke-width="2"/>
+  <path d="M330 36 l8 4 -8 4 z" fill="#45b0e8"/>
+  <text x="250" y="32" fill="#45b0e8" font-family="Consolas, monospace" font-size="13">x が増える →</text>
+
+  <line x1="60" y1="40" x2="60" y2="212" stroke="#ff6b97" stroke-width="2"/>
+  <path d="M56 212 l4 8 4 -8 z" fill="#ff6b97"/>
+  <text x="24" y="140" fill="#ff6b97" font-family="Consolas, monospace" font-size="13"
+        transform="rotate(-90 24 140)" text-anchor="middle">↓ y が増える</text>
+
+  <rect x="196" y="126" width="8" height="8" fill="#2ee6a8"/>
+  <text x="212" y="124" fill="#2ee6a8" font-family="Consolas, monospace" font-size="13">(80, 60)</text>
+
+  <text x="340" y="238" fill="#9aa4c4" font-family="Consolas, monospace" font-size="12" text-anchor="end">(159, 119)</text>
+</svg>
+</div>
+<figcaption>画面サイズを 160×120 にした場合。右下の座標は (159, 119) で、160 や 120 ではない点に注意</figcaption>
+</figure>
+
+<div class="term">
+  <b>用語：ドット（ピクセル）</b>
+  Pyxel の画面は小さな正方形のマス目の集まりです。1 マスが 1 ドット。
+  160×120 は「横 160 マス・縦 120 マス」という意味で、実際のウィンドウは
+  これを何倍かに拡大して表示されます。
+</div>
+
+<h3>土台 2：毎フレーム繰り返される 2 つの処理</h3>
+
+<p>
+Pyxel のゲームは <b>1 秒間に 30 回</b>、同じ処理を繰り返し続けることで動いて見えます。
+その 1 回分を <b>1 フレーム</b> と呼び、フレームごとに次の 2 つが順番に呼ばれます。
+</p>
+
+<ul>
+  <li><b>更新（update）</b> … 座標を変える、キー入力を調べる、当たり判定をする。<b>画面には何も描かない</b></li>
+  <li><b>描画（draw）</b> … 更新された状態にもとづいて、画面を描き直す。<b>状態は変えない</b></li>
+</ul>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 560 190" role="img" aria-label="Pyxel の実行の流れ。init のあと update と draw が毎フレーム繰り返される">
+  <rect x="14" y="60" width="96" height="52" rx="5" fill="#232840" stroke="#ffcc44" stroke-width="2"/>
+  <text x="62" y="82" fill="#ffcc44" font-family="Consolas, monospace" font-size="13" text-anchor="middle">init</text>
+  <text x="62" y="100" fill="#9aa4c4" font-size="11" text-anchor="middle">最初に1回</text>
+
+  <line x1="110" y1="86" x2="152" y2="86" stroke="#3b4166" stroke-width="2"/>
+  <path d="M152 82 l8 4 -8 4 z" fill="#3b4166"/>
+
+  <rect x="164" y="24" width="330" height="124" rx="6" fill="none" stroke="#3b4166" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="329" y="44" fill="#9aa4c4" font-size="11.5" text-anchor="middle">1 秒間に 30 回くりかえす（＝ 30 FPS）</text>
+
+  <rect x="186" y="60" width="120" height="60" rx="5" fill="#232840" stroke="#45b0e8" stroke-width="2"/>
+  <text x="246" y="84" fill="#45b0e8" font-family="Consolas, monospace" font-size="13" text-anchor="middle">update</text>
+  <text x="246" y="102" fill="#9aa4c4" font-size="11" text-anchor="middle">状態を変える</text>
+
+  <line x1="306" y1="90" x2="346" y2="90" stroke="#3b4166" stroke-width="2"/>
+  <path d="M346 86 l8 4 -8 4 z" fill="#3b4166"/>
+
+  <rect x="358" y="60" width="120" height="60" rx="5" fill="#232840" stroke="#2ee6a8" stroke-width="2"/>
+  <text x="418" y="84" fill="#2ee6a8" font-family="Consolas, monospace" font-size="13" text-anchor="middle">draw</text>
+  <text x="418" y="102" fill="#9aa4c4" font-size="11" text-anchor="middle">画面に描く</text>
+
+  <path d="M418 120 L418 138 L246 138 L246 122" fill="none" stroke="#3b4166" stroke-width="2"/>
+  <path d="M242 122 l4 -8 4 8 z" fill="#3b4166"/>
+
+  <line x1="494" y1="86" x2="502" y2="86" stroke="#ff6b97" stroke-width="2"/>
+  <text x="524" y="90" fill="#ff6b97" font-family="Consolas, monospace" font-size="12" text-anchor="middle">Esc</text>
+  <text x="524" y="106" fill="#9aa4c4" font-size="11" text-anchor="middle">で終了</text>
+</svg>
+</div>
+<figcaption>update と draw の役割を分けておくと、あとで動きがおかしいときに原因を探しやすくなります</figcaption>
+</figure>
+
+<div class="warn">
+  <b>よくあるつまずき</b>
+  「描画（draw）の中で座標を増やす」と、一見動いて見えるのに、あとで画面を止めたり
+  やり直したりする機能を足したときに破綻します。<b>動かすのは update、描くのは draw</b>
+  と最初から分けておいてください。
+</div>
+
+<h2>4. フェーズ分割</h2>
+
+<p>完成までを 8 つのフェーズに分けます。上から順に、少しずつ書き足していきます。</p>
+
+<table>
+  <thead><tr><th>フェーズ</th><th>やること</th><th>主に使う API・機能</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-no">1</td><td>ウィンドウを出して、黒い画面を表示する</td><td><code>pyxel.init</code> / <code>pyxel.run</code> / <code>pyxel.cls</code></td></tr>
+    <tr><td class="phase-no">2</td><td>タイトル文字を画面に表示する</td><td><code>pyxel.text</code>、色番号</td></tr>
+    <tr><td class="phase-no">3</td><td>星を並べ、手前に流れるアニメーションにする</td><td><code>pyxel.pset</code>、リスト、<code>random</code></td></tr>
+    <tr><td class="phase-no">4</td><td>リソースエディタで宇宙船のドット絵を描く<br>あわせてコードをクラスにまとめ直す</td><td><code>pyxel edit</code>、<code>.pyxres</code>、<code>class</code></td></tr>
+    <tr><td class="phase-no">5</td><td>描いた宇宙船を画面に表示する</td><td><code>pyxel.load</code> / <code>pyxel.blt</code>、透明色</td></tr>
+    <tr><td class="phase-no">6</td><td>矢印キーで宇宙船を動かす（画面外に出ないように制限する）</td><td><code>pyxel.btn</code>、<code>pyxel.KEY_LEFT</code> ほか</td></tr>
+    <tr><td class="phase-no">7</td><td>リソースエディタで BGM を作り、流し続ける</td><td>サウンド／ミュージック編集、<code>pyxel.playm</code></td></tr>
+    <tr><td class="phase-no">8</td><td>作品をパッケージ化し、Web で公開する</td><td><code>pyxel package</code> / <code>pyxel app2html</code>、GitHub Pages</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>進め方</b>
+  1 フェーズごとに「考え方 → 必要な API → コード → 解説」を読み、コードを自分で入力して
+  実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
+  うまく動かないときや疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。
+</div>
+
+<footer class="site">
+  <a href="../">← 目次にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a>
+</footer>
+
+</div>
+</body>
+</html>
