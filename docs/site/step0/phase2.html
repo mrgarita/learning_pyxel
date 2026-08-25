@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step0 フェーズ2：タイトル文字を表示する ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 2 </span>タイトル文字を表示する</h1>
+  <p>step0：星空を飛ぶ宇宙船</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step0 概要</a> ／ フェーズ 2</p>
+
+<h2>ゴール</h2>
+
+<p>
+黒い画面の中央上部に <code>STAR VOYAGER</code> が黄色で表示され、
+その下に灰色で操作説明の文字が出る。どちらも<b>画面の横中央にきちんと揃っている</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 340 270" role="img" aria-label="フェーズ2完成イメージ：黒画面の中央上部に黄色のタイトルと灰色の説明文">
+  <rect x="10" y="10" width="320" height="240" fill="#000000" stroke="#3b4166" stroke-width="2" rx="3"/>
+  <text x="170" y="58" fill="#E9C35B" font-family="Consolas, monospace" font-size="17"
+        text-anchor="middle" letter-spacing="2">STAR VOYAGER</text>
+  <text x="170" y="88" fill="#A3A3A3" font-family="Consolas, monospace" font-size="11"
+        text-anchor="middle" letter-spacing="1">PRESS ESC TO QUIT</text>
+  <line x1="170" y1="20" x2="170" y2="240" stroke="#2ee6a8" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>
+  <text x="176" y="234" fill="#2ee6a8" font-size="10">画面の中心線</text>
+</svg>
+</div>
+<figcaption>2 つの文字列が、長さが違っても両方とも中央に揃っている状態を目指します</figcaption>
+</figure>
+
+<h2>1. 考え方</h2>
+
+<h3>文字も「描くもの」</h3>
+
+<p>
+Pyxel では文字も図形と同じ<b>描画</b>です。したがって書く場所は <code>draw</code> の中、
+そして <b><code>pyxel.cls</code> より後</b>です。<code>cls</code> は画面全体を塗りつぶすので、
+先に文字を描いてから <code>cls</code> すると<b>塗りつぶされて消えてしまいます</b>。
+</p>
+
+<div class="warn">
+  <b>描いた順に上へ重なる</b>
+  Pyxel の描画は「上から絵の具を重ねる」イメージです。<b>後に書いた命令ほど手前</b>に描かれます。
+  <code>draw</code> の中の命令の順番は、そのまま画面の重なり順になります。
+</div>
+
+<h3>文字の座標は「左上」</h3>
+
+<p>
+<code>pyxel.text(x, y, s, col)</code> の <code>x, y</code> は、文字列の<b>左上の角</b>の位置です。
+中心でも左下でもありません。そして Pyxel の内蔵フォントは
+<b>1 文字がぴったり 4×6 ドット</b>と決まっています。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 480 210" role="img" aria-label="文字の座標は左上。1文字は4×6ドットで、文字列の幅は文字数×4">
+  <!-- 拡大した文字マス -->
+  <g>
+    <rect x="60" y="50" width="40" height="60" fill="#10121c" stroke="#3b4166"/>
+    <rect x="100" y="50" width="40" height="60" fill="#10121c" stroke="#3b4166"/>
+    <rect x="140" y="50" width="40" height="60" fill="#10121c" stroke="#3b4166"/>
+    <rect x="180" y="50" width="40" height="60" fill="#10121c" stroke="#3b4166"/>
+    <text x="80"  y="92" fill="#E9C35B" font-family="Consolas, monospace" font-size="26" text-anchor="middle">S</text>
+    <text x="120" y="92" fill="#E9C35B" font-family="Consolas, monospace" font-size="26" text-anchor="middle">T</text>
+    <text x="160" y="92" fill="#E9C35B" font-family="Consolas, monospace" font-size="26" text-anchor="middle">A</text>
+    <text x="200" y="92" fill="#E9C35B" font-family="Consolas, monospace" font-size="26" text-anchor="middle">R</text>
+  </g>
+
+  <!-- 左上の座標マーカー -->
+  <circle cx="60" cy="50" r="4" fill="#2ee6a8"/>
+  <text x="56" y="40" fill="#2ee6a8" font-family="Consolas, monospace" font-size="12" text-anchor="end">(x, y)</text>
+  <text x="60" y="26" fill="#9aa4c4" font-size="11" text-anchor="middle">ここが基準</text>
+
+  <!-- 1文字の寸法 -->
+  <line x1="60" y1="126" x2="100" y2="126" stroke="#45b0e8" stroke-width="1.5"/>
+  <path d="M60 122 l-6 4 6 4 z M100 122 l6 4 -6 4 z" fill="#45b0e8"/>
+  <text x="80" y="144" fill="#45b0e8" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">4 ドット</text>
+
+  <line x1="44" y1="50" x2="44" y2="110" stroke="#ff6b97" stroke-width="1.5"/>
+  <path d="M40 50 l4 -6 4 6 z M40 110 l4 6 4 -6 z" fill="#ff6b97"/>
+  <text x="14" y="84" fill="#ff6b97" font-family="Consolas, monospace" font-size="11.5">6</text>
+
+  <!-- 文字列全体の幅 -->
+  <line x1="60" y1="164" x2="220" y2="164" stroke="#ffcc44" stroke-width="1.5"/>
+  <path d="M60 160 l-6 4 6 4 z M220 160 l6 4 -6 4 z" fill="#ffcc44"/>
+  <text x="140" y="182" fill="#ffcc44" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">4 文字 × 4 ドット = 16 ドット</text>
+
+  <!-- 公式 -->
+  <rect x="256" y="52" width="212" height="86" rx="5" fill="#232840" stroke="#3b4166"/>
+  <text x="362" y="78" fill="#9aa4c4" font-size="11.5" text-anchor="middle">文字列の表示幅は</text>
+  <text x="362" y="104" fill="#2ee6a8" font-family="Consolas, monospace" font-size="13.5" text-anchor="middle">len(s) * 4</text>
+  <text x="362" y="126" fill="#9aa4c4" font-size="11" text-anchor="middle">（文字数 × 1 文字の幅）で求まる</text>
+</svg>
+</div>
+<figcaption>内蔵フォントは等幅（すべての文字が同じ幅）なので、文字数から表示幅を計算できます</figcaption>
+</figure>
+
+<h3>中央に揃える計算</h3>
+
+<p>
+「中央に置く」は、Pyxel が用意してくれてはいません。<b>自分で x 座標を計算します。</b>
+考え方は単純で、<b>画面幅から文字列の幅を引いて、余った左右の余白を半分ずつに分ける</b>だけです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 520 180" role="img" aria-label="中央揃えの計算：画面幅から文字幅を引き、2で割った値が x 座標">
+  <!-- 画面 -->
+  <rect x="40" y="40" width="440" height="56" fill="#10121c" stroke="#3b4166" stroke-width="2"/>
+  <!-- 文字列 -->
+  <rect x="172" y="40" width="176" height="56" fill="#232840" stroke="#E9C35B" stroke-width="1.5"/>
+  <text x="260" y="76" fill="#E9C35B" font-family="Consolas, monospace" font-size="15" text-anchor="middle">STAR VOYAGER</text>
+
+  <!-- 画面幅 -->
+  <line x1="40" y1="26" x2="480" y2="26" stroke="#45b0e8" stroke-width="1.5"/>
+  <path d="M40 22 l-6 4 6 4 z M480 22 l6 4 -6 4 z" fill="#45b0e8"/>
+  <text x="260" y="18" fill="#45b0e8" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">画面幅 160</text>
+
+  <!-- 文字幅 -->
+  <line x1="172" y1="112" x2="348" y2="112" stroke="#E9C35B" stroke-width="1.5"/>
+  <path d="M172 108 l-6 4 6 4 z M348 108 l6 4 -6 4 z" fill="#E9C35B"/>
+  <text x="260" y="128" fill="#E9C35B" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">12 文字 × 4 = 48</text>
+
+  <!-- 余白 -->
+  <line x1="40" y1="112" x2="172" y2="112" stroke="#2ee6a8" stroke-width="1.5"/>
+  <path d="M40 108 l-6 4 6 4 z M172 108 l6 4 -6 4 z" fill="#2ee6a8"/>
+  <text x="106" y="128" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">余白 56</text>
+  <line x1="348" y1="112" x2="480" y2="112" stroke="#2ee6a8" stroke-width="1.5"/>
+  <path d="M348 108 l-6 4 6 4 z M480 108 l6 4 -6 4 z" fill="#2ee6a8"/>
+  <text x="414" y="128" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">余白 56</text>
+
+  <!-- 式 -->
+  <text x="260" y="160" fill="#e8f0ff" font-family="Consolas, monospace" font-size="13" text-anchor="middle">x = (160 - 48) // 2 = 56</text>
+</svg>
+</div>
+<figcaption>左の余白の大きさが、そのまま文字列を描き始める x 座標になります</figcaption>
+</figure>
+
+<h2>2. このフェーズで使う API</h2>
+
+<table>
+  <thead><tr><th>API・定数</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.text(x, y, s, col)</code></td><td>文字列 <code>s</code> を色 <code>col</code> で、左上が <code>(x, y)</code> になるように描く</td></tr>
+    <tr><td><code>pyxel.FONT_WIDTH</code></td><td>内蔵フォント 1 文字の幅。中身は <code>4</code></td></tr>
+    <tr><td><code>pyxel.FONT_HEIGHT</code></td><td>内蔵フォント 1 文字の高さ。中身は <code>6</code></td></tr>
+    <tr><td><code>pyxel.COLOR_YELLOW</code> ほか</td><td>色番号に付けられた名前。<code>COLOR_YELLOW</code> は <code>10</code> と同じ意味</td></tr>
+  </tbody>
+</table>
+
+<h2>3. コード</h2>
+
+<p><code>step0/star_voyager.py</code> を、次の内容に書き換えてください。</p>
+
+<pre><code># star_voyager.py
+# step0 フェーズ2：タイトル文字を表示する
+
+import pyxel
+
+SCREEN_WIDTH = 160   # 画面の横幅（ドット）
+SCREEN_HEIGHT = 120  # 画面の縦幅（ドット）
+
+TITLE = "STAR VOYAGER"
+GUIDE = "PRESS ESC TO QUIT"
+
+
+def text_center(y, s, col):
+    """文字列 s を、画面の横中央に来るように描く"""
+    x = (SCREEN_WIDTH - len(s) * pyxel.FONT_WIDTH) // 2
+    pyxel.text(x, y, s, col)
+
+
+def update():
+    """毎フレームの更新処理。このフェーズではまだ何もしない"""
+    pass
+
+
+def draw():
+    """毎フレームの描画処理"""
+    pyxel.cls(0)                                    # 画面を黒で塗りつぶす
+    text_center(20, TITLE, pyxel.COLOR_YELLOW)      # タイトル
+    text_center(34, GUIDE, pyxel.COLOR_GRAY)        # 操作説明
+
+
+pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Star Voyager")
+pyxel.run(update, draw)
+</code></pre>
+
+<h2>4. 実行して確認する</h2>
+
+<pre><code>python step0/star_voyager.py</code></pre>
+
+<h3>確認ポイント</h3>
+
+<ul>
+  <li><code>STAR VOYAGER</code> が<b>黄色</b>で表示される</li>
+  <li>その下に <code>PRESS ESC TO QUIT</code> が<b>灰色</b>で表示される</li>
+  <li><b>2 つの文字列は長さが違うのに、どちらも横中央に揃っている</b></li>
+  <li><code>Esc</code> で閉じられる</li>
+</ul>
+
+<h2>5. コードの解説</h2>
+
+<h3>大文字だけの変数 ＝ 定数のつもり</h3>
+
+<pre><code>SCREEN_WIDTH = 160
+TITLE = "STAR VOYAGER"</code></pre>
+
+<p>
+Python には「変更できない値」を作る仕組みはありませんが、
+<b>全部大文字の名前を付けたものは途中で書き換えない</b>という約束（慣習）があります。
+これを<b>定数</b>と呼びます。
+</p>
+
+<p>理由は 2 つあります。</p>
+
+<ul>
+  <li><b>直す場所が 1 か所で済む</b> — <code>160</code> という数字を <code>init</code> の中と中央揃えの計算の
+  両方に直接書くと、画面幅を変えたいときに両方を直す必要があります。書き換え漏れはバグの定番です</li>
+  <li><b>数字の意味が読める</b> — <code>(160 - ...)</code> より <code>(SCREEN_WIDTH - ...)</code> のほうが、
+  何を計算しているか一目で分かります</li>
+</ul>
+
+<div class="term">
+  <b>用語：マジックナンバー</b>
+  コードの中に理由の説明なく直接書かれた数字のこと。読み手に意味が伝わらず、
+  変更にも弱いため、名前を付けて定数にするのが定石です。
+</div>
+
+<h3>引数を受け取る自作関数</h3>
+
+<pre><code>def text_center(y, s, col):
+    x = (SCREEN_WIDTH - len(s) * pyxel.FONT_WIDTH) // 2
+    pyxel.text(x, y, s, col)</code></pre>
+
+<p>
+フェーズ 1 の <code>update</code> や <code>draw</code> はカッコの中が空でしたが、
+今回は <code>y, s, col</code> の 3 つを受け取ります。これを<b>引数</b>と呼びます。
+呼ぶ側が値を渡し、関数の中ではその値が変数として使えます。
+</p>
+
+<p>
+<b>なぜ関数にまとめるのか。</b> 中央揃えの計算は、タイトルと操作説明の 2 か所で必要です。
+同じ計算を 2 回書くと、<b>片方だけ直して食い違う</b>という事故が起きます。
+1 か所にまとめておけば、直すときも 1 か所で済みます。
+</p>
+
+<div class="note">
+  <b>引数の順番は自分で決める</b>
+  <code>text_center(y, s, col)</code> の順番は、<code>pyxel.text(x, y, s, col)</code> から
+  <code>x</code> を取り除いた並びに合わせています。<b>元の API と似た並びにしておくと混乱しません。</b>
+</div>
+
+<h3><code>len(s)</code></h3>
+<p>
+文字列 <code>s</code> の<b>文字数</b>を返す Python の組み込み関数です。
+<code>len("STAR")</code> なら <code>4</code>。リストに使えば要素の個数を返します。
+</p>
+
+<h3><code>//</code> — 整数の割り算</h3>
+
+<p>
+Python の割り算には 2 種類あり、この違いは Pyxel では特に重要です。
+</p>
+
+<table>
+  <thead><tr><th>書き方</th><th>結果</th><th>型</th></tr></thead>
+  <tbody>
+    <tr><td><code>112 / 2</code></td><td><code>56.0</code></td><td>小数（float）</td></tr>
+    <tr><td><code>112 // 2</code></td><td><code>56</code></td><td>整数（int）</td></tr>
+    <tr><td><code>113 // 2</code></td><td><code>56</code></td><td>整数（小数点以下は切り捨て）</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>/</code> は<b>割り切れても必ず小数</b>になります。画面のドットは整数のマス目なので、
+座標の計算には <code>//</code> を使って整数のまま扱うほうが素直です。
+</p>
+
+<div class="note">
+  <b><code>/</code> を使ってもエラーにはなりません</b>
+  Pyxel の座標は小数も受け付けます（内部で切り捨てられます）。
+  ただし <code>print</code> で座標を確認したときに <code>56.0</code> と表示されて紛らわしいので、
+  整数で扱えるところは整数にしておきます。
+</div>
+
+<h3><code>pyxel.COLOR_YELLOW</code></h3>
+
+<p>
+<code>10</code> と書いても同じですが、名前で書くほうが読んだときに色が分かります。
+16 色すべてに名前が付いています。
+</p>
+
+<pre><code>BLACK(0)  NAVY(1)   PURPLE(2)  GREEN(3)
+BROWN(4)  DARK_BLUE(5)  LIGHT_BLUE(6)  WHITE(7)
+RED(8)    ORANGE(9) YELLOW(10) LIME(11)
+CYAN(12)  GRAY(13)  PINK(14)   PEACH(15)</code></pre>
+
+<div class="warn">
+  <b>名前と見た目が一致しない色があります</b>
+  <code>COLOR_GREEN</code>(3) は青緑、<code>COLOR_CYAN</code>(12) は青紫寄り、
+  <code>COLOR_RED</code>(8) は赤紫です。名前を鵜呑みにせず、
+  <a href="phase1.html">フェーズ 1 のパレット図</a>で実際の色を確かめてください。
+</div>
+
+<h3>y 座標を 20 と 34 にした理由</h3>
+
+<p>
+文字の高さは 6 ドット（<code>pyxel.FONT_HEIGHT</code>）です。
+<code>20</code> と <code>34</code> の差は 14 なので、文字と文字の間に 8 ドットのすき間ができます。
+数字に深い意味はなく、<b>見た目のバランスで決めています</b>。好きに変えてかまいません。
+</p>
+
+<h2>6. 試してみよう</h2>
+
+<table>
+  <thead><tr><th>やってみること</th><th>確かめたいこと</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>TITLE</code> の文字列を長さの違うものに変える</td>
+      <td>文字数が変わっても、自動で中央に揃い続ける</td>
+    </tr>
+    <tr>
+      <td><code>draw</code> の中で <code>pyxel.cls(0)</code> を<b>いちばん最後</b>に移動する</td>
+      <td>文字が塗りつぶされて何も見えなくなる（＝順番が重要な理由）</td>
+    </tr>
+    <tr>
+      <td><code>text_center</code> の <code>// 2</code> を <code>// 4</code> に変える</td>
+      <td>文字が左寄りになる。式の意味を実感できる</td>
+    </tr>
+    <tr>
+      <td>色を <code>pyxel.COLOR_GREEN</code> や <code>pyxel.COLOR_RED</code> に変える</td>
+      <td>名前から想像する色と実際の色が違うことを確認できる</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>確認できたら、コードは元に戻しておいてください。</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>何も表示されない（真っ黒のまま）</td>
+      <td><code>pyxel.cls(0)</code> が <code>text_center</code> より後ろにある。<code>cls</code> は<b>いちばん先頭</b>に置く</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'text_center' is not defined</code></td>
+      <td><code>def text_center</code> の定義が <code>draw</code> より<b>後ろ</b>にある、または名前のつづりが違う</td>
+    </tr>
+    <tr>
+      <td><code>TypeError: text_center() missing 1 required positional argument</code></td>
+      <td>呼び出し時の引数が足りない。<code>text_center(20, TITLE, pyxel.COLOR_YELLOW)</code> と 3 つ渡す</td>
+    </tr>
+    <tr>
+      <td>文字が中央からずれる</td>
+      <td><code>SCREEN_WIDTH</code> と <code>pyxel.init</code> に渡した幅が食い違っている</td>
+    </tr>
+    <tr>
+      <td><code>TabError: inconsistent use of tabs and spaces</code></td>
+      <td>タブとスペースが混ざっている。<a href="../memo/#indent">備忘録の該当項目</a>を参照</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>次のフェーズ</b>
+  フェーズ 3 では星を画面に散らし、手前へ流れるアニメーションにします。
+  ここで初めて <code>update</code> に中身が入り、画面が「動き」ます。
+</div>
+
+<footer class="site">
+  <a href="phase1.html">← フェーズ 1</a>　｜
+  <a href="./">step0 概要</a>　｜
+  <a href="../">目次</a>
+</footer>
+
+</div>
+</body>
+</html>
