@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step0 フェーズ3：星を流す ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 3 </span>星を流す</h1>
+  <p>step0：星空を飛ぶ宇宙船</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step0 概要</a> ／ フェーズ 3</p>
+
+<h2>ゴール</h2>
+
+<p>
+画面いっぱいに星が散らばり、<b>上から下へ流れ続けます</b>。
+速い星は明るく、遅い星は暗く描くことで<b>奥行き</b>が生まれます。
+画面の下に出た星は上に戻って再利用されるので、星は無限に流れ続けます。
+</p>
+
+<div class="note">
+  <b>このフェーズが step0 の山場です</b>
+  ここで初めて <code>update</code> に中身が入り、画面が<b>動き</b>ます。
+  新しい概念がまとめて 3 つ出てくるので、<b>2 つのステップに分けて</b>進めます。
+  ステップ A で星を止めたまま表示し、動くのを確認してからステップ B で流します。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>「動く」とは、座標を毎フレーム少しずつ変えること</h3>
+
+<p>
+アニメーションに特別な仕組みはありません。<b>1 フレームごとに y 座標を少しだけ増やし、
+その位置に描き直す</b>。これを 1 秒間に 30 回繰り返すと、人の目には滑らかに動いて見えます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 520 150" role="img" aria-label="毎フレーム y 座標を少しずつ増やすと動いて見える">
+  <g>
+    <rect x="30"  y="30" width="80" height="76" fill="#000" stroke="#3b4166"/>
+    <rect x="150" y="30" width="80" height="76" fill="#000" stroke="#3b4166"/>
+    <rect x="270" y="30" width="80" height="76" fill="#000" stroke="#3b4166"/>
+    <rect x="390" y="30" width="80" height="76" fill="#000" stroke="#3b4166"/>
+    <rect x="66"  y="40" width="6" height="6" fill="#EEEEEE"/>
+    <rect x="186" y="60" width="6" height="6" fill="#EEEEEE"/>
+    <rect x="306" y="80" width="6" height="6" fill="#EEEEEE"/>
+    <rect x="426" y="100" width="6" height="6" fill="#EEEEEE"/>
+  </g>
+  <g fill="#9aa4c4" font-size="10.5" text-anchor="middle">
+    <text x="70"  y="122">y = 10</text>
+    <text x="190" y="122">y = 12</text>
+    <text x="310" y="122">y = 14</text>
+    <text x="430" y="122">y = 16</text>
+  </g>
+  <g fill="#2ee6a8" font-family="Consolas, monospace" font-size="11.5" text-anchor="middle">
+    <text x="130" y="72">+2</text>
+    <text x="250" y="72">+2</text>
+    <text x="370" y="72">+2</text>
+  </g>
+  <text x="250" y="142" fill="#e8f0ff" font-size="11.5" text-anchor="middle">1 秒間に 30 回これを繰り返す ＝ 動いて見える</text>
+</svg>
+</div>
+<figcaption>座標を変えるのは <code>update</code>、描くのは <code>draw</code>。役割は分けたままです</figcaption>
+</figure>
+
+<h3>星 1 個が覚えておくことは 3 つ</h3>
+
+<p>
+星ごとに <b>x 座標・y 座標・落ちる速さ</b> の 3 つが必要です。速さを星ごとに変えることで
+奥行きが出ます。これを <code>[x, y, 速さ]</code> という 3 要素のリストで表し、
+そのリストを <b>さらにリストに入れて</b> 全部の星をまとめて持ちます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 520 210" role="img" aria-label="stars は star のリスト。star は x, y, 速さ の 3 要素のリスト">
+  <text x="30" y="24" fill="#ffcc44" font-family="Consolas, monospace" font-size="13">stars</text>
+  <text x="82" y="24" fill="#9aa4c4" font-size="11">＝ 星ぜんぶを入れたリスト</text>
+
+  <g font-family="Consolas, monospace" font-size="12">
+    <!-- 0 -->
+    <rect x="30" y="36" width="60" height="34" fill="#232840" stroke="#3b4166"/>
+    <text x="60" y="58" fill="#9aa4c4" text-anchor="middle">[0]</text>
+    <rect x="106" y="36" width="240" height="34" fill="#1b1f33" stroke="#45b0e8"/>
+    <text x="226" y="58" fill="#e8f0ff" text-anchor="middle">[ 24 , 8 , 1.5 ]</text>
+    <!-- 1 -->
+    <rect x="30" y="78" width="60" height="34" fill="#232840" stroke="#3b4166"/>
+    <text x="60" y="100" fill="#9aa4c4" text-anchor="middle">[1]</text>
+    <rect x="106" y="78" width="240" height="34" fill="#1b1f33" stroke="#45b0e8"/>
+    <text x="226" y="100" fill="#e8f0ff" text-anchor="middle">[ 117 , 45 , 0.4 ]</text>
+    <!-- 2 -->
+    <rect x="30" y="120" width="60" height="34" fill="#232840" stroke="#3b4166"/>
+    <text x="60" y="142" fill="#9aa4c4" text-anchor="middle">[2]</text>
+    <rect x="106" y="120" width="240" height="34" fill="#1b1f33" stroke="#45b0e8"/>
+    <text x="226" y="142" fill="#e8f0ff" text-anchor="middle">[ 60 , 92 , 0.9 ]</text>
+    <text x="226" y="176" fill="#9aa4c4" font-size="11" text-anchor="middle">… 全部で 40 個</text>
+  </g>
+
+  <!-- 内側の説明 -->
+  <line x1="150" y1="30" x2="150" y2="36" stroke="#2ee6a8"/>
+  <line x1="226" y1="30" x2="226" y2="36" stroke="#2ee6a8"/>
+  <line x1="300" y1="30" x2="300" y2="36" stroke="#2ee6a8"/>
+  <g fill="#2ee6a8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="150" y="26">star[0]</text>
+    <text x="226" y="26">star[1]</text>
+    <text x="300" y="26">star[2]</text>
+  </g>
+  <g fill="#9aa4c4" font-size="10.5" text-anchor="middle">
+    <text x="150" y="196">x 座標</text>
+    <text x="226" y="196">y 座標</text>
+    <text x="300" y="196">速さ</text>
+  </g>
+
+  <rect x="366" y="36" width="130" height="118" rx="5" fill="none" stroke="#3b4166" stroke-dasharray="4 4"/>
+  <text x="431" y="72" fill="#e8f0ff" font-size="11" text-anchor="middle">1 行 ＝ 星 1 個</text>
+  <text x="431" y="94" fill="#e8f0ff" font-size="11" text-anchor="middle">リストの中に</text>
+  <text x="431" y="112" fill="#e8f0ff" font-size="11" text-anchor="middle">リストが入っている</text>
+  <text x="431" y="134" fill="#ffcc44" font-size="11" text-anchor="middle">＝ 二次元リスト</text>
+</svg>
+</div>
+<figcaption><code>stars[2][1]</code> と書くと「3 個目の星の y 座標」を指します</figcaption>
+</figure>
+
+<h3>画面の下に出たら、上に戻して使い回す</h3>
+
+<p>
+星が下に流れ切ったら、その星を<b>捨てて新しく作る必要はありません</b>。
+y を 0 に戻し、x をランダムに引き直せば<b>そのまま新しい星として再利用</b>できます。
+星の個数は最初の 40 個から一生変わらず、それでも無限に流れ続けます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 480 190" role="img" aria-label="画面下に出た星は y を 0 に戻し x を引き直して再利用する">
+  <rect x="120" y="24" width="150" height="140" fill="#000" stroke="#3b4166" stroke-width="2"/>
+  <text x="195" y="16" fill="#9aa4c4" font-size="11" text-anchor="middle">画面（高さ 120）</text>
+
+  <rect x="180" y="140" width="5" height="5" fill="#EEEEEE"/>
+  <text x="278" y="150" fill="#ff6b97" font-size="11">y が 120 以上になった</text>
+
+  <!-- 回り込み矢印 -->
+  <path d="M186 160 C 240 186, 330 170, 330 100 C 330 40, 250 26, 200 32"
+        fill="none" stroke="#2ee6a8" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M204 28 l-8 4 6 6 z" fill="#2ee6a8"/>
+  <text x="360" y="96" fill="#2ee6a8" font-size="11">y = 0 に戻す</text>
+  <text x="360" y="114" fill="#2ee6a8" font-size="11">x は引き直す</text>
+
+  <rect x="196" y="28" width="5" height="5" fill="#EEEEEE"/>
+
+  <text x="60" y="96" fill="#9aa4c4" font-size="11" text-anchor="middle">星の数は</text>
+  <text x="60" y="114" fill="#ffcc44" font-size="11" text-anchor="middle">ずっと 40 個</text>
+</svg>
+</div>
+<figcaption>作っては捨てるより速く、書くコードも短くなります。ゲームでよく使う考え方です</figcaption>
+</figure>
+
+<h2>2. このフェーズで使う API・機能</h2>
+
+<table>
+  <thead><tr><th>API・機能</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.pset(x, y, col)</code></td><td><code>(x, y)</code> に色 <code>col</code> の点を 1 ドット打つ</td></tr>
+    <tr><td><code>import random</code></td><td>乱数を扱う Python の標準モジュール</td></tr>
+    <tr><td><code>random.randint(a, b)</code></td><td><code>a</code> 以上 <code>b</code> 以下の<b>整数</b>をランダムに返す（<code>b</code> を含む）</td></tr>
+    <tr><td><code>random.uniform(a, b)</code></td><td><code>a</code> 以上 <code>b</code> 以下の<b>小数</b>をランダムに返す</td></tr>
+    <tr><td><code>リスト.append(値)</code></td><td>リストの末尾に要素を 1 つ追加する</td></tr>
+    <tr><td><code>range(n)</code></td><td><code>0</code> から <code>n-1</code> までを順に取り出す。<code>for</code> と組で n 回繰り返す</td></tr>
+  </tbody>
+</table>
+
+<h2>3. ステップ A：星を作って、止めたまま表示する</h2>
+
+<p>
+まず動かさずに、星が画面に散らばるところまで作ります。
+<code>star_voyager.py</code> を次のように書き換えてください。<b>追加した行に印を付けています。</b>
+</p>
+
+<pre><code># star_voyager.py
+# step0 フェーズ3：星を流す（ステップA：星を表示する）
+
+import random                    # ← 追加：乱数を使う
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+TITLE = "STAR VOYAGER"
+GUIDE = "PRESS ESC TO QUIT"
+
+STAR_COUNT = 40                  # ← 追加：星の数
+STAR_SPEED_MIN = 0.3             # ← 追加：星の速さの下限（ドット／フレーム）
+STAR_SPEED_MAX = 1.8             # ← 追加：星の速さの上限
+
+stars = []                       # ← 追加：星をぜんぶ入れるリスト
+
+
+def make_stars():                # ← 追加：ここから
+    """星を STAR_COUNT 個ぶん作って stars に入れる"""
+    for i in range(STAR_COUNT):
+        x = random.randint(0, SCREEN_WIDTH - 1)
+        y = random.randint(0, SCREEN_HEIGHT - 1)
+        speed = random.uniform(STAR_SPEED_MIN, STAR_SPEED_MAX)
+        stars.append([x, y, speed])
+
+
+def star_color(speed):
+    """速い星ほど明るい色にして、奥行きを表す"""
+    if speed > 1.2:
+        return pyxel.COLOR_WHITE
+    if speed > 0.7:
+        return pyxel.COLOR_GRAY
+    return pyxel.COLOR_DARK_BLUE  # ← 追加：ここまで
+
+
+def text_center(y, s, col):
+    """文字列 s を、画面の横中央に来るように描く"""
+    x = (SCREEN_WIDTH - len(s) * pyxel.FONT_WIDTH) // 2
+    pyxel.text(x, y, s, col)
+
+
+def update():
+    """毎フレームの更新処理。まだ何もしない"""
+    pass
+
+
+def draw():
+    """毎フレームの描画処理"""
+    pyxel.cls(0)
+
+    for star in stars:                                   # ← 追加：星を描く
+        pyxel.pset(star[0], star[1], star_color(star[2]))
+
+    text_center(20, TITLE, pyxel.COLOR_YELLOW)
+    text_center(34, GUIDE, pyxel.COLOR_GRAY)
+
+
+pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Star Voyager")
+make_stars()                     # ← 追加：星を用意してから
+pyxel.run(update, draw)
+</code></pre>
+
+<h3>実行して確認</h3>
+
+<pre><code>python step0/star_voyager.py</code></pre>
+
+<ul>
+  <li>画面いっぱいに<b>点が散らばっている</b>（40 個）</li>
+  <li>点には<b>明るいもの・灰色・暗い青</b>の 3 種類がある</li>
+  <li>まだ<b>動かない</b>。文字は今までどおり表示されている</li>
+  <li>閉じてもう一度実行すると、<b>星の配置が変わる</b>（乱数なので毎回違う）</li>
+</ul>
+
+<div class="note">
+  <b>ここまで確認できたらステップ B へ</b>
+  星が出ない・エラーが出る場合は、先に下の「うまくいかないときは」を確認してください。
+</div>
+
+<h2>4. ステップ B：星を流す</h2>
+
+<p><code>update</code> だけを次のように書き換えます。<b>他の場所はそのままです。</b></p>
+
+<pre><code>def update():
+    """毎フレームの更新処理。星を下へ動かす"""
+    for star in stars:
+        star[1] += star[2]                             # y に速さを足す
+
+        if star[1] >= SCREEN_HEIGHT:                   # 画面の下に出たら
+            star[0] = random.randint(0, SCREEN_WIDTH - 1)  # x を引き直して
+            star[1] = 0                                # いちばん上に戻す
+</code></pre>
+
+<p>先頭のコメントも <code>ステップB：星を流す</code> に直しておくと分かりやすくなります。</p>
+
+<h3>実行して確認</h3>
+
+<ul>
+  <li>星が<b>上から下へ流れ続ける</b></li>
+  <li><b>明るい星ほど速く、暗い星ほど遅い</b>（奥行きが感じられる）</li>
+  <li>下に消えた星が上から出てきて、<b>途切れずに流れ続ける</b></li>
+  <li>タイトル文字は星の<b>手前</b>に表示されている</li>
+</ul>
+
+<p>4 つとも確認できたらフェーズ 3 は完了です。</p>
+
+<h2>5. コードの解説</h2>
+
+<h3>リストの中のリスト（二次元リスト）</h3>
+
+<pre><code>stars.append([x, y, speed])</code></pre>
+
+<p>
+<code>[x, y, speed]</code> という<b>リストを 1 つ作って</b>、それを <code>stars</code> に追加しています。
+結果として <code>stars</code> は「リストを要素に持つリスト」になります。
+</p>
+
+<table>
+  <thead><tr><th>書き方</th><th>指すもの</th></tr></thead>
+  <tbody>
+    <tr><td><code>stars</code></td><td>星ぜんぶ（40 要素のリスト）</td></tr>
+    <tr><td><code>stars[0]</code></td><td>1 個目の星（<code>[x, y, 速さ]</code> の 3 要素リスト）</td></tr>
+    <tr><td><code>stars[0][1]</code></td><td>1 個目の星の <b>y 座標</b></td></tr>
+    <tr><td><code>star[2]</code>（<code>for</code> の中）</td><td>今見ている星の <b>速さ</b></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>もっと読みやすい書き方もあります</b>
+  <code>star[1]</code> より <code>star.y</code> と書けたほうが分かりやすい、と感じたはずです。
+  そのための仕組みが<b>クラス</b>で、次のフェーズ 4 で導入します。
+  <b>いまの「番号で覚えるのが面倒」という感覚が、クラスを学ぶ動機になります。</b>
+</div>
+
+<h3><code>for star in stars:</code> の中で書き換えると、元のリストが変わる</h3>
+
+<pre><code>for star in stars:
+    star[1] += star[2]     # ← これで stars の中身が本当に変わる</code></pre>
+
+<p>
+<code>star</code> はリストの要素の<b>コピーではなく、同じものを指す別名</b>です。
+だから <code>star[1]</code> を書き換えると <code>stars</code> の中身が変わります。
+</p>
+
+<div class="warn">
+  <b>数値のリストでは同じことができません</b>
+  <pre><code>numbers = [1, 2, 3]
+for n in numbers:
+    n += 10            # numbers は [1, 2, 3] のまま変わらない</code></pre>
+  <p>
+  <code>n</code> には<b>値そのもの</b>が入るため、<code>n</code> を書き換えても元のリストには影響しません。
+  一方リストや、次に学ぶクラスのオブジェクトは<b>中身を指す名札</b>が渡るので、書き換えが元に反映されます。
+  Python でつまずきやすい区別なので、頭の片隅に置いておいてください。
+  </p>
+</div>
+
+<h3>関数の中からリストに追加できる理由</h3>
+
+<pre><code>stars = []           # 関数の外で作った
+
+def make_stars():
+    stars.append(...)  # 関数の中から追加できる（global 宣言は不要）</code></pre>
+
+<p>
+関数の外にある変数は、関数の中から<b>読むことはできます</b>。
+<code>append</code> は「<code>stars</code> という箱の<b>中身をいじる</b>」操作なので、そのまま実行できます。
+</p>
+
+<p>
+一方、<code>stars = []</code> のように<b>入れ直そう</b>とすると別の話になります。
+これは「<code>stars</code> という名前を新しいリストに付け替える」操作で、
+関数の中で書くと<b>関数の中だけの別の変数</b>になってしまい、外側は変わりません。
+その場合は <code>global stars</code> という宣言が必要です。
+</p>
+
+<div class="note">
+  <b>今回は <code>append</code> だけなので <code>global</code> は不要です</b>
+  この「外の変数をどう扱うか」という悩みも、フェーズ 4 でクラスにまとめると自然に解消します。
+</div>
+
+<h3><code>random.randint</code> と <code>random.uniform</code> の違い</h3>
+
+<table>
+  <thead><tr><th>関数</th><th>返る値</th><th>両端</th><th>今回の使いどころ</th></tr></thead>
+  <tbody>
+    <tr><td><code>random.randint(0, 159)</code></td><td>整数</td><td><b>159 を含む</b></td><td>x 座標（ドットは整数のマス目）</td></tr>
+    <tr><td><code>random.uniform(0.3, 1.8)</code></td><td>小数</td><td>0.3 と 1.8 を含む</td><td>速さ（細かく散らしたい）</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b><code>SCREEN_WIDTH - 1</code> の <code>-1</code> を忘れないでください</b>
+  画面幅が 160 のとき、使える x 座標は <b>0 〜 159</b> です。
+  <code>randint(0, 160)</code> と書くと、たまに画面外の <code>160</code> が出てしまいます。
+  <code>randint</code> は<b>右端を含む</b>ことに注意してください。
+</div>
+
+<h3>速さを色に変える <code>star_color</code></h3>
+
+<pre><code>def star_color(speed):
+    if speed > 1.2:
+        return pyxel.COLOR_WHITE
+    if speed > 0.7:
+        return pyxel.COLOR_GRAY
+    return pyxel.COLOR_DARK_BLUE</code></pre>
+
+<p>
+<code>return</code> はその場で関数を<b>終える</b>命令です。<code>speed</code> が 1.5 なら
+最初の <code>if</code> で <code>COLOR_WHITE</code> を返して終わるので、
+以降の行は実行されません。だから <code>elif</code> や <code>else</code> を書かなくても
+正しく振り分けられます。
+</p>
+
+<p>
+これまでの関数（<code>text_center</code> など）は「何かをして終わり」でしたが、
+この関数は<b>値を返します</b>。返った値は <code>pyxel.pset(..., star_color(star[2]))</code> のように
+そのまま別の関数に渡せます。
+</p>
+
+<h3>座標が小数になっても大丈夫</h3>
+
+<p>
+速さが <code>1.5</code> のような小数なので、<code>star[1]</code> も
+<code>10.5</code> <code>12.0</code> …と小数になっていきます。
+<code>pyxel.pset</code> は小数を受け取ると<b>小数点以下を切り捨てて</b>描くので、そのままで問題ありません。
+</p>
+
+<p>
+むしろ小数のまま持つほうが正確です。もし整数に丸めてから足していくと、
+<code>0.3</code> のような遅い星は毎回 <code>0</code> に切り捨てられ、<b>永遠に動かなくなります</b>。
+</p>
+
+<h3><code>make_stars()</code> を呼ぶ位置</h3>
+
+<pre><code>pyxel.init(...)
+make_stars()          # 星を用意してから
+pyxel.run(update, draw)</code></pre>
+
+<p>
+<code>pyxel.run</code> は<b>そこで止まる</b>ので、それより後ろに書いた行は実行されません。
+星の準備は必ず <code>run</code> の<b>前</b>に置きます。
+</p>
+
+<h2>6. 試してみよう</h2>
+
+<table>
+  <thead><tr><th>やってみること</th><th>確かめたいこと</th></tr></thead>
+  <tbody>
+    <tr><td><code>STAR_COUNT</code> を <code>200</code> にする</td><td>星が濃くなる。数を定数にしておいた利点が分かる</td></tr>
+    <tr><td><code>STAR_SPEED_MAX</code> を <code>6.0</code> にする</td><td>ワープしているような速さになる</td></tr>
+    <tr><td><code>update</code> の <code>star[1] = 0</code> を消す</td><td>星が下に落ちきったきり戻らず、画面が空になる（＝再利用の意味）</td></tr>
+    <tr><td><code>star[1] += star[2]</code> を <code>star[0] += star[2]</code> に変える</td><td>星が右へ流れる。x と y の役割を確認できる</td></tr>
+    <tr><td><code>draw</code> で星を描く <code>for</code> を、文字を描く 2 行の<b>後ろ</b>に移す</td><td>星が文字の手前に描かれ、文字が読みにくくなる（＝描画順）</td></tr>
+  </tbody>
+</table>
+
+<p>確認できたら元に戻しておいてください。</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>星が 1 つも表示されない</td>
+      <td><code>make_stars()</code> の呼び出しが抜けているか、<code>pyxel.run(...)</code> より後ろにある</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'random' is not defined</code></td>
+      <td>ファイル先頭の <code>import random</code> が抜けている</td>
+    </tr>
+    <tr>
+      <td>星が動かない（ステップ B 後）</td>
+      <td><code>update</code> の中の <code>pass</code> が残っている。書き換えて消す</td>
+    </tr>
+    <tr>
+      <td>一瞬で星が全部消える</td>
+      <td><code>if star[1] &gt;= SCREEN_HEIGHT:</code> の中で <code>star[1] = 0</code> ではなく
+          <code>star[1] == 0</code> と書いている（<code>=</code> が代入、<code>==</code> は比較）</td>
+    </tr>
+    <tr>
+      <td>星が一直線に並んで落ちてくる</td>
+      <td>x を引き直す行が抜けている。<code>star[0] = random.randint(...)</code> を確認</td>
+    </tr>
+    <tr>
+      <td><code>IndexError: list index out of range</code></td>
+      <td><code>star[3]</code> のように存在しない番号を指している。要素は <code>[0] [1] [2]</code> の 3 つだけ</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>次のフェーズ</b>
+  フェーズ 4 では、リソースエディタで宇宙船のドット絵を描きます。
+  あわせて、増えてきた変数を整理するために<b>クラス</b>を導入します。
+</div>
+
+<footer class="site">
+  <a href="phase2.html">← フェーズ 2</a>　｜
+  <a href="./">step0 概要</a>　｜
+  <a href="../">目次</a>
+</footer>
+
+</div>
+</body>
+</html>
