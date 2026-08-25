@@ -10,7 +10,7 @@ Python のゲームライブラリ **[Pyxel](https://github.com/kitao/pyxel)** �
 
 学習の解説・備忘録は `docs/site/` に静的 HTML として置き、GitHub Pages で公開します。
 
-- 公開 URL：（GitHub Pages 有効化後に記載）
+- **公開 URL：https://mrgarita.github.io/learning_pyxel/**
 
 ## 学習ステップ
 
