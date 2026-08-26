@@ -113,7 +113,8 @@ pre code { background: none; color: var(--c-text); padding: 0; }
 .note { background: rgba(69,176,232,.1);  border-left: 4px solid var(--c-accent-2); }
 .warn { background: rgba(255,107,151,.1); border-left: 4px solid var(--c-pink); }
 .term { background: rgba(255,204,68,.09); border-left: 4px solid var(--c-accent); }
-.note b, .warn b, .term b { display: block; margin-bottom: .3rem; }
+/* ボックス見出しだけをブロック化する。本文中の <b> は行内のまま残す */
+.note > b:first-child, .warn > b:first-child, .term > b:first-child { display: block; margin-bottom: .3rem; }
 .note > :last-child, .warn > :last-child, .term > :last-child { margin-bottom: 0; }
 
 /* --- step カード --- */

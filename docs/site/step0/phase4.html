@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step0 フェーズ4：素材を描き、クラスにまとめる ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 4 </span>素材を描き、クラスにまとめる</h1>
+  <p>step0：星空を飛ぶ宇宙船</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step0 概要</a> ／ フェーズ 4</p>
+
+<h2>ゴール</h2>
+
+<p>このフェーズでやることは 2 つです。</p>
+
+<ul>
+  <li><b>ステップ A</b>：リソースエディタで宇宙船のドット絵を描き、<code>step0/assets.pyxres</code> に保存する</li>
+  <li><b>ステップ B</b>：いまのコードを <code>App</code> という<b>クラス</b>にまとめ直す</li>
+</ul>
+
+<div class="warn">
+  <b>このフェーズは「仕込み」です。画面の見た目は変わりません</b>
+  描いた宇宙船を実際に画面へ出すのは<b>次のフェーズ 5</b>、動かすのはフェーズ 6 です。
+  ステップ B を終えても、星が流れる画面はフェーズ 3 とまったく同じに見えます。
+  <b>それが正解</b>なので、変化がなくても不安にならないでください。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 絵はコードで書かない。「絵として」作る</h3>
+
+<p>
+星は <code>pyxel.pset</code> 1 行で描けました。1 ドットだからです。
+では宇宙船はどうでしょう。これから描くものは <b>100 ドット</b>ほどあります。
+<code>pset</code> を 100 行書くのは現実的ではありませんし、
+1 ドット直すたびにコードを書き換えることになります。
+</p>
+
+<p>
+そこで発想を変えます。<b>絵は絵として別に作っておき、コードからは
+「あの絵を、あの場所に貼れ」とだけ指示する</b>。
+Pyxel はこのために <b>リソースエディタ</b>という専用のお絵かきツールを内蔵しています。
+</p>
+
+<div class="term">
+  <b>用語：イメージバンク</b>
+  Pyxel が絵を置いておくための、<b>256 × 256 ドットの台紙</b>です。
+  <code>0</code>・<code>1</code>・<code>2</code> の <b>3 枚</b>あり、
+  ゲームで使う絵をここに並べておきます。コードからは
+  「<b>何番の台紙の、どの座標から、何ドットぶん</b>」という指定で切り出して使います。
+</div>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 600 260" role="img" aria-label="イメージバンクに置いた絵を、座標指定で切り出して画面に貼る流れ">
+  <text x="14" y="18" fill="#9aa4c4" font-size="12">イメージバンク（絵の置き場・256×256 ドット × 3 枚）</text>
+
+  <rect x="46" y="44" width="140" height="140" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <rect x="38" y="36" width="140" height="140" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <rect x="30" y="28" width="140" height="140" fill="#10121c" stroke="#ffcc44" stroke-width="2"/>
+  <text x="108" y="204" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" text-anchor="middle">イメージバンク 0（全 3 枚）</text>
+  <text x="108" y="222" fill="#2ee6a8" font-family="Consolas, monospace" font-size="10" text-anchor="middle">緑の枠＝(0, 0) から 16×16 ドット</text>
+
+  <g transform="translate(34, 32)">
+    <rect x="0" y="0" width="30" height="30" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+    <g>
+      <rect x="13.125" y="0" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="15" y="0" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="13.125" y="1.875" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="15" y="1.875" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="3.75" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="13.125" y="3.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="3.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="3.75" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="5.625" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="13.125" y="5.625" width="1.875" height="1.875" fill="#7696DE"/>
+      <rect x="15" y="5.625" width="1.875" height="1.875" fill="#7696DE"/>
+      <rect x="16.875" y="5.625" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="7.5" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="13.125" y="7.5" width="1.875" height="1.875" fill="#7696DE"/>
+      <rect x="15" y="7.5" width="1.875" height="1.875" fill="#7696DE"/>
+      <rect x="16.875" y="7.5" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="9.375" y="9.375" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="9.375" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="9.375" width="1.875" height="1.875" fill="#7696DE"/>
+      <rect x="15" y="9.375" width="1.875" height="1.875" fill="#7696DE"/>
+      <rect x="16.875" y="9.375" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="18.75" y="9.375" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="9.375" y="11.25" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="11.25" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="11.25" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="11.25" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="11.25" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="18.75" y="11.25" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="7.5" y="13.125" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="9.375" y="13.125" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="11.25" y="13.125" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="13.125" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="13.125" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="13.125" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="18.75" y="13.125" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="20.625" y="13.125" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="5.625" y="15" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="7.5" y="15" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="9.375" y="15" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="11.25" y="15" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="15" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="15" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="15" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="18.75" y="15" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="20.625" y="15" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="22.5" y="15" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="3.75" y="16.875" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="5.625" y="16.875" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="7.5" y="16.875" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="9.375" y="16.875" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="11.25" y="16.875" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="16.875" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="16.875" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="16.875" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="18.75" y="16.875" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="20.625" y="16.875" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="22.5" y="16.875" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="24.375" y="16.875" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="1.875" y="18.75" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="3.75" y="18.75" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="5.625" y="18.75" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="7.5" y="18.75" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="9.375" y="18.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="11.25" y="18.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="18.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="18.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="18.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="18.75" y="18.75" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="20.625" y="18.75" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="22.5" y="18.75" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="24.375" y="18.75" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="26.25" y="18.75" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="1.875" y="20.625" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="3.75" y="20.625" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="5.625" y="20.625" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="11.25" y="20.625" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="20.625" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="20.625" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="20.625" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="22.5" y="20.625" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="24.375" y="20.625" width="1.875" height="1.875" fill="#395C98"/>
+      <rect x="26.25" y="20.625" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="1.875" y="22.5" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="3.75" y="22.5" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="22.5" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="13.125" y="22.5" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="22.5" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="22.5" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="24.375" y="22.5" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="26.25" y="22.5" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="24.375" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="13.125" y="24.375" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="15" y="24.375" width="1.875" height="1.875" fill="#A9C1FF"/>
+      <rect x="16.875" y="24.375" width="1.875" height="1.875" fill="#EEEEEE"/>
+      <rect x="11.25" y="26.25" width="1.875" height="1.875" fill="#D4186C"/>
+      <rect x="13.125" y="26.25" width="1.875" height="1.875" fill="#E9C35B"/>
+      <rect x="15" y="26.25" width="1.875" height="1.875" fill="#E9C35B"/>
+      <rect x="16.875" y="26.25" width="1.875" height="1.875" fill="#D4186C"/>
+      <rect x="13.125" y="28.125" width="1.875" height="1.875" fill="#D4186C"/>
+      <rect x="15" y="28.125" width="1.875" height="1.875" fill="#D4186C"/>
+    </g>
+  </g>
+
+  <path d="M 196 98 L 268 98" stroke="#45b0e8" stroke-width="2" fill="none"/>
+  <path d="M 268 92 l 10 6 -10 6 z" fill="#45b0e8"/>
+  <text x="236" y="88" fill="#45b0e8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">pyxel.blt</text>
+  <text x="236" y="118" fill="#9aa4c4" font-size="11" text-anchor="middle">切り出して貼る</text>
+
+  <text x="300" y="18" fill="#9aa4c4" font-size="12">ゲーム画面（160×120 ドット）</text>
+  <rect x="300" y="28" width="280" height="210" fill="#10121c" stroke="#3b4166" stroke-width="2"/>
+  <g fill="#e8f0ff">
+    <rect x="330" y="60" width="2" height="2"/><rect x="420" y="48" width="2" height="2"/>
+    <rect x="520" y="76" width="2" height="2"/><rect x="360" y="120" width="2" height="2"/>
+    <rect x="480" y="150" width="2" height="2"/><rect x="540" y="190" width="2" height="2"/>
+  </g>
+  <g transform="translate(424, 148)">
+    <rect x="0" y="0" width="32" height="32" fill="none" stroke="#2ee6a8" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <g>
+      <rect x="14" y="0" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="16" y="0" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="14" y="2" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="16" y="2" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="4" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="14" y="4" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="4" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="4" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="6" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="14" y="6" width="2" height="2" fill="#7696DE"/>
+      <rect x="16" y="6" width="2" height="2" fill="#7696DE"/>
+      <rect x="18" y="6" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="8" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="14" y="8" width="2" height="2" fill="#7696DE"/>
+      <rect x="16" y="8" width="2" height="2" fill="#7696DE"/>
+      <rect x="18" y="8" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="10" y="10" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="10" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="10" width="2" height="2" fill="#7696DE"/>
+      <rect x="16" y="10" width="2" height="2" fill="#7696DE"/>
+      <rect x="18" y="10" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="20" y="10" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="10" y="12" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="12" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="12" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="12" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="12" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="20" y="12" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="8" y="14" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="10" y="14" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="12" y="14" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="14" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="14" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="14" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="20" y="14" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="22" y="14" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="6" y="16" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="8" y="16" width="2" height="2" fill="#395C98"/>
+      <rect x="10" y="16" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="12" y="16" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="16" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="16" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="16" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="20" y="16" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="22" y="16" width="2" height="2" fill="#395C98"/>
+      <rect x="24" y="16" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="4" y="18" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="6" y="18" width="2" height="2" fill="#395C98"/>
+      <rect x="8" y="18" width="2" height="2" fill="#395C98"/>
+      <rect x="10" y="18" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="12" y="18" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="18" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="18" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="18" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="20" y="18" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="22" y="18" width="2" height="2" fill="#395C98"/>
+      <rect x="24" y="18" width="2" height="2" fill="#395C98"/>
+      <rect x="26" y="18" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="2" y="20" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="4" y="20" width="2" height="2" fill="#395C98"/>
+      <rect x="6" y="20" width="2" height="2" fill="#395C98"/>
+      <rect x="8" y="20" width="2" height="2" fill="#395C98"/>
+      <rect x="10" y="20" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="12" y="20" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="20" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="20" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="20" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="20" y="20" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="22" y="20" width="2" height="2" fill="#395C98"/>
+      <rect x="24" y="20" width="2" height="2" fill="#395C98"/>
+      <rect x="26" y="20" width="2" height="2" fill="#395C98"/>
+      <rect x="28" y="20" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="2" y="22" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="4" y="22" width="2" height="2" fill="#395C98"/>
+      <rect x="6" y="22" width="2" height="2" fill="#395C98"/>
+      <rect x="12" y="22" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="22" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="22" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="22" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="24" y="22" width="2" height="2" fill="#395C98"/>
+      <rect x="26" y="22" width="2" height="2" fill="#395C98"/>
+      <rect x="28" y="22" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="2" y="24" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="4" y="24" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="24" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="14" y="24" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="24" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="24" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="26" y="24" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="28" y="24" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="26" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="14" y="26" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="16" y="26" width="2" height="2" fill="#A9C1FF"/>
+      <rect x="18" y="26" width="2" height="2" fill="#EEEEEE"/>
+      <rect x="12" y="28" width="2" height="2" fill="#D4186C"/>
+      <rect x="14" y="28" width="2" height="2" fill="#E9C35B"/>
+      <rect x="16" y="28" width="2" height="2" fill="#E9C35B"/>
+      <rect x="18" y="28" width="2" height="2" fill="#D4186C"/>
+      <rect x="14" y="30" width="2" height="2" fill="#D4186C"/>
+      <rect x="16" y="30" width="2" height="2" fill="#D4186C"/>
+    </g>
+  </g>
+  <text x="440" y="198" fill="#2ee6a8" font-family="Consolas, monospace" font-size="10" text-anchor="middle">好きな座標へ</text>
+</svg>
+</div>
+<figcaption>絵は台紙に置きっぱなしにしておき、毎フレーム「切り出して貼る」だけ。1 枚の絵を何度でも使い回せます</figcaption>
+</figure>
+
+<div class="note">
+  <b>このフェーズは「台紙に絵を置く」ところまで</b>
+  上の図の <code>pyxel.blt</code>（切り出して貼る）はフェーズ 5 で扱います。
+</div>
+
+<h3>1-2. 変数が増えると、関数だけでは苦しくなる</h3>
+
+<p>
+いまのコードでは、星のリスト <code>stars</code> を<b>関数の外</b>に置いています。
+これはフェーズ 3 までは何の問題もありませんでした。しかし、この先を考えてみてください。
+</p>
+
+<ul>
+  <li>フェーズ 5・6 … 宇宙船の <code>ship_x</code> と <code>ship_y</code> が増える</li>
+  <li>フェーズ 7 … BGM が鳴っているかどうかの状態が増える</li>
+  <li>step1 以降 … 得点、残り時間、いまタイトル画面かゲーム中か……</li>
+</ul>
+
+<p>
+関数の外に置く変数（<b>グローバル変数</b>）が増えていくと、
+「この変数は、どの関数が書き換えているのか」が追えなくなります。
+そして、もっと困る問題が待っています。
+</p>
+
+<h4>関数の中では、外の変数に代入できない</h4>
+
+<p>
+フェーズ 6 で宇宙船を右へ動かすとき、素直に書くとこうなります。<b>ですがこれは動きません。</b>
+</p>
+
+<pre><code>ship_x = 72                  # 関数の外に置いた変数
+
+def update():
+    ship_x = ship_x + 2      # ← UnboundLocalError で落ちる
+</code></pre>
+
+<p>
+Python は「関数の中で<b>代入</b>されている名前は、その関数だけのローカル変数だ」と判断します。
+そのため <code>ship_x + 2</code> を計算しようとした時点で、
+まだ何も入っていないローカルの <code>ship_x</code> を読もうとしてエラーになります。
+</p>
+
+<div class="note">
+  <b>では、なぜ <code>stars.append(...)</code> は動いたのか</b>
+  <code>append</code> は「<code>stars</code> という名前に<b>別のものを代入</b>する」のではなく、
+  「<code>stars</code> が指しているリストの<b>中身を変える</b>」操作だからです。
+  名前への代入がないので、Python はローカル変数だと判断しません。
+  詳しくは<a href="phase3.html">フェーズ 3 の解説</a>で扱いました。<br>
+  <b>数値ではこの手が使えません。</b><code>ship_x</code> を増やすには必ず代入が必要になります。
+</div>
+
+<p>
+回避策として <code>global ship_x</code> と宣言する方法はありますが、
+変数が増えるたびに書き足すことになり、結局は散らかります。そこで <b>クラス</b>の出番です。
+</p>
+
+<h4>クラス＝データと関数を 1 つの箱にまとめる仕組み</h4>
+
+<p>
+<code>App</code> という箱を作り、その中に<b>データ（星のリスト）</b>も
+<b>それを扱う関数</b>も入れてしまいます。箱の中からは <code>self.</code> を付けるだけで
+データに手が届き、代入も自由にできます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 270" role="img" aria-label="関数だけの構成とクラスにまとめた構成の比較図">
+  <text x="16" y="16" fill="#9aa4c4" font-size="12">フェーズ 3 まで（関数だけ）</text>
+  <rect x="16" y="26" width="252" height="226" rx="6" fill="none" stroke="#3b4166" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="142" y="44" fill="#9aa4c4" font-size="10.5" text-anchor="middle">star_voyager.py（モジュール全体）</text>
+
+  <rect x="92" y="54" width="100" height="30" rx="4" fill="#232840" stroke="#ffcc44" stroke-width="2"/>
+  <text x="142" y="74" fill="#ffcc44" font-family="Consolas, monospace" font-size="12" text-anchor="middle">stars</text>
+
+  <g stroke="#ff6b97" stroke-width="1.2" fill="none" stroke-dasharray="3 3">
+    <path d="M 78 138 L 110 90"/>
+    <path d="M 206 138 L 174 90"/>
+    <path d="M 142 196 L 142 90"/>
+  </g>
+
+  <rect x="30" y="140" width="96" height="32" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="78" y="160" fill="#45b0e8" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">make_stars</text>
+  <rect x="158" y="140" width="96" height="32" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="206" y="160" fill="#45b0e8" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">update</text>
+  <rect x="94" y="198" width="96" height="32" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="142" y="218" fill="#45b0e8" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">draw</text>
+
+  <text x="142" y="246" fill="#ff6b97" font-size="10.5" text-anchor="middle">誰でも触れるが、代入はできない</text>
+
+  <path d="M 288 138 L 340 138" stroke="#ffcc44" stroke-width="2" fill="none"/>
+  <path d="M 340 132 l 10 6 -10 6 z" fill="#ffcc44"/>
+  <text x="316" y="128" fill="#ffcc44" font-size="10.5" text-anchor="middle">まとめ直す</text>
+
+  <text x="372" y="16" fill="#9aa4c4" font-size="12">フェーズ 4 から（クラス）</text>
+  <rect x="372" y="26" width="252" height="226" rx="6" fill="#1b1f33" stroke="#2ee6a8" stroke-width="2"/>
+  <text x="498" y="44" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">class App:</text>
+
+  <rect x="440" y="54" width="116" height="30" rx="4" fill="#232840" stroke="#ffcc44" stroke-width="2"/>
+  <text x="498" y="74" fill="#ffcc44" font-family="Consolas, monospace" font-size="12" text-anchor="middle">self.stars</text>
+
+  <g stroke="#2ee6a8" stroke-width="1.2" fill="none">
+    <path d="M 434 138 L 466 90"/>
+    <path d="M 562 138 L 530 90"/>
+    <path d="M 498 196 L 498 90"/>
+  </g>
+
+  <rect x="386" y="140" width="96" height="32" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="434" y="160" fill="#45b0e8" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">make_stars</text>
+  <rect x="514" y="140" width="96" height="32" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="562" y="160" fill="#45b0e8" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">update</text>
+  <rect x="450" y="198" width="96" height="32" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="498" y="218" fill="#45b0e8" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">draw</text>
+
+  <text x="498" y="246" fill="#2ee6a8" font-size="10.5" text-anchor="middle">同じ箱の中なので self. で自由に読み書き</text>
+</svg>
+</div>
+<figcaption>やっていることは同じですが、データと関数が同じ箱に入るだけで見通しが変わります</figcaption>
+</figure>
+
+<h2>2. このフェーズで使う API・機能</h2>
+
+<table>
+  <thead><tr><th>API・機能</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel edit ファイル名</code></td><td>リソースエディタを開く。ファイルが無ければ空の状態で開き、保存した時点で作られる</td></tr>
+    <tr><td><code>.pyxres</code></td><td>絵・タイルマップ・音・曲をまとめて 1 つに入れる、Pyxel のリソースファイル</td></tr>
+    <tr><td>イメージバンク <code>0</code>〜<code>2</code></td><td>256×256 ドットの絵の置き場。3 枚ある</td></tr>
+    <tr><td><code>class App:</code></td><td>クラス（データと関数をまとめた設計図）を定義する</td></tr>
+    <tr><td><code>def __init__(self):</code></td><td>箱が作られるときに <b>1 回だけ</b>呼ばれる、準備専用の関数</td></tr>
+    <tr><td><code>self</code></td><td>「作られた箱そのもの」を指す。クラスの中の関数では第 1 引数に必ず書く</td></tr>
+    <tr><td><code>self.名前 = 値</code></td><td>その箱が覚えておく変数（属性）を作る／書き換える</td></tr>
+    <tr><td><code>App()</code></td><td>設計図から箱を 1 つ作る。このとき <code>__init__</code> が呼ばれる</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>用語：メソッド／属性／インスタンス</b>
+  クラスの中に書いた関数を<b>メソッド</b>、クラスが持つ変数（<code>self.stars</code> など）を<b>属性</b>、
+  設計図から実際に作られた箱 1 個を<b>インスタンス</b>と呼びます。
+  用語は後からで構いません。まずは「箱にまとめる」感覚をつかんでください。
+</div>
+
+<h2>3. ステップ A：リソースエディタで宇宙船を描く</h2>
+
+<h3>3-1. エディタを開く</h3>
+
+<p>ターミナルで次を実行します。</p>
+
+<pre><code>pyxel edit step0/assets.pyxres</code></pre>
+
+<p>
+<code>assets.pyxres</code> はまだ存在しませんが、<b>エラーにはなりません</b>。
+空のリソースがエディタで開き、保存した時点でファイルが作られます。
+</p>
+
+<div class="warn">
+  <b>エディタは <code>Esc</code> では閉じません</b>
+  リソースエディタは <code>Esc</code> キーを無効にしています（描いている途中に誤って閉じないためです）。
+  <b>ウィンドウ右上の × ボタン</b>で閉じてください。
+  そして<b>閉じる前に必ず <code>Ctrl</code> + <code>S</code> で保存すること。</b>
+  保存していない変更は警告なしに消えます。
+</div>
+
+<h3>3-2. 画面の見方</h3>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 500 430" role="img" aria-label="Pyxel リソースエディタの画面レイアウト">
+  <rect x="20" y="20" width="460" height="390" fill="#1b1f33" stroke="#3b4166" stroke-width="2" rx="4"/>
+  <rect x="20" y="20" width="460" height="34" fill="#232840"/>
+  <rect x="30" y="26" width="60" height="22" rx="3" fill="#10121c" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="60" y="41" fill="#ffcc44" font-family="Consolas, monospace" font-size="10" text-anchor="middle">IMAGE</text>
+  <rect x="94" y="26" width="150" height="22" rx="3" fill="#10121c" stroke="#3b4166"/>
+  <text x="169" y="41" fill="#9aa4c4" font-family="Consolas, monospace" font-size="8.5" text-anchor="middle">TILEMAP / SOUND / MUSIC</text>
+  <rect x="300" y="26" width="34" height="22" rx="3" fill="#10121c" stroke="#3b4166"/>
+  <text x="317" y="41" fill="#9aa4c4" font-family="Consolas, monospace" font-size="8.5" text-anchor="middle">UNDO</text>
+  <rect x="338" y="26" width="34" height="22" rx="3" fill="#10121c" stroke="#3b4166"/>
+  <text x="355" y="41" fill="#9aa4c4" font-family="Consolas, monospace" font-size="8.5" text-anchor="middle">REDO</text>
+  <rect x="386" y="26" width="44" height="22" rx="3" fill="#10121c" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="408" y="41" fill="#2ee6a8" font-family="Consolas, monospace" font-size="8.5" text-anchor="middle">SAVE</text>
+  <rect x="40" y="72" width="256" height="256" fill="#10121c" stroke="#ffcc44" stroke-width="2"/>
+  <rect x="152" y="72" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="168" y="72" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="152" y="88" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="168" y="88" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="104" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="152" y="104" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="104" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="104" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="120" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="152" y="120" width="16" height="16" fill="#7696DE"/>
+  <rect x="168" y="120" width="16" height="16" fill="#7696DE"/>
+  <rect x="184" y="120" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="136" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="152" y="136" width="16" height="16" fill="#7696DE"/>
+  <rect x="168" y="136" width="16" height="16" fill="#7696DE"/>
+  <rect x="184" y="136" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="120" y="152" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="152" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="152" width="16" height="16" fill="#7696DE"/>
+  <rect x="168" y="152" width="16" height="16" fill="#7696DE"/>
+  <rect x="184" y="152" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="200" y="152" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="120" y="168" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="168" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="168" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="168" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="168" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="200" y="168" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="104" y="184" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="120" y="184" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="136" y="184" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="184" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="184" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="184" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="200" y="184" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="216" y="184" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="88" y="200" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="104" y="200" width="16" height="16" fill="#395C98"/>
+  <rect x="120" y="200" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="136" y="200" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="200" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="200" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="200" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="200" y="200" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="216" y="200" width="16" height="16" fill="#395C98"/>
+  <rect x="232" y="200" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="72" y="216" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="88" y="216" width="16" height="16" fill="#395C98"/>
+  <rect x="104" y="216" width="16" height="16" fill="#395C98"/>
+  <rect x="120" y="216" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="136" y="216" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="216" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="216" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="216" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="200" y="216" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="216" y="216" width="16" height="16" fill="#395C98"/>
+  <rect x="232" y="216" width="16" height="16" fill="#395C98"/>
+  <rect x="248" y="216" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="56" y="232" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="72" y="232" width="16" height="16" fill="#395C98"/>
+  <rect x="88" y="232" width="16" height="16" fill="#395C98"/>
+  <rect x="104" y="232" width="16" height="16" fill="#395C98"/>
+  <rect x="120" y="232" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="136" y="232" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="232" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="232" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="232" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="200" y="232" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="216" y="232" width="16" height="16" fill="#395C98"/>
+  <rect x="232" y="232" width="16" height="16" fill="#395C98"/>
+  <rect x="248" y="232" width="16" height="16" fill="#395C98"/>
+  <rect x="264" y="232" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="56" y="248" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="72" y="248" width="16" height="16" fill="#395C98"/>
+  <rect x="88" y="248" width="16" height="16" fill="#395C98"/>
+  <rect x="136" y="248" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="248" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="248" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="248" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="232" y="248" width="16" height="16" fill="#395C98"/>
+  <rect x="248" y="248" width="16" height="16" fill="#395C98"/>
+  <rect x="264" y="248" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="56" y="264" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="72" y="264" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="264" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="152" y="264" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="264" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="264" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="248" y="264" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="264" y="264" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="280" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="152" y="280" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="168" y="280" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="184" y="280" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="136" y="296" width="16" height="16" fill="#D4186C"/>
+  <rect x="152" y="296" width="16" height="16" fill="#E9C35B"/>
+  <rect x="168" y="296" width="16" height="16" fill="#E9C35B"/>
+  <rect x="184" y="296" width="16" height="16" fill="#D4186C"/>
+  <rect x="152" y="312" width="16" height="16" fill="#D4186C"/>
+  <rect x="168" y="312" width="16" height="16" fill="#D4186C"/>
+  <g stroke="#2a3050" stroke-width="0.7">
+    <line x1="56" y1="72" x2="56" y2="328"/>
+    <line x1="40" y1="88" x2="296" y2="88"/>
+    <line x1="72" y1="72" x2="72" y2="328"/>
+    <line x1="40" y1="104" x2="296" y2="104"/>
+    <line x1="88" y1="72" x2="88" y2="328"/>
+    <line x1="40" y1="120" x2="296" y2="120"/>
+    <line x1="104" y1="72" x2="104" y2="328"/>
+    <line x1="40" y1="136" x2="296" y2="136"/>
+    <line x1="120" y1="72" x2="120" y2="328"/>
+    <line x1="40" y1="152" x2="296" y2="152"/>
+    <line x1="136" y1="72" x2="136" y2="328"/>
+    <line x1="40" y1="168" x2="296" y2="168"/>
+    <line x1="152" y1="72" x2="152" y2="328"/>
+    <line x1="40" y1="184" x2="296" y2="184"/>
+    <line x1="184" y1="72" x2="184" y2="328"/>
+    <line x1="40" y1="216" x2="296" y2="216"/>
+    <line x1="200" y1="72" x2="200" y2="328"/>
+    <line x1="40" y1="232" x2="296" y2="232"/>
+    <line x1="216" y1="72" x2="216" y2="328"/>
+    <line x1="40" y1="248" x2="296" y2="248"/>
+    <line x1="232" y1="72" x2="232" y2="328"/>
+    <line x1="40" y1="264" x2="296" y2="264"/>
+    <line x1="248" y1="72" x2="248" y2="328"/>
+    <line x1="40" y1="280" x2="296" y2="280"/>
+    <line x1="264" y1="72" x2="264" y2="328"/>
+    <line x1="40" y1="296" x2="296" y2="296"/>
+    <line x1="280" y1="72" x2="280" y2="328"/>
+    <line x1="40" y1="312" x2="296" y2="312"/>
+  </g>
+  <g stroke="#5a628f" stroke-width="1.2">
+    <line x1="168" y1="72" x2="168" y2="328"/>
+    <line x1="40" y1="200" x2="296" y2="200"/>
+  </g>
+  <text x="168" y="348" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" text-anchor="middle">キャンバス（16×16 ドット）</text>
+  <rect x="316" y="72" width="144" height="144" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <rect x="331.75" y="72" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="334" y="72" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="331.75" y="74.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="334" y="74.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="76.5" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="331.75" y="76.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="76.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="76.5" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="78.75" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="331.75" y="78.75" width="2.25" height="2.25" fill="#7696DE"/>
+  <rect x="334" y="78.75" width="2.25" height="2.25" fill="#7696DE"/>
+  <rect x="336.25" y="78.75" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="81" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="331.75" y="81" width="2.25" height="2.25" fill="#7696DE"/>
+  <rect x="334" y="81" width="2.25" height="2.25" fill="#7696DE"/>
+  <rect x="336.25" y="81" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="327.25" y="83.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="83.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="83.25" width="2.25" height="2.25" fill="#7696DE"/>
+  <rect x="334" y="83.25" width="2.25" height="2.25" fill="#7696DE"/>
+  <rect x="336.25" y="83.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="338.5" y="83.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="327.25" y="85.5" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="85.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="85.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="85.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="85.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="338.5" y="85.5" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="325" y="87.75" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="327.25" y="87.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="329.5" y="87.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="87.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="87.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="87.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="338.5" y="87.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="340.75" y="87.75" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="322.75" y="90" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="325" y="90" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="327.25" y="90" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="329.5" y="90" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="90" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="90" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="90" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="338.5" y="90" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="340.75" y="90" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="343" y="90" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="320.5" y="92.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="322.75" y="92.25" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="325" y="92.25" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="327.25" y="92.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="329.5" y="92.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="92.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="92.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="92.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="338.5" y="92.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="340.75" y="92.25" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="343" y="92.25" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="345.25" y="92.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="318.25" y="94.5" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="320.5" y="94.5" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="322.75" y="94.5" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="325" y="94.5" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="327.25" y="94.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="329.5" y="94.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="94.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="94.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="94.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="338.5" y="94.5" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="340.75" y="94.5" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="343" y="94.5" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="345.25" y="94.5" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="347.5" y="94.5" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="318.25" y="96.75" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="320.5" y="96.75" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="322.75" y="96.75" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="329.5" y="96.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="96.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="96.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="96.75" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="343" y="96.75" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="345.25" y="96.75" width="2.25" height="2.25" fill="#395C98"/>
+  <rect x="347.5" y="96.75" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="318.25" y="99" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="320.5" y="99" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="99" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="331.75" y="99" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="99" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="99" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="345.25" y="99" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="347.5" y="99" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="101.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="331.75" y="101.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="334" y="101.25" width="2.25" height="2.25" fill="#A9C1FF"/>
+  <rect x="336.25" y="101.25" width="2.25" height="2.25" fill="#EEEEEE"/>
+  <rect x="329.5" y="103.5" width="2.25" height="2.25" fill="#D4186C"/>
+  <rect x="331.75" y="103.5" width="2.25" height="2.25" fill="#E9C35B"/>
+  <rect x="334" y="103.5" width="2.25" height="2.25" fill="#E9C35B"/>
+  <rect x="336.25" y="103.5" width="2.25" height="2.25" fill="#D4186C"/>
+  <rect x="331.75" y="105.75" width="2.25" height="2.25" fill="#D4186C"/>
+  <rect x="334" y="105.75" width="2.25" height="2.25" fill="#D4186C"/>
+  <rect x="316" y="72" width="36" height="36" fill="none" stroke="#ff6b97" stroke-width="2"/>
+  <text x="388" y="234" fill="#9aa4c4" font-size="10" text-anchor="middle">イメージバンク全体</text>
+  <text x="388" y="249" fill="#ff6b97" font-size="9.5" text-anchor="middle">桃色の枠＝いま編集中の場所</text>
+  <text x="316" y="278" fill="#9aa4c4" font-size="10">IMAGE 番号（0〜2）</text>
+  <rect x="316" y="286" width="60" height="20" rx="3" fill="#10121c" stroke="#3b4166"/>
+  <text x="346" y="300" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">0</text>
+  <text x="316" y="330" fill="#9aa4c4" font-size="10">ツール（ペン・四角・円・バケツ…）</text>
+  <text x="40" y="382" fill="#9aa4c4" font-size="10">パレット（16 色）</text>
+  <g transform="translate(150, 371)">
+    <rect x="0" y="0" width="14" height="14" fill="#000000" stroke="#e8f0ff" stroke-width="1.5"/>
+    <rect x="15" y="0" width="14" height="14" fill="#2B335F"/>
+    <rect x="30" y="0" width="14" height="14" fill="#7E2072"/>
+    <rect x="45" y="0" width="14" height="14" fill="#19959C"/>
+    <rect x="60" y="0" width="14" height="14" fill="#8B4852"/>
+    <rect x="75" y="0" width="14" height="14" fill="#395C98"/>
+    <rect x="90" y="0" width="14" height="14" fill="#A9C1FF"/>
+    <rect x="105" y="0" width="14" height="14" fill="#EEEEEE"/>
+    <rect x="120" y="0" width="14" height="14" fill="#D4186C"/>
+    <rect x="135" y="0" width="14" height="14" fill="#D38441"/>
+    <rect x="150" y="0" width="14" height="14" fill="#E9C35B"/>
+    <rect x="165" y="0" width="14" height="14" fill="#70C6A9"/>
+    <rect x="180" y="0" width="14" height="14" fill="#7696DE"/>
+    <rect x="195" y="0" width="14" height="14" fill="#A3A3A3"/>
+    <rect x="210" y="0" width="14" height="14" fill="#FF9798"/>
+    <rect x="225" y="0" width="14" height="14" fill="#EDC7B0"/>
+  </g>
+</svg>
+</div>
+<figcaption>図は要素の関係を示す概念図です。細部の配置は実物と異なります</figcaption>
+</figure>
+
+<p>覚えておく点は 3 つだけです。</p>
+
+<ul>
+  <li>左の大きな方眼が<b>キャンバス</b>。ここで一度に編集できるのは<b>ちょうど 16×16 ドット</b>です</li>
+  <li>右上の四角が<b>イメージバンク全体</b>のプレビュー。枠で囲まれた部分が、いまキャンバスに映っている場所です</li>
+  <li>起動直後は<b>左上の (0, 0) が選ばれています</b>。今回はそこに描くので、
+      <b>何も動かさず、そのまま描き始めて構いません</b></li>
+</ul>
+
+<h3>3-3. 操作一覧</h3>
+
+<table>
+  <thead><tr><th>操作</th><th>できること</th></tr></thead>
+  <tbody>
+    <tr><td>キャンバスを<b>左ドラッグ</b></td><td>選んでいる色で描く</td></tr>
+    <tr><td>キャンバスを<b>右クリック</b></td><td>その場所の色を吸い取る（スポイト）</td></tr>
+    <tr><td>ドラッグ中に <code>Shift</code></td><td>まっすぐ／正方形に補正される</td></tr>
+    <tr><td><code>1</code>〜<code>8</code></td><td>色 <code>0</code>〜<code>7</code> を選ぶ</td></tr>
+    <tr><td><code>Shift</code> + <code>1</code>〜<code>8</code></td><td>色 <code>8</code>〜<code>15</code> を選ぶ</td></tr>
+    <tr><td><code>P</code> / <code>S</code></td><td>ペン／選択ツール</td></tr>
+    <tr><td><code>R</code> / <code>Shift</code> + <code>R</code></td><td>四角（枠だけ／塗りつぶし）</td></tr>
+    <tr><td><code>C</code> / <code>Shift</code> + <code>C</code></td><td>円（枠だけ／塗りつぶし）</td></tr>
+    <tr><td><code>B</code></td><td>バケツ（つながった同じ色を塗りつぶす）</td></tr>
+    <tr><td><code>Ctrl</code> + <code>Z</code> / <code>Ctrl</code> + <code>Y</code></td><td>元に戻す／やり直す</td></tr>
+    <tr><td><code>Ctrl</code> + <code>S</code></td><td><b>保存</b></td></tr>
+    <tr><td><code>Alt</code> + <code>←</code> / <code>→</code></td><td>IMAGE / TILEMAP / SOUND / MUSIC を切り替える</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>画面の下端にヒントが出ます</b>
+  マウスを乗せている場所に応じて、そこで使えるショートカットと
+  <b>いまカーソルがあるドットの座標</b>が下端に表示されます。迷ったらそこを見てください。
+</div>
+
+<h3>3-4. 宇宙船を描く</h3>
+
+<p>
+下が設計図です。<b>左上の (0, 0) から 16×16 ドット</b>の範囲に描きます。
+方眼の太い線が 8 ドットごとの区切りです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 298 290" role="img" aria-label="宇宙船スプライトの設計図。16かける16ドットの方眼に色番号を配置した図">
+  <rect x="34" y="26" width="256" height="256" fill="#10121c"/>
+  <rect x="146" y="26" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="162" y="26" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="146" y="42" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="162" y="42" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="58" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="146" y="58" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="58" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="58" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="74" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="146" y="74" width="16" height="16" fill="#7696DE"/>
+  <rect x="162" y="74" width="16" height="16" fill="#7696DE"/>
+  <rect x="178" y="74" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="90" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="146" y="90" width="16" height="16" fill="#7696DE"/>
+  <rect x="162" y="90" width="16" height="16" fill="#7696DE"/>
+  <rect x="178" y="90" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="114" y="106" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="106" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="106" width="16" height="16" fill="#7696DE"/>
+  <rect x="162" y="106" width="16" height="16" fill="#7696DE"/>
+  <rect x="178" y="106" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="194" y="106" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="114" y="122" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="122" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="122" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="122" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="122" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="194" y="122" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="98" y="138" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="114" y="138" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="130" y="138" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="138" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="138" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="138" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="194" y="138" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="210" y="138" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="82" y="154" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="98" y="154" width="16" height="16" fill="#395C98"/>
+  <rect x="114" y="154" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="130" y="154" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="154" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="154" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="154" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="194" y="154" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="210" y="154" width="16" height="16" fill="#395C98"/>
+  <rect x="226" y="154" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="66" y="170" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="82" y="170" width="16" height="16" fill="#395C98"/>
+  <rect x="98" y="170" width="16" height="16" fill="#395C98"/>
+  <rect x="114" y="170" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="130" y="170" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="170" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="170" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="170" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="194" y="170" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="210" y="170" width="16" height="16" fill="#395C98"/>
+  <rect x="226" y="170" width="16" height="16" fill="#395C98"/>
+  <rect x="242" y="170" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="50" y="186" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="66" y="186" width="16" height="16" fill="#395C98"/>
+  <rect x="82" y="186" width="16" height="16" fill="#395C98"/>
+  <rect x="98" y="186" width="16" height="16" fill="#395C98"/>
+  <rect x="114" y="186" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="130" y="186" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="186" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="186" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="186" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="194" y="186" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="210" y="186" width="16" height="16" fill="#395C98"/>
+  <rect x="226" y="186" width="16" height="16" fill="#395C98"/>
+  <rect x="242" y="186" width="16" height="16" fill="#395C98"/>
+  <rect x="258" y="186" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="50" y="202" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="66" y="202" width="16" height="16" fill="#395C98"/>
+  <rect x="82" y="202" width="16" height="16" fill="#395C98"/>
+  <rect x="130" y="202" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="202" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="202" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="202" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="226" y="202" width="16" height="16" fill="#395C98"/>
+  <rect x="242" y="202" width="16" height="16" fill="#395C98"/>
+  <rect x="258" y="202" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="50" y="218" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="66" y="218" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="218" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="146" y="218" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="218" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="218" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="242" y="218" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="258" y="218" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="234" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="146" y="234" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="162" y="234" width="16" height="16" fill="#A9C1FF"/>
+  <rect x="178" y="234" width="16" height="16" fill="#EEEEEE"/>
+  <rect x="130" y="250" width="16" height="16" fill="#D4186C"/>
+  <rect x="146" y="250" width="16" height="16" fill="#E9C35B"/>
+  <rect x="162" y="250" width="16" height="16" fill="#E9C35B"/>
+  <rect x="178" y="250" width="16" height="16" fill="#D4186C"/>
+  <rect x="146" y="266" width="16" height="16" fill="#D4186C"/>
+  <rect x="162" y="266" width="16" height="16" fill="#D4186C"/>
+  <line x1="34" y1="26" x2="34" y2="282" stroke="#5a628f" stroke-width="1.4"/>
+  <line x1="34" y1="26" x2="290" y2="26" stroke="#5a628f" stroke-width="1.4"/>
+  <line x1="50" y1="26" x2="50" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="42" x2="290" y2="42" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="66" y1="26" x2="66" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="58" x2="290" y2="58" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="82" y1="26" x2="82" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="74" x2="290" y2="74" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="98" y1="26" x2="98" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="90" x2="290" y2="90" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="114" y1="26" x2="114" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="106" x2="290" y2="106" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="130" y1="26" x2="130" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="122" x2="290" y2="122" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="146" y1="26" x2="146" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="138" x2="290" y2="138" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="162" y1="26" x2="162" y2="282" stroke="#5a628f" stroke-width="1.4"/>
+  <line x1="34" y1="154" x2="290" y2="154" stroke="#5a628f" stroke-width="1.4"/>
+  <line x1="178" y1="26" x2="178" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="170" x2="290" y2="170" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="194" y1="26" x2="194" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="186" x2="290" y2="186" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="210" y1="26" x2="210" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="202" x2="290" y2="202" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="226" y1="26" x2="226" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="218" x2="290" y2="218" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="242" y1="26" x2="242" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="234" x2="290" y2="234" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="258" y1="26" x2="258" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="250" x2="290" y2="250" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="274" y1="26" x2="274" y2="282" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="34" y1="266" x2="290" y2="266" stroke="#2a3050" stroke-width="0.7"/>
+  <line x1="290" y1="26" x2="290" y2="282" stroke="#5a628f" stroke-width="1.4"/>
+  <line x1="34" y1="282" x2="290" y2="282" stroke="#5a628f" stroke-width="1.4"/>
+  <text x="42" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">0</text>
+  <text x="28" y="37" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">0</text>
+  <text x="58" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">1</text>
+  <text x="28" y="53" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">1</text>
+  <text x="74" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">2</text>
+  <text x="28" y="69" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">2</text>
+  <text x="90" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">3</text>
+  <text x="28" y="85" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">3</text>
+  <text x="106" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">4</text>
+  <text x="28" y="101" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">4</text>
+  <text x="122" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">5</text>
+  <text x="28" y="117" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">5</text>
+  <text x="138" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">6</text>
+  <text x="28" y="133" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">6</text>
+  <text x="154" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">7</text>
+  <text x="28" y="149" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">7</text>
+  <text x="170" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">8</text>
+  <text x="28" y="165" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">8</text>
+  <text x="186" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">9</text>
+  <text x="28" y="181" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">9</text>
+  <text x="202" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">10</text>
+  <text x="28" y="197" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">10</text>
+  <text x="218" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">11</text>
+  <text x="28" y="213" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">11</text>
+  <text x="234" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">12</text>
+  <text x="28" y="229" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">12</text>
+  <text x="250" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">13</text>
+  <text x="28" y="245" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">13</text>
+  <text x="266" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">14</text>
+  <text x="28" y="261" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">14</text>
+  <text x="282" y="20" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="middle">15</text>
+  <text x="28" y="277" fill="#9aa4c4" font-family="Consolas, monospace" font-size="9" text-anchor="end">15</text>
+  <text x="162" y="9" fill="#ffcc44" font-family="Consolas, monospace" font-size="9" text-anchor="middle">u</text>
+  <text x="12" y="154" fill="#ffcc44" font-family="Consolas, monospace" font-size="9" text-anchor="middle">v</text>
+</svg>
+</div>
+<figcaption>宇宙船スプライトの設計図（16×16 ドット）。上と左の数字が座標です。横方向を <code>u</code>、縦方向を <code>v</code> と呼びます（フェーズ 5 で使います）</figcaption>
+</figure>
+
+<p>使う色は、背景の黒を入れて 7 色です。キーボードの数字キーで切り替えられます。</p>
+
+<table>
+  <thead><tr><th>見本</th><th>色番号</th><th>名前</th><th>選ぶキー</th><th>使う場所</th></tr></thead>
+  <tbody>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#000000;border:1px solid #3b4166"></span></td>
+        <td><code>0</code></td><td>BLACK</td><td><code>1</code></td><td>背景（そのまま／あとで透明にする）</td></tr>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#395C98"></span></td>
+        <td><code>5</code></td><td>DARK_BLUE</td><td><code>6</code></td><td>翼</td></tr>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#A9C1FF"></span></td>
+        <td><code>6</code></td><td>LIGHT_BLUE</td><td><code>7</code></td><td>機体</td></tr>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#EEEEEE"></span></td>
+        <td><code>7</code></td><td>WHITE</td><td><code>8</code></td><td>輪郭・機首</td></tr>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#D4186C"></span></td>
+        <td><code>8</code></td><td>RED</td><td><code>Shift</code> + <code>1</code></td><td>噴射の外側</td></tr>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#E9C35B"></span></td>
+        <td><code>10</code></td><td>YELLOW</td><td><code>Shift</code> + <code>3</code></td><td>噴射の芯</td></tr>
+    <tr><td><span style="display:inline-block;width:2.4rem;height:1rem;background:#7696DE"></span></td>
+        <td><code>12</code></td><td>CYAN</td><td><code>Shift</code> + <code>5</code></td><td>コックピット</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>設計図どおりでなくて構いません</b>
+  絵は自由に描いてください。ただし次の <b>3 つだけは守ってください</b>。
+  フェーズ 5 のコードがこの前提で動きます。
+  <ol>
+    <li><b>16×16 ドットに収める</b></li>
+    <li><b>左上の (0, 0) から描き始める</b></li>
+    <li><b>背景は色 <code>0</code>（黒）のまま残す</b> … フェーズ 5 で色 0 を「透明」として抜くためです。
+        背景を黒以外で塗ってしまうと、宇宙船のまわりに四角い枠が出ます</li>
+  </ol>
+</div>
+
+<h3>3-5. 保存して確認</h3>
+
+<ol>
+  <li><code>Ctrl</code> + <code>S</code> を押す</li>
+  <li>ウィンドウ右上の × でエディタを閉じる</li>
+  <li>ファイルができているか確認する</li>
+</ol>
+
+<pre><code>ls step0</code></pre>
+
+<p>
+<code>assets.pyxres</code> が並んでいれば成功です。もう一度
+<code>pyxel edit step0/assets.pyxres</code> を実行して、
+描いた絵がちゃんと残っていることも確かめておきましょう。
+</p>
+
+<div class="note">
+  <b>ここまで確認できたらステップ B へ</b>
+  <code>.pyxres</code> は中身がバイナリなので、VS Code で開いても読めません。それで正常です。
+</div>
+
+<h2>4. ステップ B：コードをクラスにまとめ直す</h2>
+
+<p>
+ここからはコードの作業です。<b>動きは 1 ミリも変えません。</b>
+同じ動作のまま、置き場所だけを整えます。
+このように「外から見た動きを変えずに、内側を整理する」書き換えを
+<b>リファクタリング</b>と呼びます。
+</p>
+
+<p>
+<code>star_voyager.py</code> を<b>下の内容にまるごと書き換えて</b>ください。
+定数の部分（上から 15 行目まで）は今までと同じなので、そのまま残して構いません。
+</p>
+
+<pre><code># star_voyager.py
+# step0 フェーズ4：素材を描き、クラスにまとめる
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+TITLE = "STAR VOYAGER"
+GUIDE = "PRESS ESC TO QUIT"
+
+STAR_COUNT = 40         # 星の数
+STAR_SPEED_MIN = 0.3    # 星の速さの下限（ドット／フレーム）
+STAR_SPEED_MAX = 1.8    # 星の速さの上限
+
+
+class App:
+    """このゲーム全体を受け持つ箱"""
+
+    def __init__(self):
+        """箱が作られるときに 1 回だけ呼ばれる。ここで準備をすませる"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Star Voyager")
+        self.stars = []          # 星をぜんぶ入れるリスト
+        self.make_stars()
+        pyxel.run(self.update, self.draw)
+
+    def make_stars(self):
+        """星を STAR_COUNT 個ぶん作って self.stars に入れる"""
+        for i in range(STAR_COUNT):
+            x = random.randint(0, SCREEN_WIDTH - 1)
+            y = random.randint(0, SCREEN_HEIGHT - 1)
+            speed = random.uniform(STAR_SPEED_MIN, STAR_SPEED_MAX)
+            self.stars.append([x, y, speed])
+
+    def star_color(self, speed):
+        """速い星ほど明るい色にして、奥行きを表す"""
+        if speed &gt; 1.2:
+            return pyxel.COLOR_WHITE
+        if speed &gt; 0.7:
+            return pyxel.COLOR_GRAY
+        return pyxel.COLOR_DARK_BLUE
+
+    def text_center(self, y, s, col):
+        """文字列 s を、画面の横中央に来るように描く"""
+        x = (SCREEN_WIDTH - len(s) * pyxel.FONT_WIDTH) // 2
+        pyxel.text(x, y, s, col)
+
+    def update(self):
+        """毎フレームの更新処理。星を下へ動かす"""
+        for star in self.stars:
+            star[1] += star[2]                                  # y に速さを足す
+
+            if star[1] &gt;= SCREEN_HEIGHT:                        # 画面の下に出たら
+                star[0] = random.randint(0, SCREEN_WIDTH - 1)   # x を引き直して
+                star[1] = 0                                     # いちばん上に戻す
+
+    def draw(self):
+        """毎フレームの描画処理"""
+        pyxel.cls(0)
+
+        for star in self.stars:
+            pyxel.pset(star[0], star[1], self.star_color(star[2]))
+
+        self.text_center(20, TITLE, pyxel.COLOR_YELLOW)
+        self.text_center(34, GUIDE, pyxel.COLOR_GRAY)
+
+
+App()
+</code></pre>
+
+<div class="term">
+  <b>書き換えのルールは 4 つだけ</b>
+  <ol>
+    <li>関数の定義を <b>すべて <code>class App:</code> の中へ</b>入れる（インデントを 4 つ深くする）</li>
+    <li>すべての関数の引数の<b>先頭に <code>self</code></b> を足す</li>
+    <li><code>stars</code> を <b><code>self.stars</code></b> に、
+        <code>star_color(...)</code> を <b><code>self.star_color(...)</code></b> に書き換える</li>
+    <li>最後にあった <code>pyxel.init</code> ／ <code>make_stars()</code> ／ <code>pyxel.run</code> の 3 行を
+        <b><code>__init__</code> の中へ</b>移し、いちばん下は <code>App()</code> だけにする</li>
+  </ol>
+</div>
+
+<h3>実行して確認</h3>
+
+<pre><code>python step0/star_voyager.py</code></pre>
+
+<ul>
+  <li>星が<b>フェーズ 3 とまったく同じように</b>流れる</li>
+  <li>タイトル文字も今までどおり表示されている</li>
+  <li><code>Esc</code> で閉じられる</li>
+</ul>
+
+<p><b>「何も変わらない」ことが確認できれば成功です。</b></p>
+
+<h2>5. コードの解説</h2>
+
+<h3><code>class</code> は設計図、<code>App()</code> は実物</h3>
+
+<p>
+<code>class App:</code> と書いた時点では、まだ何も動きません。これは<b>設計図</b>だからです。
+いちばん下の <code>App()</code> で初めて、設計図から<b>実物が 1 個</b>作られます。
+</p>
+
+<p>
+「たった 1 個しか作らないのに、なぜ設計図が要るのか」と思うかもしれません。
+理由は<b>変数と関数を 1 つの名前の下にまとめられるから</b>で、
+数を作るためではありません。step1 以降でお化けやお菓子を何十個も作るときには、
+「設計図から実物をたくさん作る」という本来の使い方も出てきます。
+</p>
+
+<h3><code>__init__</code> は準備係</h3>
+
+<p>
+<code>App()</code> と書くと、Python は箱を作ったあと<b>自動的に <code>__init__</code> を呼びます</b>。
+自分で <code>app.__init__()</code> と書く必要はありません。
+前後のアンダースコア 2 本は「Python が決めた特別な名前」という目印です。
+</p>
+
+<p>今回の <code>__init__</code> がやっているのは、フェーズ 3 で<b>ファイルの最後に書いていた 3 行</b>そのままです。</p>
+
+<table>
+  <thead><tr><th>フェーズ 3（ファイルの末尾）</th><th>フェーズ 4（<code>__init__</code> の中）</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.init(...)</code></td><td><code>pyxel.init(...)</code></td></tr>
+    <tr><td>（<code>stars = []</code> はファイル上部）</td><td><code>self.stars = []</code></td></tr>
+    <tr><td><code>make_stars()</code></td><td><code>self.make_stars()</code></td></tr>
+    <tr><td><code>pyxel.run(update, draw)</code></td><td><code>pyxel.run(self.update, self.draw)</code></td></tr>
+  </tbody>
+</table>
+
+<h3><code>self</code> とは何者か</h3>
+
+<p>
+<code>self</code> は <b>「いま処理している、その箱そのもの」</b>です。
+不思議に見えるのは、<b>呼ぶときには書かないのに、定義には書く</b>点でしょう。
+これは Python が<b>自動で渡している</b>からです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 560 190" role="img" aria-label="メソッド呼び出し時に self が自動で渡される仕組みの図">
+  <text x="20" y="24" fill="#9aa4c4" font-size="12">呼ぶとき（<tspan font-family="Consolas, monospace">__init__</tspan> の中）</text>
+  <rect x="20" y="36" width="190" height="34" rx="4" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="36" y="58" fill="#e8f0ff" font-family="Consolas, monospace" font-size="13">self.make_stars()</text>
+  <text x="218" y="58" fill="#ff6b97" font-family="Consolas, monospace" font-size="12">← 空っぽ</text>
+
+  <path d="M 115 74 L 115 108" stroke="#ffcc44" stroke-width="2" fill="none"/>
+  <path d="M 109 108 l 6 10 6 -10 z" fill="#ffcc44"/>
+  <text x="128" y="96" fill="#ffcc44" font-size="11">Python が自動で箱そのものを渡す</text>
+
+  <text x="20" y="140" fill="#9aa4c4" font-size="12">定義するとき</text>
+  <rect x="20" y="148" width="210" height="34" rx="4" fill="#232840" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="36" y="170" fill="#e8f0ff" font-family="Consolas, monospace" font-size="13">def make_stars(self):</text>
+  <text x="242" y="170" fill="#2ee6a8" font-family="Consolas, monospace" font-size="12">← 受け取る</text>
+
+  <rect x="356" y="46" width="184" height="126" rx="6" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="448" y="68" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" text-anchor="middle">App の箱（実物）</text>
+  <rect x="376" y="84" width="144" height="26" rx="3" fill="#232840" stroke="#3b4166"/>
+  <text x="448" y="101" fill="#e8f0ff" font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">stars = [ ... ]</text>
+  <text x="448" y="132" fill="#9aa4c4" font-size="10.5" text-anchor="middle">self はこの箱を指す</text>
+  <text x="448" y="152" fill="#9aa4c4" font-size="10.5" text-anchor="middle">だから self.stars で中身に届く</text>
+</svg>
+</div>
+<figcaption><code>self</code> という名前は決まりではなく慣習ですが、<b>必ず <code>self</code> と書いてください</b>。Python の世界の共通語です</figcaption>
+</figure>
+
+<div class="warn">
+  <b>最頻出のエラー：<code>self</code> の書き忘れ</b>
+  定義に <code>self</code> を書き忘れると
+  <code>TypeError: make_stars() takes 0 positional arguments but 1 was given</code>
+  というエラーになります。「0 個しか受け取らない関数に 1 個渡された」＝
+  <b>Python が渡した <code>self</code> の受け取り先がない</b>、という意味です。
+</div>
+
+<h3><code>self.stars</code> と、ただの <code>stars</code> の違い</h3>
+
+<p>
+<code>self.</code> を付け忘れて <code>stars</code> と書くと、それは
+<b>そのメソッドの中だけの、まったく別の変数</b>になります。
+書き換えても箱の中身は変わらないので、
+「エラーは出ないのに星が動かない」という一番やっかいな症状になります。
+<b>クラスの中でデータを触るときは、必ず <code>self.</code> を付ける</b>と覚えてください。
+</p>
+
+<h3><code>pyxel.run(self.update, self.draw)</code> にカッコが無い理由</h3>
+
+<p>
+<code>self.update()</code> と書くと「いま実行しろ」という意味になり、実行<b>結果</b>が渡ってしまいます。
+カッコを付けない <code>self.update</code> は<b>関数そのもの</b>を指します。
+Pyxel に渡したいのは結果ではなく「毎フレーム呼ぶべき関数」なので、カッコは付けません。
+</p>
+
+<p>
+これはフェーズ 1 の <code>pyxel.run(update, draw)</code> と同じ考え方で、
+<b><code>self.</code> が付いただけ</b>です。
+</p>
+
+<h3>定数はなぜクラスの外に残したのか</h3>
+
+<p>
+<code>SCREEN_WIDTH</code> や <code>STAR_COUNT</code> は<b>一度決めたら変わらない値</b>で、
+箱ごとに違う値を持つ必要がありません。こういうものは外に置いたままで十分です。
+<b>「箱ごとに変わるもの」だけを <code>self.</code> に入れる</b>のが目安です。
+</p>
+
+<h3>なぜ <code>App()</code> の 1 行だけで動くのか</h3>
+
+<p>
+<code>App()</code> → <code>__init__</code> が呼ばれる → その中の <code>pyxel.run(...)</code> に到達する、
+という流れです。<code>pyxel.run</code> は<b>そこで止まってゲームを回し続ける</b>ので、
+<code>App()</code> の 1 行が実質的にゲーム全体の実行になります。
+</p>
+
+<h2>6. 試してみよう</h2>
+
+<table>
+  <thead><tr><th>やってみること</th><th>確かめたいこと</th></tr></thead>
+  <tbody>
+    <tr><td><code>make_stars</code> の定義から <code>self</code> を消す</td>
+        <td><code>TypeError: ... takes 0 positional arguments but 1 was given</code> が出る</td></tr>
+    <tr><td><code>update</code> の中の <code>self.stars</code> を <code>stars</code> にする</td>
+        <td><code>NameError: name 'stars' is not defined</code> が出る（<code>self.</code> は省略できない）</td></tr>
+    <tr><td>いちばん下の <code>App()</code> を <code>App</code> に変える</td>
+        <td>何も起きずに終了する。<b>カッコが「作れ」の合図</b>だと分かる</td></tr>
+    <tr><td><code>pyxel.run(self.update, self.draw)</code> を
+            <code>pyxel.run(self.update(), self.draw())</code> にする</td>
+        <td>エラーになる。カッコの有無で意味が変わることを確認できる</td></tr>
+    <tr><td><code>__init__</code> の中の <code>self.make_stars()</code> を消す</td>
+        <td>星が 1 つも出ない。準備の呼び出しが要ることが分かる</td></tr>
+  </tbody>
+</table>
+
+<p>確認できたら元に戻しておいてください。</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>Directory for 'step0/assets.pyxres' does not exist</code></td>
+      <td><code>step0</code> フォルダのある場所（リポジトリのルート）から実行していない。
+          <code>pwd</code> で現在地を確認する</td>
+    </tr>
+    <tr>
+      <td>エディタが <code>Esc</code> で閉じない</td>
+      <td>仕様です。ウィンドウ右上の × で閉じてください</td>
+    </tr>
+    <tr>
+      <td>閉じたら描いた絵が消えていた</td>
+      <td><code>Ctrl</code> + <code>S</code> での保存を忘れている。保存前は閉じても警告が出ません</td>
+    </tr>
+    <tr>
+      <td>キャンバスに描いても反応しない</td>
+      <td>選んでいる色が背景と同じ <code>0</code>（黒）になっている。数字キーで別の色を選ぶ</td>
+    </tr>
+    <tr>
+      <td><code>TypeError: ... takes 0 positional arguments but 1 was given</code></td>
+      <td>メソッドの定義に <code>self</code> を書き忘れている</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'stars' is not defined</code></td>
+      <td><code>self.stars</code> と書くべきところが <code>stars</code> のままになっている</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'star_color' is not defined</code></td>
+      <td><code>draw</code> の中が <code>self.star_color(...)</code> になっていない。
+          同じクラスの中でも <code>self.</code> は必要です</td>
+    </tr>
+    <tr>
+      <td><code>IndentationError</code> が出る</td>
+      <td>クラスの中に入れた関数のインデントが揃っていない。
+          <code>def</code> はすべて<b>スペース 4 つ</b>の位置に揃える</td>
+    </tr>
+    <tr>
+      <td>実行しても何も起きずに終わる</td>
+      <td>いちばん下の <code>App()</code> が抜けているか、<code>App</code> とカッコ無しで書いている</td>
+    </tr>
+    <tr>
+      <td>星が出ない（エラーは無し）</td>
+      <td><code>__init__</code> の中の <code>self.make_stars()</code> が抜けている。
+          または <code>pyxel.run(...)</code> より<b>後ろ</b>に書いている</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>次のフェーズ</b>
+  フェーズ 5 では、いま描いた宇宙船を <code>pyxel.load</code> で読み込み、
+  <code>pyxel.blt</code> で画面に表示します。<b>ようやく見た目が変わります。</b>
+</div>
+
+<footer class="site">
+  <a href="phase3.html">← フェーズ 3</a>　｜
+  <a href="./">step0 概要</a>　｜
+  <a href="../">目次</a>
+</footer>
+
+</div>
+</body>
+</html>
