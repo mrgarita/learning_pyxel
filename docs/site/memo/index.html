@@ -80,6 +80,80 @@
   <code>.gitignore</code> で GitHub への push 対象から外しています。手元に置いておく分には問題ありません。
 </div>
 
+<h3 id="insert-line-after">Q. 閉じ <code>"""</code> の手前にあるカーソルを、次の行へ楽に送りたい</h3>
+<p>
+<b>A.</b> <b><code>Ctrl</code> + <code>Enter</code></b> を押します。カーソルが行のどこにあっても、
+その行の<b>下に新しい行を作って移動</b>するコマンド（<code>editor.action.insertLineAfter</code>）で、
+VS Code の標準キーバインドなので設定は要りません。インデントも自動で揃います。
+</p>
+<p>
+関数の説明文（docstring）を書くとき、<code>"""</code> と打つと閉じ側の <code>"""</code> が自動で補完され、
+説明文を入力し終えたカーソルは<b>閉じ <code>"""</code> の手前</b>で止まります。
+ここからわざわざ <code>→</code> キーで閉じ引用符を通り過ぎる必要はありません。
+</p>
+
+<figure class="fig-box">
+<svg viewBox="0 0 720 276" role="img" aria-label="Ctrl+Enter でカーソルが次の行へ移動する様子">
+  <style>
+    .lbl  { font: 12px var(--font-body); fill: var(--c-text-dim); }
+    .num  { font: 14px var(--font-code); fill: var(--c-text-dim); }
+    .cd   { font: 15px var(--font-code); fill: var(--c-text); }
+    .kw   { font: 15px var(--font-code); fill: var(--c-accent-2); }
+    .str  { font: 15px var(--font-code); fill: var(--c-green); }
+    .key  { font: bold 14px var(--font-body); fill: var(--c-accent); }
+  </style>
+
+  <!-- 入力直後 -->
+  <text class="lbl" x="20" y="16">入力直後 — カーソルは閉じ引用符の手前で止まっている</text>
+  <rect x="20" y="24" width="680" height="72" rx="6" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="num" x="36" y="52">27</text>
+  <text class="num" x="36" y="78">28</text>
+  <text class="kw"  x="70" y="52">def</text>
+  <text class="cd"  x="106" y="52">star_color(speed):</text>
+  <text class="str" x="106" y="78">"""星の色を返す"""</text>
+  <rect x="222" y="64" width="2" height="19" fill="var(--c-accent)"/>
+  <text class="key" x="262" y="78">← ここ</text>
+
+  <!-- 操作 -->
+  <path d="M 300 104 L 300 128" stroke="var(--c-accent)" stroke-width="2" fill="none"/>
+  <path d="M 294 122 L 300 130 L 306 122 Z" fill="var(--c-accent)"/>
+  <text class="key" x="316" y="122">Ctrl + Enter</text>
+
+  <!-- 押した後 -->
+  <text class="lbl" x="20" y="152">押した後 — 閉じ引用符を飛び越えて次の行へ（インデント付き）</text>
+  <rect x="20" y="160" width="680" height="100" rx="6" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="num" x="36" y="188">27</text>
+  <text class="num" x="36" y="214">28</text>
+  <text class="num" x="36" y="240">29</text>
+  <text class="kw"  x="70" y="188">def</text>
+  <text class="cd"  x="106" y="188">star_color(speed):</text>
+  <text class="str" x="106" y="214">"""星の色を返す"""</text>
+  <rect x="106" y="226" width="2" height="19" fill="var(--c-accent)"/>
+  <text class="key" x="122" y="240">← ここ</text>
+</svg>
+<figcaption>閉じ <code>"""</code> の手前で <code>Ctrl</code> + <code>Enter</code> を押すと、そのまま次の行の先頭へ移動する</figcaption>
+</figure>
+
+<p>上下セットで覚えておくと便利です。</p>
+<ul>
+  <li><code>Ctrl</code> + <code>Enter</code> … 現在行の<b>下</b>に行を挿入して移動</li>
+  <li><code>Ctrl</code> + <code>Shift</code> + <code>Enter</code> … 現在行の<b>上</b>に行を挿入して移動</li>
+</ul>
+
+<div class="note">
+  <b>効かないときの代替：<code>End</code> → <code>Enter</code></b>
+  <code>End</code> キーで行末（閉じ <code>"""</code> の右側）へ飛び、そこで <code>Enter</code>。
+  2 打鍵になりますが、どんな環境でも確実に動きます。
+</div>
+
+<div class="warn">
+  <b><code>Ctrl</code> + <code>Enter</code> が別の機能に取られている場合</b>
+  Jupyter 拡張を入れていて、そのファイルに <code># %%</code> のセル区切りがあると
+  「セルを実行」に割り当てが移ることがあります。反応がおかしいときは
+  <code>Ctrl</code> + <code>K</code> → <code>Ctrl</code> + <code>S</code> でキーボードショートカット画面を開き、
+  <code>insertLineAfter</code> で検索して現在の割り当てを確認してください。
+</div>
+
 <footer class="site">
   <a href="../">← 目次にもどる</a>　｜
   リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a>
