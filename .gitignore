@@ -12,3 +12,6 @@ venv/
 
 # Pyxel 付属のサンプル集（copy_examples で展開。付属物なのでリポジトリには含めない）
 pyxel_examples/
+
+# VS Code の Code Runner 拡張が「選択範囲だけ実行」時に作る一時ファイル
+tempCodeRunnerFile.py
