@@ -55,6 +55,65 @@
   （<code>Toggle Render Whitespace</code>）をオンにすると、スペースは点、タブは矢印で表示されます。
 </div>
 
+<h3 id="self-name">Q. <code>self</code> という名前は <code>me</code> などに変えてもいい？</h3>
+<p>
+<b>A.</b> <b>変えられます。</b><code>self</code> は Python の予約語ではなく、
+「メソッドの 1 つめの引数」に慣習でつけている<b>ただの変数名</b>です。
+次のコードは実際に動きます（<code>15</code> と表示されます）。
+</p>
+
+<pre><code>class Counter:
+    def __init__(me, start):      # self ではなく me
+        me.value = start
+
+    def add(watashi, n):          # メソッドごとに名前が違ってもよい
+        watashi.value += n
+
+    def show(self):               # ここだけ self
+        print("いまの値:", self.value)
+
+c = Counter(10)
+c.add(5)
+c.show()                          # → いまの値: 15
+</code></pre>
+
+<p>
+ポイントは<b>「名前が何か」ではなく「1 つめの引数である」こと</b>です。
+<code>c.add(5)</code> と書くと、Python が裏で <code>Counter.add(c, 5)</code> のように
+<b>呼び出し元のインスタンスを 1 つめの引数として自動で渡します</b>。
+受け取る側の名前は <code>self</code> でも <code>me</code> でも
+<code>watashi</code> でも、渡ってくる中身は同じです。
+</p>
+
+<div class="term">
+  <b>フェーズ4 で出たエラーの正体</b>
+  <code>def make_stars():</code> と 1 つめの引数を消すと
+  <code>TypeError: make_stars() takes 0 positional arguments but 1 was given</code> が出ました。
+  これは「Python が勝手に 1 個渡したのに、受け取る場所がない」という意味です。
+  名前を消したのが問題ではなく、<b>受け皿を消した</b>のが問題でした。
+</div>
+
+<div class="warn">
+  <b>それでも <code>self</code> と書いてください</b>
+  動くことと、そう書くべきことは別です。<code>self</code> は Python の世界で
+  ほぼ全員が守っている約束で、次の実害があります。
+  <ul>
+    <li>他人（と半年後の自分）が読んだとき、一瞬「これは何の変数？」で止まる</li>
+    <li>VS Code の補完やチェック機能が <code>self</code> を前提にしているため、
+    別名だと補完が弱くなったり、<code>N805</code> のような警告が出たりする</li>
+    <li>ネットのサンプルコードを貼り合わせたときに混ざって混乱する</li>
+  </ul>
+  「変えられるが、変えない」——理由を知ったうえで慣習に乗るのが一番ラクです。
+</div>
+
+<div class="note">
+  <b>ついでに：<code>cls</code> という名前も出てきます</b>
+  クラスメソッド（<code>@classmethod</code>）では 1 つめの引数に
+  インスタンスではなく<b>クラスそのもの</b>が渡され、慣習で <code>cls</code> と名づけます。
+  これも予約語ではなく、<code>self</code> と同じ「ただの慣習」です。
+  step0 では使いませんが、名前を見かけたら「あの仲間だ」と思ってください。
+</div>
+
 <h2>Pyxel について</h2>
 
 <p style="color:var(--c-text-dim)">（まだ項目はありません）</p>
