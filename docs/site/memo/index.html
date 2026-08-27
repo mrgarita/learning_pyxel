@@ -114,9 +114,148 @@ c.show()                          # → いまの値: 15
   step0 では使いませんが、名前を見かけたら「あの仲間だ」と思ってください。
 </div>
 
+<h3 id="dunder">Q. <code>__init__</code> の前後のアンダーバー 2 つには意味がある？</h3>
+<p>
+<b>A.</b> <b>あります。</b>前後をアンダースコア 2 つで挟んだ名前は、
+「<b>Python 本体が特別扱いする名前</b>」という目印です。
+これらは<b>自分で呼ぶメソッドではなく、決まったタイミングで Python が勝手に呼ぶ</b>メソッドで、
+<b>特殊メソッド</b>（マジックメソッド、ダンダーメソッド）と呼ばれます。
+</p>
+
+<table>
+  <thead><tr><th>名前</th><th>呼ばれるタイミング</th></tr></thead>
+  <tbody>
+    <tr><td><code>__init__</code></td><td><code>App()</code> のようにインスタンスを作ったとき</td></tr>
+    <tr><td><code>__str__</code></td><td><code>print(obj)</code> したとき</td></tr>
+    <tr><td><code>__len__</code></td><td><code>len(obj)</code> と書いたとき</td></tr>
+    <tr><td><code>__eq__</code></td><td><code>obj1 == obj2</code> と比べたとき</td></tr>
+    <tr><td><code>__name__</code></td><td>（メソッドではなく変数）実行中のモジュール名が入る。
+        <code>if __name__ == "__main__":</code> でおなじみ</td></tr>
+  </tbody>
+</table>
+
+<p>実際に動かすと、呼んでいないのに呼ばれることが確認できます。</p>
+
+<pre><code>class Team:
+    def __init__(self, name, members):   # Team(...) で呼ばれる
+        self.name = name
+        self.members = members
+
+    def __str__(self):                   # print(t) で呼ばれる
+        return "チーム" + self.name
+
+    def __len__(self):                   # len(t) で呼ばれる
+        return len(self.members)
+
+
+t = Team("A", ["山田", "鈴木", "佐藤"])
+print(t)        # → チームA
+print(len(t))   # → 3
+</code></pre>
+
+<p>
+<code>__str__</code> も <code>__len__</code> も、コードのどこにも「呼び出し」を書いていません。
+<code>print</code> や <code>len</code> が<b>裏で探しにきている</b>のです。
+<code>App()</code> で <code>__init__</code> が呼ばれるのも、まったく同じ仕組みです。
+</p>
+
+<h4>なぜこんな変な見た目なのか</h4>
+<p>
+<b>普通の名前とぶつからないようにするため</b>です。
+もし <code>init</code> という名前だったら、自分で「初期化用の <code>init</code> メソッド」を
+作りたくなったときに衝突します。前後をアンダースコア 2 つで挟むことで、
+<b>「ここは Python 側が予約している領域」</b>と見ただけで区別できるようにしています。
+</p>
+
+<div class="warn">
+  <b>アンダースコアは本数と位置で意味が変わります</b>
+  <table>
+    <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>__init__</code><br>（前後に 2 つ）</td>
+          <td>Python が特別扱いする<b>特殊メソッド</b>。
+              決められた名前を<b>使う</b>もので、自分で新しく発明するものではありません</td></tr>
+      <tr><td><code>_count</code><br>（前に 1 つ）</td>
+          <td>「内部用なので外から触らないでね」という<b>お願い</b>。
+              強制力はなく、単なる慣習です</td></tr>
+      <tr><td><code>__count</code><br>（前に 2 つだけ）</td>
+          <td>Python が名前を裏で書き換えて、外から呼びにくくします
+              （name mangling）。step0 では使いません</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="note">
+  <b>自分で <code>__init__</code> を呼ぶ必要はありません</b>
+  <code>app = App()</code> と書けば Python が呼んでくれます。
+  <code>app.__init__()</code> と自分で書くことは、通常ありません。
+  「特殊メソッドは<b>定義するけれど、呼ばない</b>」と覚えてください。
+</div>
+
 <h2>Pyxel について</h2>
 
-<p style="color:var(--c-text-dim)">（まだ項目はありません）</p>
+<h3 id="pyxres-inside">Q. <code>.pyxres</code> ファイルの中身は読める？ 何が入っている？</h3>
+<p>
+<b>A.</b> <b>読めます。</b><code>.pyxres</code> は独自の暗号化バイナリではなく、
+<b>中身が 1 個の TOML テキストファイルだけの ZIP</b> です。
+拡張子を <code>.zip</code> に変えれば、普通の解凍ソフトでも開けます。
+</p>
+
+<pre><code>import zipfile
+
+z = zipfile.ZipFile("step0/assets.pyxres")
+print(z.namelist())
+# → ['pyxel_resource.toml']
+
+print(z.read("pyxel_resource.toml").decode("utf-8")[:200])
+</code></pre>
+
+<p>取り出した <code>pyxel_resource.toml</code> は、こんな中身です。</p>
+
+<pre><code>format_version = 1
+
+[[images]]
+width = 256
+height = 256
+data = [[0, 0, 0, 0, 0, 0, 6, 7, 7, 6, 0], [0, 0, 0, 6, 6, 6, 6, 7, 7, 6, ...
+
+[[tilemaps]]
+...
+
+[[sounds]]
+...
+
+[[musics]]
+...
+</code></pre>
+
+<p>
+<code>[[images]]</code> の <code>data</code> は、<b>1 行が画像の 1 ライン</b>、
+<b>数字 1 つがドット 1 個のパレット番号</b>です。
+上の <code>6, 7, 7, 6</code> は、宇宙船のてっぺんの
+「<span style="color:#A9C1FF">■</span>6 = 淡い青、<span style="color:#EEEEEE">■</span>7 = 白」
+の並びそのものです。右端の連続する <code>0</code>（黒＝未使用）は省略されるので、
+行ごとに長さが違って見えます。
+</p>
+
+<div class="note">
+  <b>何がうれしいのか</b>
+  <ul>
+    <li><b>差分が見える</b> — バイナリに見えて実体はテキストなので、
+    中身を取り出せば「どこを描き変えたか」を確認できます</li>
+    <li><b>プログラムから確認できる</b> — 「絵が本当に (0,0) に 16×16 で入っているか」を、
+    ゲームを起動せずに調べられます。<code>blt</code> の <code>u</code>・<code>v</code>・<code>w</code>・<code>h</code>
+    を決めるときに確実です</li>
+    <li><b>壊れていないか調べられる</b> — 保存し忘れなどで空のときも、開けばすぐ分かります</li>
+  </ul>
+</div>
+
+<div class="warn">
+  <b>直接書き換えるのはやめましょう</b>
+  読むだけにしてください。絵の編集は <code>pyxel edit</code> のリソースエディタで行うのが安全です。
+  手で TOML を書き換えると、<code>format_version</code> や配列の形が崩れて
+  読み込めなくなることがあります。
+</div>
 
 <h2>環境・ツールについて</h2>
 
