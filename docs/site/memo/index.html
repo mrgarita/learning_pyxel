@@ -257,6 +257,168 @@ data = [[0, 0, 0, 0, 0, 0, 6, 7, 7, 6, 0], [0, 0, 0, 6, 6, 6, 6, 7, 7, 6, ...
   読み込めなくなることがあります。
 </div>
 
+<h3 id="float-coord">Q. 座標や速さに小数を使ってもいい？ <code>SHIP_SPEED = 0.2</code> でもちゃんと動いたのはなぜ？</h3>
+<p>
+<b>A.</b> <b>使えます。</b>Pyxel の描画命令は座標を<b>小数（<code>float</code>）で受け取り</b>、
+画面に出すときに<b>いちばん近いドットへ四捨五入</b>します。
+付属の型定義ファイル（<code>pyxel/__init__.pyi</code>）を見ると、はっきり <code>float</code> と書いてあります。
+</p>
+
+<pre><code>def blt(
+    x: float,
+    y: float,
+    ...</code></pre>
+
+<p>
+どう丸められるかを実際に試した結果が次です
+（<code>pyxel.Image</code> に <code>pset</code> して、どのドットが点いたかを調べたもの）。
+</p>
+
+<table>
+  <thead><tr><th>渡した値</th><th>0.0</th><th>0.2</th><th>0.4</th><th>0.5</th><th>0.6</th><th>1.0</th><th>1.5</th><th>2.5</th></tr></thead>
+  <tbody>
+    <tr><td><b>点いたドット</b></td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>2</td><td>3</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>四捨五入</b>で、<code>.5</code> はつねに切り上げです（切り捨てではありません）。
+</p>
+
+<h4>なぜ 1 より遅くなるのか</h4>
+
+<p>
+<code>SHIP_SPEED = 0.2</code> にすると、<code>self.ship_x</code> は
+<b>0.2 ずつ、小数のまま</b>変わっていきます。画面に出るのは丸めたあとの整数なので、
+<b>値が 1 ドットぶん動くまでに 5 フレームかかります</b>。
+1 秒 = 30 フレームなので、1 秒あたり 6 ドット。<code>SHIP_SPEED = 1</code>（1 秒に 30 ドット）
+と比べて、ちょうど 5 分の 1 の速さです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 210" role="img" aria-label="SHIP_SPEED が 0.2 のとき、ship_x の小数値は毎フレーム変わるが、実際に描かれるドットは 5 フレームに 1 回しか変わらないことを示す図">
+  <text x="88" y="30" fill="#9aa4c4" font-size="12" text-anchor="end">フレーム</text>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="12" text-anchor="middle">
+    <text x="118" y="30">1</text>
+    <text x="162" y="30">2</text>
+    <text x="206" y="30">3</text>
+    <text x="250" y="30">4</text>
+    <text x="294" y="30">5</text>
+    <text x="338" y="30">6</text>
+    <text x="382" y="30">7</text>
+    <text x="426" y="30">8</text>
+    <text x="470" y="30">9</text>
+    <text x="514" y="30">10</text>
+    <text x="558" y="30">11</text>
+    <text x="602" y="30">12</text>
+  </g>
+
+  <text x="88" y="66" fill="#45b0e8" font-family="Consolas, monospace" font-size="12" text-anchor="end">ship_x</text>
+  <g fill="#45b0e8" font-family="Consolas, monospace" font-size="12" text-anchor="middle">
+    <text x="118" y="66">71.8</text>
+    <text x="162" y="66">71.6</text>
+    <text x="206" y="66">71.4</text>
+    <text x="250" y="66">71.2</text>
+    <text x="294" y="66">71.0</text>
+    <text x="338" y="66">70.8</text>
+    <text x="382" y="66">70.6</text>
+    <text x="426" y="66">70.4</text>
+    <text x="470" y="66">70.2</text>
+    <text x="514" y="66">70.0</text>
+    <text x="558" y="66">69.8</text>
+    <text x="602" y="66">69.6</text>
+  </g>
+
+  <text x="88" y="112" fill="#e8f0ff" font-size="12" text-anchor="end">描かれる x</text>
+  <g fill="#232840" stroke="#3b4166">
+    <rect x="98" y="92" width="40" height="30" rx="3"/>
+    <rect x="142" y="92" width="40" height="30" rx="3"/>
+    <rect x="230" y="92" width="40" height="30" rx="3"/>
+    <rect x="274" y="92" width="40" height="30" rx="3"/>
+    <rect x="318" y="92" width="40" height="30" rx="3"/>
+    <rect x="362" y="92" width="40" height="30" rx="3"/>
+    <rect x="450" y="92" width="40" height="30" rx="3"/>
+    <rect x="494" y="92" width="40" height="30" rx="3"/>
+    <rect x="538" y="92" width="40" height="30" rx="3"/>
+    <rect x="582" y="92" width="40" height="30" rx="3"/>
+  </g>
+  <g fill="#2ee6a8">
+    <rect x="186" y="92" width="40" height="30" rx="3"/>
+    <rect x="406" y="92" width="40" height="30" rx="3"/>
+  </g>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="12" text-anchor="middle">
+    <text x="118" y="112">72</text>
+    <text x="162" y="112">72</text>
+    <text x="250" y="112">71</text>
+    <text x="294" y="112">71</text>
+    <text x="338" y="112">71</text>
+    <text x="382" y="112">71</text>
+    <text x="470" y="112">70</text>
+    <text x="514" y="112">70</text>
+    <text x="558" y="112">70</text>
+    <text x="602" y="112">70</text>
+  </g>
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="12" text-anchor="middle" font-weight="bold">
+    <text x="206" y="112">71</text>
+    <text x="426" y="112">70</text>
+  </g>
+
+  <g stroke="#2ee6a8" stroke-width="1.5">
+    <line x1="206" y1="126" x2="206" y2="140"/>
+    <line x1="426" y1="126" x2="426" y2="140"/>
+  </g>
+  <text x="206" y="156" fill="#2ee6a8" font-size="11" text-anchor="middle">1 ドット動いた</text>
+  <text x="426" y="156" fill="#2ee6a8" font-size="11" text-anchor="middle">1 ドット動いた</text>
+
+  <line x1="206" y1="176" x2="426" y2="176" stroke="#ffcc44" stroke-width="1.5"/>
+  <line x1="206" y1="171" x2="206" y2="181" stroke="#ffcc44" stroke-width="1.5"/>
+  <line x1="426" y1="171" x2="426" y2="181" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="316" y="196" fill="#ffcc44" font-size="11" text-anchor="middle">0.2 × 5 フレーム ＝ 1 ドット</text>
+</svg>
+</div>
+<figcaption>小数の値は毎フレーム動いているが、画面に出るのは丸めたあとの整数だけ</figcaption>
+</figure>
+
+<div class="warn">
+  <b>自分で丸めてはいけない</b>
+  「どうせ整数で描かれるなら」と、<b>毎フレーム丸めて代入し直す</b>と壊れます。
+  <ul>
+    <li><code>self.ship_x = round(self.ship_x - 0.2)</code> … 72 → 71.8 → 丸めて 72 …
+        と<b>元に戻り続けて、永久に動きません</b></li>
+    <li><code>self.ship_x = int(self.ship_x - 0.2)</code> … 切り捨てなので毎フレーム 1 ドット進み、
+        <b>0.2 のはずが 1 の速さ</b>になります</li>
+  </ul>
+  <b>位置は小数のまま持ち、丸めるのは Pyxel に任せる。</b>これが正解です。
+</div>
+
+<div class="note">
+  <b>じつは星でも同じことをしています</b>
+  フェーズ 3 の <code>star[1] += star[2]</code> は、まさにこの仕組みです。
+  星の速さは <code>random.uniform(0.3, 1.8)</code> の小数なので、
+  遅い星は数フレームに 1 ドットしか動きません。
+  <b>だから奥行きのある、なめらかな流れに見えます。</b>
+  もし整数しか使えなかったら、星の速さは 1、2、3… の 3 段階しか作れません。
+</div>
+
+<div class="term">
+  <b>使い分けの目安</b>
+  <ul>
+    <li><b>小数で持つ</b> … 自機・弾・敵・星のように<b>なめらかに動く</b>もの。
+        速さを細かく調整したいとき</li>
+    <li><b>整数で持つ</b> … step2 の倉庫番のように<b>マス目単位</b>で動くもの。
+        「今どのマスにいるか」がそのまま意味を持つとき</li>
+  </ul>
+</div>
+
+<div class="note">
+  <b>おまけ：端に着くと型が int に戻る</b>
+  <code>max(0, min(self.ship_x, 144))</code> は、はみ出したときに
+  <code>0</code> や <code>144</code>（整数）をそのまま返します。
+  つまり左端に張り付いた瞬間、<code>self.ship_x</code> は小数から整数に変わります。
+  Python は型が混ざっても計算できるので、動作に問題はありません。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>
