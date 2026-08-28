@@ -64,9 +64,9 @@ class App:
             self.ship_x -= SHIP_SPEED
         if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.KEY_D):
             self.ship_x += SHIP_SPEED
-        if pyxel.btn(pyxel.KEY_UP):
+        if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.KEY_W):
             self.ship_y -= SHIP_SPEED
-        if pyxel.btn(pyxel.KEY_DOWN):
+        if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.KEY_S):
             self.ship_y += SHIP_SPEED
 
         # 画面の外へ出ないように、行きすぎた分を押し戻す
