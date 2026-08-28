@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音楽の知識ゼロから作る BGM ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">BGM </span>の作り方</h1>
+  <p>音楽の知識ゼロから、Pyxel でそれらしい曲を組み立てる</p>
+</header>
+
+<p class="crumb"><a href="../">← 目次にもどる</a> ／ 関連：<a href="../step0/phase7.html">step0 フェーズ7</a></p>
+
+<h2>このページについて</h2>
+
+<p>
+音楽理論を学ぶページ<b>ではありません</b>。楽譜が読めなくても、ドレミが分からなくても、
+<b>手順どおりに置いていけば「聞ける BGM」になる</b>という、その手順をまとめたページです。
+</p>
+
+<p>
+フェーズ 7 で作った 4 秒のループを題材にします。あそこで打ち込んだ音の並びには、
+実はちゃんと理由がありました。それを 1 つずつ説明していきます。
+</p>
+
+<div class="note">
+  <b>いちばん大事なことを先に</b>
+  作曲でつまずく原因のほとんどは<b>「いきなりメロディから作ろうとすること」</b>です。
+  メロディは<b>最後</b>に作ります。先に土台を作れば、メロディは驚くほど簡単になります。
+</div>
+
+<h2>1. BGM は 4 つの層でできている</h2>
+
+<p>
+ゲームの BGM は、次の 4 つが重なってできています。そして<b>作る順番は、下から上</b>です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 280" role="img" aria-label="BGM の 4 層。下からコード進行、ベース、ドラム、メロディの順に作る">
+  <line x1="60" y1="230" x2="60" y2="46" stroke="#ffcc44" stroke-width="2"/>
+  <path d="M60 34 l-6 14 12 0 z" fill="#ffcc44"/>
+  <text x="44" y="150" fill="#ffcc44" font-size="12" text-anchor="middle" transform="rotate(-90 44 150)">作る順番</text>
+
+  <rect x="96" y="28" width="500" height="46" rx="5" fill="#1b1f33" stroke="#45b0e8"/>
+  <text x="128" y="49" fill="#45b0e8" font-size="13" font-weight="bold">④ メロディ</text>
+  <text x="128" y="66" fill="#9aa4c4" font-size="11">耳に残る主役。土台ができてから最後に乗せる</text>
+
+  <rect x="96" y="84" width="500" height="46" rx="5" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="128" y="105" fill="#2ee6a8" font-size="13" font-weight="bold">③ ドラム</text>
+  <text x="128" y="122" fill="#9aa4c4" font-size="11">拍を刻む。ノイズ音色で作る。あるだけで一気に曲らしくなる</text>
+
+  <rect x="96" y="140" width="500" height="46" rx="5" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="128" y="161" fill="#ff6b97" font-size="13" font-weight="bold">② ベース</text>
+  <text x="128" y="178" fill="#9aa4c4" font-size="11">コードの一番低い音をなぞるだけ。作るのがいちばん簡単</text>
+
+  <rect x="96" y="196" width="500" height="52" rx="5" fill="#232840" stroke="#ffcc44" stroke-width="2"/>
+  <text x="128" y="217" fill="#ffcc44" font-size="13" font-weight="bold">① コード進行</text>
+  <text x="128" y="234" fill="#9aa4c4" font-size="11">曲の設計図。これ自体は鳴らさない。「どの音を使ってよいか」を決める</text>
+
+  <text x="320" y="270" fill="#9aa4c4" font-size="11" text-anchor="middle">土台から順に積む。メロディから作ろうとすると、ほぼ必ず行き詰まる</text>
+</svg>
+</div>
+<figcaption>下の 3 層は「決めごと」に近く、迷う要素がほとんどありません</figcaption>
+</figure>
+
+<h2>2. 音の正体は「12 段の階段」</h2>
+
+<p>
+まず音の高さの仕組みだけ押さえます。<b>これだけ知っていれば足ります。</b>
+</p>
+
+<ul>
+  <li>音の高さは <b>12 段の階段</b>でひと回りする。13 段目は、1 段目と同じ音の 1 つ上（＝ 1 オクターブ上）</li>
+  <li>Pyxel の音番号は、この<b>階段 1 段ぶんが 1</b>。だから <b>+12 で 1 オクターブ上</b></li>
+  <li>階段のうち 7 段が<b>白鍵</b>（ドレミファソラシ）、5 段が<b>黒鍵</b></li>
+</ul>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 240" role="img" aria-label="1 オクターブの鍵盤と Pyxel の音番号の対応。白鍵は 24 26 28 29 31 33 35、黒鍵は 25 27 30 32 34">
+  <text x="320" y="28" fill="#9aa4c4" font-size="12" text-anchor="middle">1 オクターブ ＝ 12 段。数字は Pyxel の音番号</text>
+
+  <g fill="#e8f0ff" stroke="#3b4166">
+    <rect x="120" y="44" width="56" height="126"/>
+    <rect x="176" y="44" width="56" height="126"/>
+    <rect x="232" y="44" width="56" height="126"/>
+    <rect x="288" y="44" width="56" height="126"/>
+    <rect x="344" y="44" width="56" height="126"/>
+    <rect x="400" y="44" width="56" height="126"/>
+    <rect x="456" y="44" width="56" height="126"/>
+  </g>
+  <g fill="#10121c">
+    <rect x="160" y="44" width="32" height="78"/>
+    <rect x="216" y="44" width="32" height="78"/>
+    <rect x="328" y="44" width="32" height="78"/>
+    <rect x="384" y="44" width="32" height="78"/>
+    <rect x="440" y="44" width="32" height="78"/>
+  </g>
+
+  <g fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="176" y="112">25</text>
+    <text x="232" y="112">27</text>
+    <text x="344" y="112">30</text>
+    <text x="400" y="112">32</text>
+    <text x="456" y="112">34</text>
+  </g>
+
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="14" text-anchor="middle" font-weight="bold">
+    <text x="148" y="142">C</text>
+    <text x="204" y="142">D</text>
+    <text x="260" y="142">E</text>
+    <text x="316" y="142">F</text>
+    <text x="372" y="142">G</text>
+    <text x="428" y="142">A</text>
+    <text x="484" y="142">B</text>
+  </g>
+  <g fill="#3b4166" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="148" y="162">24</text>
+    <text x="204" y="162">26</text>
+    <text x="260" y="162">28</text>
+    <text x="316" y="162">29</text>
+    <text x="372" y="162">31</text>
+    <text x="428" y="162">33</text>
+    <text x="484" y="162">35</text>
+  </g>
+  <g fill="#9aa4c4" font-size="11" text-anchor="middle">
+    <text x="148" y="190">ド</text>
+    <text x="204" y="190">レ</text>
+    <text x="260" y="190">ミ</text>
+    <text x="316" y="190">ファ</text>
+    <text x="372" y="190">ソ</text>
+    <text x="428" y="190">ラ</text>
+    <text x="484" y="190">シ</text>
+  </g>
+
+  <rect x="52" y="204" width="536" height="26" rx="4" fill="#1b1f33" stroke="#ffcc44"/>
+  <text x="320" y="221" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" text-anchor="middle">A2 ＝ 33 ＝ 440Hz（基準の音）　／　+12 すると 1 オクターブ上（A3 ＝ 45）</text>
+</svg>
+</div>
+<figcaption>ゲーム制作では、ドレミではなく <b>C D E F G A B</b> の英語音名を使うのが普通です</figcaption>
+</figure>
+
+<h2>3. 最強のルール：黒鍵を使わない</h2>
+
+<p>
+音を適当に置くと不協和になるのは、<b>使ってよい音を決めていない</b>からです。
+逆にいえば、最初に「この 7 音だけ使う」と決めてしまえば、
+<b>どう並べても致命的には外れません</b>。
+</p>
+
+<div class="term">
+  <b>知識ゼロならこれ 1 つでいい</b>
+  <b>白鍵だけを使う。</b>Pyxel のキーボードでいえば
+  <code>Z X C V B N M</code>（下段）と <code>Q W E R T Y U</code>（上段）だけを押し、
+  <code>S D G H J</code> と <code>2 3 5 6 7</code> には<b>触らない</b>。
+  これだけで「A マイナー（イ短調）」という、<b>ゲーム BGM でいちばん使われる音の集まり</b>になります。
+</div>
+
+<p>
+さらに確実にしたければ、白鍵 7 音のうち<b>ぶつかりやすい 2 音（F と B）を外した 5 音</b>だけを使います。
+これを<b>ペンタトニック</b>といい、<b>どんな順番で並べても、まず外れません</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 250" role="img" aria-label="白鍵だけを使うルールの図。A C D E G の 5 音がペンタトニック、F と B は注意、黒鍵は使わない">
+  <g stroke="#3b4166">
+    <rect x="120" y="44" width="56" height="126" fill="#ffcc44"/>
+    <rect x="176" y="44" width="56" height="126" fill="#ffcc44"/>
+    <rect x="232" y="44" width="56" height="126" fill="#ffcc44"/>
+    <rect x="288" y="44" width="56" height="126" fill="#e8f0ff"/>
+    <rect x="344" y="44" width="56" height="126" fill="#ffcc44"/>
+    <rect x="400" y="44" width="56" height="126" fill="#ffcc44"/>
+    <rect x="456" y="44" width="56" height="126" fill="#e8f0ff"/>
+  </g>
+  <g fill="#10121c">
+    <rect x="160" y="44" width="32" height="78"/>
+    <rect x="216" y="44" width="32" height="78"/>
+    <rect x="328" y="44" width="32" height="78"/>
+    <rect x="384" y="44" width="32" height="78"/>
+    <rect x="440" y="44" width="32" height="78"/>
+  </g>
+  <g stroke="#ff6b97" stroke-width="2">
+    <path d="M170 96 l12 12 M182 96 l-12 12"/>
+    <path d="M226 96 l12 12 M238 96 l-12 12"/>
+    <path d="M338 96 l12 12 M350 96 l-12 12"/>
+    <path d="M394 96 l12 12 M406 96 l-12 12"/>
+    <path d="M450 96 l12 12 M462 96 l-12 12"/>
+  </g>
+
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="15" text-anchor="middle" font-weight="bold">
+    <text x="148" y="146">C</text>
+    <text x="204" y="146">D</text>
+    <text x="260" y="146">E</text>
+    <text x="316" y="146">F</text>
+    <text x="372" y="146">G</text>
+    <text x="428" y="146">A</text>
+    <text x="484" y="146">B</text>
+  </g>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="12" text-anchor="middle">
+    <text x="148" y="192">Z</text>
+    <text x="204" y="192">X</text>
+    <text x="260" y="192">C</text>
+    <text x="316" y="192">V</text>
+    <text x="372" y="192">B</text>
+    <text x="428" y="192">N</text>
+    <text x="484" y="192">M</text>
+  </g>
+  <text x="104" y="192" fill="#9aa4c4" font-size="11" text-anchor="end">キー</text>
+
+  <rect x="120" y="210" width="150" height="26" rx="4" fill="#ffcc44"/>
+  <text x="195" y="227" fill="#10121c" font-size="11" text-anchor="middle" font-weight="bold">この 5 音なら外れない</text>
+  <rect x="282" y="210" width="112" height="26" rx="4" fill="#e8f0ff"/>
+  <text x="338" y="227" fill="#10121c" font-size="11" text-anchor="middle">使ってよい</text>
+  <rect x="406" y="210" width="140" height="26" rx="4" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="476" y="227" fill="#ff6b97" font-size="11" text-anchor="middle">黒鍵は当分使わない</text>
+</svg>
+</div>
+<figcaption>ペンタトニック ＝ <b>A・C・D・E・G</b> の 5 音。フェーズ 7 のメロディは、実はこの 5 音だけでできています</figcaption>
+</figure>
+
+<h2>4. コード進行 ＝ 曲の設計図</h2>
+
+<p>
+<b>コード</b>とは、同時に鳴らすと気持ちよく響く音のセットのことです。
+そして<b>コード進行</b>は、その並び順。曲の「地面」にあたります。
+</p>
+
+<p>
+うれしいことに、<b>定番の進行がいくつかあり、そのまま借りて構いません</b>。
+著作権があるのは「メロディ」であって、コード進行は共有財産です。
+プロもみんな同じ進行を使っています。
+</p>
+
+<table>
+  <thead><tr><th>コード進行</th><th>感じ</th><th>ベースが弾く音（OCTAVE 1）</th></tr></thead>
+  <tbody>
+    <tr><td><b>Am → F → C → G</b></td><td>定番中の定番。前向き・王道</td>
+        <td><code>N</code> → <code>V</code> → <code>Q</code>（上段） → <code>B</code></td></tr>
+    <tr><td><b>Am → F → C → Em</b></td><td>落ち着く・浮遊感<br>（フェーズ 7 で使ったもの）</td>
+        <td><code>N</code> → <code>V</code> → <code>Q</code>（上段） → <code>C</code></td></tr>
+    <tr><td><b>Am → G → F → G</b></td><td>哀愁。ずっと同じ場所を回っている感じ</td>
+        <td><code>N</code> → <code>B</code> → <code>V</code> → <code>B</code></td></tr>
+    <tr><td><b>Am → Dm → G → C</b></td><td>展開する。場面が動く感じ</td>
+        <td><code>N</code> → <code>X</code> → <code>B</code> → <code>Q</code>（上段）</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>ベースは「コードの名前の音」を鳴らすだけ</b>
+  <code>Am</code> なら A、<code>F</code> なら F、<code>C</code> なら C。
+  <b>コード名の頭文字の音を、1 つ鳴らせばいい</b>だけです。
+  和音として 3 音を重ねる必要はありません（ゲーム BGM では 1 音のほうがむしろ普通です）。
+  これが「ベースがいちばん簡単」と書いた理由です。
+</div>
+
+<h2>5. 拍とテンポ：16 ステップを 4 つに割る</h2>
+
+<p>
+Pyxel のサウンドは、マス目にひとつずつ音を置いていく形式です。
+<b>16 ステップを 4 つのブロックに割り、1 ブロックに 1 コード</b>を割り当てます。
+これで 4 コード ＝ 1 ループが完成します。
+</p>
+
+<p>
+テンポは SPEED で決まります。<b>1 ステップの長さ ＝ SPEED ÷ 120 秒</b>なので、
+4 ステップを 1 拍と数えると次のようになります。
+</p>
+
+<table>
+  <thead><tr><th>SPEED</th><th>1 ステップ</th><th>16 ステップの長さ</th><th>テンポの目安</th></tr></thead>
+  <tbody>
+    <tr><td><code>10</code></td><td>0.083 秒</td><td>1.3 秒</td><td>180 BPM ／ 疾走感。シューティング向き</td></tr>
+    <tr><td><code>15</code></td><td>0.125 秒</td><td>2 秒</td><td>120 BPM ／ 軽快。アクション向き</td></tr>
+    <tr><td><code>20</code></td><td>0.167 秒</td><td>2.7 秒</td><td>90 BPM ／ 標準的</td></tr>
+    <tr><td><b><code>30</code></b></td><td>0.25 秒</td><td><b>4 秒</b></td><td>60 BPM ／ ゆったり。step0 で使った設定</td></tr>
+    <tr><td><code>40</code></td><td>0.333 秒</td><td>5.3 秒</td><td>45 BPM ／ 荘厳・不気味</td></tr>
+  </tbody>
+</table>
+
+<h2>6. 作る手順（このとおりに進めれば完成する）</h2>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" role="img" aria-label="16 ステップの譜面図。コード、メロディ、ベース、ドラムの各行にどう音を置くかを示す">
+  <g fill="#3b4166" font-family="Consolas, monospace" font-size="9" text-anchor="middle">
+    <text x="124" y="30">1</text><text x="156" y="30">2</text><text x="188" y="30">3</text><text x="220" y="30">4</text>
+    <text x="252" y="30">5</text><text x="284" y="30">6</text><text x="316" y="30">7</text><text x="348" y="30">8</text>
+    <text x="380" y="30">9</text><text x="412" y="30">10</text><text x="444" y="30">11</text><text x="476" y="30">12</text>
+    <text x="508" y="30">13</text><text x="540" y="30">14</text><text x="572" y="30">15</text><text x="604" y="30">16</text>
+  </g>
+
+  <text x="100" y="58" fill="#ffcc44" font-size="11" text-anchor="end">コード</text>
+  <g stroke="#ffcc44" fill="#232840">
+    <rect x="108" y="40" width="128" height="26" rx="3"/>
+    <rect x="236" y="40" width="128" height="26" rx="3"/>
+    <rect x="364" y="40" width="128" height="26" rx="3"/>
+    <rect x="492" y="40" width="128" height="26" rx="3"/>
+  </g>
+  <g fill="#ffcc44" font-family="Consolas, monospace" font-size="13" text-anchor="middle" font-weight="bold">
+    <text x="172" y="58">Am</text>
+    <text x="300" y="58">F</text>
+    <text x="428" y="58">C</text>
+    <text x="556" y="58">Em</text>
+  </g>
+
+  <text x="100" y="104" fill="#ff6b97" font-size="11" text-anchor="end">② ベース</text>
+  <rect x="108" y="84" width="512" height="28" fill="#10121c" stroke="#3b4166"/>
+  <g fill="#ff6b97">
+    <rect x="110" y="86" width="28" height="24" rx="2"/>
+    <rect x="238" y="86" width="28" height="24" rx="2"/>
+    <rect x="366" y="86" width="28" height="24" rx="2"/>
+    <rect x="494" y="86" width="28" height="24" rx="2"/>
+  </g>
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="11" text-anchor="middle" font-weight="bold">
+    <text x="124" y="103">A</text><text x="252" y="103">F</text><text x="380" y="103">C</text><text x="508" y="103">E</text>
+  </g>
+
+  <text x="100" y="150" fill="#2ee6a8" font-size="11" text-anchor="end">③ ドラム</text>
+  <rect x="108" y="130" width="512" height="28" fill="#10121c" stroke="#3b4166"/>
+  <g fill="#2ee6a8">
+    <rect x="110" y="132" width="28" height="24" rx="2"/>
+    <rect x="366" y="132" width="28" height="24" rx="2"/>
+  </g>
+  <g fill="#45b0e8">
+    <rect x="238" y="132" width="28" height="24" rx="2"/>
+    <rect x="494" y="132" width="28" height="24" rx="2"/>
+  </g>
+  <g fill="#3b4166">
+    <rect x="174" y="138" width="28" height="12" rx="2"/>
+    <rect x="302" y="138" width="28" height="12" rx="2"/>
+    <rect x="430" y="138" width="28" height="12" rx="2"/>
+    <rect x="558" y="138" width="28" height="12" rx="2"/>
+  </g>
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="10" text-anchor="middle" font-weight="bold">
+    <text x="124" y="149">ド</text><text x="380" y="149">ド</text>
+    <text x="252" y="149">タ</text><text x="508" y="149">タ</text>
+  </g>
+
+  <text x="100" y="196" fill="#45b0e8" font-size="11" text-anchor="end">④ メロディ</text>
+  <rect x="108" y="176" width="512" height="28" fill="#10121c" stroke="#3b4166"/>
+  <g fill="#45b0e8">
+    <rect x="110" y="178" width="28" height="24" rx="2"/>
+    <rect x="174" y="178" width="28" height="24" rx="2"/>
+    <rect x="238" y="178" width="28" height="24" rx="2"/>
+    <rect x="302" y="178" width="28" height="24" rx="2"/>
+    <rect x="366" y="178" width="28" height="24" rx="2"/>
+    <rect x="430" y="178" width="28" height="24" rx="2"/>
+    <rect x="494" y="178" width="28" height="24" rx="2"/>
+  </g>
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="11" text-anchor="middle" font-weight="bold">
+    <text x="124" y="195">A</text><text x="188" y="195">C</text><text x="252" y="195">E</text><text x="316" y="195">D</text>
+    <text x="380" y="195">C</text><text x="444" y="195">A</text><text x="508" y="195">G</text>
+  </g>
+
+  <line x1="108" y1="222" x2="236" y2="222" stroke="#9aa4c4" stroke-width="1.5"/>
+  <line x1="108" y1="217" x2="108" y2="227" stroke="#9aa4c4" stroke-width="1.5"/>
+  <line x1="236" y1="217" x2="236" y2="227" stroke="#9aa4c4" stroke-width="1.5"/>
+  <text x="172" y="242" fill="#9aa4c4" font-size="11" text-anchor="middle">4 ステップ ＝ 1 ブロック</text>
+
+  <text x="320" y="272" fill="#9aa4c4" font-size="11" text-anchor="middle">白マスは休符。ベースとドラムはブロックの頭に置くだけでよい</text>
+  <text x="320" y="290" fill="#3b4166" font-size="10" text-anchor="middle">「ド」＝低いノイズ（キック）　「タ」＝高いノイズ（スネア）　小さいマス＝ごく小音量のノイズ</text>
+</svg>
+</div>
+<figcaption>フェーズ 7 で作ったループに、ドラムを足した形。上の行から順に作るのではなく、<b>コード → ベース → ドラム → メロディ</b>の順に作ります</figcaption>
+</figure>
+
+<h3>手順 ①：コード進行を決める（考える時間 30 秒）</h3>
+<p>
+上の表から 1 つ選ぶだけです。迷ったら <b>Am → F → C → G</b>。
+紙に書く必要すらなく、頭の中で決めれば十分です。
+</p>
+
+<h3>手順 ②：ベースを打つ（いちばん簡単）</h3>
+<p>
+SOUND 1、OCTAVE 1。<b>ステップ 1・5・9・13 にコードの頭文字の音を置き、あとは全部休符</b>。
+これだけで土台が完成します。音色は <code>T</code>（三角波）、音量は <code>4</code> 前後。
+</p>
+
+<h3>手順 ③：ドラムを打つ（曲らしさが一気に出る）</h3>
+<p>
+SOUND 2、音色は <code>N</code>（ノイズ）。<b>ノイズは音の高さが「音程」ではなく「質感」になります。</b>
+低い音番号ほど「ドッ」、高いほど「シャッ」と鳴ります。
+</p>
+
+<table>
+  <thead><tr><th>役割</th><th>置く場所</th><th>音の高さの目安</th><th>音量</th></tr></thead>
+  <tbody>
+    <tr><td><b>キック</b>（ド）</td><td>ステップ 1・9</td><td>低め（OCTAVE 0 〜 1 の <code>Z</code> あたり）</td><td><code>7</code></td></tr>
+    <tr><td><b>スネア</b>（タ）</td><td>ステップ 5・13</td><td>中くらい（OCTAVE 2 の <code>N</code> あたり）</td><td><code>6</code></td></tr>
+    <tr><td><b>ハイハット</b>（チ）</td><td>その間（ステップ 3・7・11・15）</td><td>高め（OCTAVE 3 の <code>Y</code> あたり）</td><td><code>1</code> 〜 <code>2</code></td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>VOL は 1 マスずつ変えられる</b>
+  フェーズ 7 では「VOL は 1 個入れれば全体に効く」と書きました。これは
+  <b>「短ければ先頭から繰り返される」</b>という意味で、
+  <b>マスごとに違う値を入れれば、そのとおりに変わります</b>。
+  ドラムでは、この強弱こそが命です。たとえば
+  <code>7 1 6 1 7 1 6 1 …</code> のように打つと、強い音と弱い音が交互になって
+  「ノリ」が生まれます。
+</div>
+
+<h3>手順 ④：最後にメロディ</h3>
+<p>
+SOUND 0、OCTAVE 2。ここまでで土台ができているので、
+<b>ペンタトニックの 5 音（A C D E G）を、適当に置いても成立します。</b>
+それでも、次の 4 つを守るとぐっと「曲」に近づきます。
+</p>
+
+<table>
+  <thead><tr><th>コツ</th><th>なぜ</th></tr></thead>
+  <tbody>
+    <tr><td><b>1. 隣の音へ動くのを基本にする</b></td>
+        <td>跳ぶと歌いにくい。ときどき跳ぶから、その跳躍が目立って気持ちよくなる</td></tr>
+    <tr><td><b>2. 出だしと終わりはコードの音に</b></td>
+        <td>Am のブロックなら A・C・E のどれかで始めると、収まりがよくなる</td></tr>
+    <tr><td><b>3. 同じ形をくり返す</b></td>
+        <td>覚えやすさは、ほぼ「くり返し」で決まる。前半 8 ステップの形を、
+            音の高さだけ変えて後半でもう一度使う</td></tr>
+    <tr><td><b>4. 休符を惜しまない</b></td>
+        <td>詰め込むと素人っぽくなる。<b>半分が休符でちょうどいい</b></td></tr>
+  </tbody>
+</table>
+
+<h3>フェーズ 7 のメロディを分解してみる</h3>
+
+<p>実際に打ち込んだ 7 音は <b>A → C → E → D → C → A → G</b> でした。</p>
+
+<ul>
+  <li><b>使っている音は 5 つだけ</b> … A・C・E・D・G。すべてペンタトニックの中（コツ 0 番）</li>
+  <li><b>前半は上る、後半は下りる</b> … A→C→E で持ち上げ、E→D→C→A→G で下ろす。<b>山を 1 つ作る</b>形</li>
+  <li><b>下りは全部隣の音</b> … E→D→C→A→G は、ほぼ 1 段ずつ（コツ 1 番）</li>
+  <li><b>1 音おきに休符</b> … 音・休・音・休…と並べたので、詰まって聞こえない（コツ 4 番）</li>
+  <li><b>最初の音は A</b> … 最初のコード Am の頭文字（コツ 2 番）</li>
+</ul>
+
+<p>
+つまり、あの並びは<b>たまたまではなく、上のコツをそのまま適用したもの</b>でした。
+逆にいえば、この 4 つを守れば同じように作れます。
+</p>
+
+<h2>7. 音色とチャンネルの割り振り</h2>
+
+<p>
+Pyxel は<b>同時に 4 音まで</b>（CH0 〜 CH3）。役割を固定しておくと迷いません。
+</p>
+
+<table>
+  <thead><tr><th>CH</th><th>役割</th><th>おすすめ音色</th><th>音量の目安</th></tr></thead>
+  <tbody>
+    <tr><td><code>0</code></td><td>メロディ</td><td><code>S</code> 矩形波（前に出る）／<code>P</code> パルス波</td><td><code>5</code> 〜 <code>6</code></td></tr>
+    <tr><td><code>1</code></td><td>ベース</td><td><code>T</code> 三角波（低音がきれい）</td><td><code>4</code> 〜 <code>5</code></td></tr>
+    <tr><td><code>2</code></td><td>副旋律・和音</td><td><code>P</code> パルス波（細くて邪魔をしない）</td><td><code>3</code> 〜 <code>4</code></td></tr>
+    <tr><td><code>3</code></td><td>ドラム</td><td><code>N</code> ノイズ</td><td>マスごとに <code>1</code> 〜 <code>7</code></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>音量は「メロディがいちばん大きい」が鉄則</b>
+  全部を <code>7</code> にすると、何が主役か分からない団子になります。
+  <b>メロディ ＞ ベース ＞ 伴奏</b>の順に下げてください。
+  ドラムのハイハットは <code>1</code> でも十分に聞こえます。
+</div>
+
+<div class="note">
+  <b>短いチャンネルは自動でくり返されます</b>
+  ミュージックの各チャンネルは<b>長さが違っていても構いません</b>。
+  短いほうは、長いほうが終わるまで<b>先頭から自動でくり返し</b>ます。
+  16 ステップのベースと 32 ステップのメロディを組み合わせれば、
+  ベースが 2 周するあいだにメロディが 1 周する形になります。
+  <b>長い曲を作りたいときは、メロディだけを長くすればよい</b>ということです。
+</div>
+
+<h2>8. 行き詰まったときの逃げ道</h2>
+
+<table>
+  <thead><tr><th>やること</th><th>効果</th></tr></thead>
+  <tbody>
+    <tr><td><b>音を減らす</b></td>
+        <td>迷ったら足すのではなく引く。休符を増やすだけで良くなることが多い</td></tr>
+    <tr><td><b>SPEED を変えてみる</b></td>
+        <td>同じ音の並びでも、速さを変えると別の曲に聞こえる。いちばん手軽な救済策</td></tr>
+    <tr><td><b>音色を変えてみる</b></td>
+        <td><code>T</code> ⇄ <code>S</code> ⇄ <code>P</code> を入れ替えるだけで印象が激変する</td></tr>
+    <tr><td><b>1 オクターブ上げ下げする</b></td>
+        <td>メロディが低くてもたつくときは、全部 <code>+12</code> して上げると映える</td></tr>
+    <tr><td><b>好きなゲーム音楽を思い出しながら打つ</b></td>
+        <td>「なんとなく似た形」を目指すのは有効な練習。ただし
+            <b>そのまま写すのは避ける</b>（メロディには著作権があります）</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b>Pyxel には自動生成機能もありますが……</b>
+  <code>pyxel.gen_bgm()</code> という、アルゴリズムで BGM を作る関数が用意されています。
+  ただしこれが返すのは <b>MML</b> という別形式の文字列で、
+  <b><code>.pyxres</code> には保存されません</b>（リソースファイルには
+  音符・音色・音量・効果・速度しか保存されない形式のため。実際に試して確認しました）。
+  エディタのピアノロールにも表示されないので、
+  <b>step0 の作り方とは別の道</b>になります。「こんな機能もある」という程度に留め、
+  当面は自分で打ち込むのがおすすめです。
+</div>
+
+<h2>9. 用語早見表</h2>
+
+<table>
+  <thead><tr><th>用語</th><th>ひとことで言うと</th></tr></thead>
+  <tbody>
+    <tr><td><b>オクターブ</b></td><td>音の高さのひと回り。Pyxel の音番号で <code>12</code> ぶん</td></tr>
+    <tr><td><b>半音</b></td><td>階段 1 段ぶん。Pyxel の音番号で <code>1</code> ぶん</td></tr>
+    <tr><td><b>キー（調）</b></td><td>その曲で使ってよい音の集まり。白鍵だけなら「A マイナー」</td></tr>
+    <tr><td><b>マイナー／メジャー</b></td><td>暗い響き／明るい響き。同じ白鍵でも、どの音を中心にするかで変わる</td></tr>
+    <tr><td><b>ペンタトニック</b></td><td>外れにくい 5 音。A・C・D・E・G</td></tr>
+    <tr><td><b>コード</b></td><td>同時に鳴らすと調和する音のセット。ベースはその頭文字の音を弾く</td></tr>
+    <tr><td><b>コード進行</b></td><td>コードの並び順 ＝ 曲の設計図。定番を借りてよい</td></tr>
+    <tr><td><b>BPM</b></td><td>1 分あたりの拍数。大きいほど速い</td></tr>
+    <tr><td><b>ルート音</b></td><td>コードの土台になる音。<code>Am</code> なら A</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>まとめ：迷ったらこれだけ</b>
+  <ol>
+    <li><b>黒鍵を使わない</b>（<code>Z X C V B N M</code> と <code>Q W E R T Y U</code> だけ）</li>
+    <li><b>ベースから作る</b>（ステップ 1・5・9・13 に <code>Am → F → C → G</code>）</li>
+    <li><b>メロディは 5 音だけ</b>（A・C・D・E・G）で、<b>半分は休符</b></li>
+  </ol>
+  この 3 つだけで、聞ける BGM になります。
+</div>
+
+<footer class="site">
+  <a href="../step0/phase7.html">← step0 フェーズ7</a>　｜
+  <a href="../">目次</a>　｜
+  <a href="../memo/">備忘録</a>
+</footer>
+
+</div>
+</body>
+</html>
