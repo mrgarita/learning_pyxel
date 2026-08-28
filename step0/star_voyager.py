@@ -35,6 +35,9 @@ class App:
         self.ship_x = (SCREEN_WIDTH - SHIP_WIDTH) // 2      # 横は画面の中央
         self.ship_y = 80                                    # 縦は下の方
 
+        self.bgm_on = True                                  # BGM が鳴っているかどうか
+        pyxel.playm(0, loop=True)                           # BGM をループ再生する
+
         pyxel.run(self.update, self.draw)
 
     def make_stars(self):
@@ -75,6 +78,13 @@ class App:
 
     def update(self):
         """フレーム毎の更新処理"""
+        if pyxel.btnp(pyxel.KEY_M):                             # M を押した瞬間だけ
+            if self.bgm_on:
+                pyxel.stop()                                    # 鳴っていたら止める
+            else:
+                pyxel.playm(0, loop = True)                     # 止まっていたら鳴らす
+            self.bgm_on = not self.bgm_on                       # 状態を反転させる
+            
         self.move_ship()
         
         for star in self.stars:
