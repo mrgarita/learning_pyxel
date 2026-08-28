@@ -80,10 +80,11 @@
 
 <figure>
 <div class="fig-box">
-<svg viewBox="0 0 520 210" role="img" aria-label="stars は star のリスト。star は x, y, 速さ の 3 要素のリスト">
-  <text x="30" y="24" fill="#ffcc44" font-family="Consolas, monospace" font-size="13">stars</text>
-  <text x="82" y="24" fill="#9aa4c4" font-size="11">＝ 星ぜんぶを入れたリスト</text>
+<svg viewBox="0 0 520 236" role="img" aria-label="stars は star のリスト。star は x, y, 速さ の 3 要素のリスト">
+  <text x="30" y="22" fill="#ffcc44" font-family="Consolas, monospace" font-size="13">stars</text>
+  <text x="82" y="22" fill="#9aa4c4" font-size="11">＝ 星ぜんぶを入れたリスト</text>
 
+  <g transform="translate(0, 26)">
   <g font-family="Consolas, monospace" font-size="12">
     <!-- 0 -->
     <rect x="30" y="36" width="60" height="34" fill="#232840" stroke="#3b4166"/>
@@ -123,6 +124,7 @@
   <text x="431" y="94" fill="#e8f0ff" font-size="11" text-anchor="middle">リストの中に</text>
   <text x="431" y="112" fill="#e8f0ff" font-size="11" text-anchor="middle">リストが入っている</text>
   <text x="431" y="134" fill="#ffcc44" font-size="11" text-anchor="middle">＝ 二次元リスト</text>
+  </g>
 </svg>
 </div>
 <figcaption><code>stars[2][1]</code> と書くと「3 個目の星の y 座標」を指します</figcaption>
@@ -138,21 +140,24 @@ y を 0 に戻し、x をランダムに引き直せば<b>そのまま新しい�
 
 <figure>
 <div class="fig-box">
-<svg viewBox="0 0 480 190" role="img" aria-label="画面下に出た星は y を 0 に戻し x を引き直して再利用する">
+<svg viewBox="0 0 480 208" role="img" aria-label="画面下に出た星は y を 0 に戻し x を引き直して再利用する">
   <rect x="120" y="24" width="150" height="140" fill="#000" stroke="#3b4166" stroke-width="2"/>
   <text x="195" y="16" fill="#9aa4c4" font-size="11" text-anchor="middle">画面（高さ 120）</text>
 
+  <!-- 下に出た星（矢印の始点） -->
   <rect x="180" y="140" width="5" height="5" fill="#EEEEEE"/>
-  <text x="278" y="150" fill="#ff6b97" font-size="11">y が 120 以上になった</text>
+  <line x1="182.5" y1="147" x2="182.5" y2="176" stroke="#ff6b97" stroke-width="1" stroke-dasharray="2 3"/>
+  <text x="182.5" y="192" fill="#ff6b97" font-size="11" text-anchor="middle">y が 120 以上になった</text>
 
-  <!-- 回り込み矢印 -->
-  <path d="M186 160 C 240 186, 330 170, 330 100 C 330 40, 250 26, 200 32"
+  <!-- 上に戻す星（矢印の終点） -->
+  <rect x="196" y="28" width="5" height="5" fill="#EEEEEE"/>
+
+  <!-- 回り込み矢印：下の星の右下から出て、上の星へ入る -->
+  <path d="M186 145 C 250 176, 340 158, 340 96 C 340 38, 262 22, 208 30"
         fill="none" stroke="#2ee6a8" stroke-width="2" stroke-dasharray="5 4"/>
-  <path d="M204 28 l-8 4 6 6 z" fill="#2ee6a8"/>
+  <path d="M202 30.5 L212 26 L211 36 Z" fill="#2ee6a8"/>
   <text x="360" y="96" fill="#2ee6a8" font-size="11">y = 0 に戻す</text>
   <text x="360" y="114" fill="#2ee6a8" font-size="11">x は引き直す</text>
-
-  <rect x="196" y="28" width="5" height="5" fill="#EEEEEE"/>
 
   <text x="60" y="96" fill="#9aa4c4" font-size="11" text-anchor="middle">星の数は</text>
   <text x="60" y="114" fill="#ffcc44" font-size="11" text-anchor="middle">ずっと 40 個</text>
