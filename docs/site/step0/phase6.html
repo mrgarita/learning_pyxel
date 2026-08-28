@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step0 フェーズ6：矢印キーで宇宙船を動かす ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 6 </span>矢印キーで宇宙船を動かす</h1>
+  <p>step0：星空を飛ぶ宇宙船</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step0 概要</a> ／ フェーズ 6</p>
+
+<h2>ゴール</h2>
+
+<p>
+フェーズ 5 で画面に出した宇宙船を、<b>矢印キーで上下左右に動かします</b>。
+あわせて、<b>画面の外へ出ていかないように制限</b>します。
+</p>
+
+<ul>
+  <li><code>pyxel.btn</code> で「今キーが押されているか」を調べる</li>
+  <li>押されていたら <code>self.ship_x</code> ／ <code>self.ship_y</code> を書き換える</li>
+  <li><code>max</code> と <code>min</code> で、位置を画面の中へ押し戻す</li>
+</ul>
+
+<div class="note">
+  <b>ここが「ゲームらしさ」の入り口</b>
+  フェーズ 5 までは、見ているだけの作品でした。
+  今回はじめて<b>プレイヤーの操作が画面に反映されます</b>。
+  そして書き換えるのは、フェーズ 5 で用意した <code>self.ship_x</code> ／ <code>self.ship_y</code>
+  の 2 つだけです。<b>描画のコード（<code>draw</code>）はいっさい触りません。</b>
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. キー入力は「今どうなっているか」を毎フレーム聞きにいく</h3>
+
+<p>
+ふつうのアプリは「キーが押されたら、この処理を呼ぶ」という書き方（イベント）をします。
+Pyxel はそうではありません。<b>毎フレーム、こちらから「今このキーは押されてる？」と
+聞きにいきます。</b>
+</p>
+
+<pre><code>if pyxel.btn(pyxel.KEY_LEFT):   # 今、左キーは押されている？
+    self.ship_x -= SHIP_SPEED   # 押されていれば 2 ドット左へ</code></pre>
+
+<p>
+これが 1 秒に 30 回くり返されます。キーを押しっぱなしにすると、
+1 フレームに 2 ドットずつ、なめらかに動いていくわけです。
+<b>「移動する処理」を書いているのではなく、「1 フレームぶんの移動」を書いている</b>
+と考えてください。
+</p>
+
+<div class="term">
+  <b>用語：ポーリング</b>
+  「向こうから知らせが来る」のを待つのではなく、<b>自分から定期的に状態を見にいく</b>
+  やり方をポーリングと呼びます。ゲームでは毎フレーム必ず処理が回るので、
+  この方式のほうが素直に書けます。
+</div>
+
+<h3>1-2. <code>btn</code> と <code>btnp</code> の違い</h3>
+
+<p>
+似た名前の関数が 2 つあります。<b>この違いが分かっていないと、
+「一瞬しか動かない」という壁にぶつかります。</b>
+</p>
+
+<table>
+  <thead><tr><th>関数</th><th>True になるのは</th><th>向いている用途</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.btn(key)</code></td>
+        <td>押されている<b>あいだ、ずっと</b></td>
+        <td>移動、ショットの連射</td></tr>
+    <tr><td><code>pyxel.btnp(key)</code></td>
+        <td>押した<b>瞬間の 1 フレームだけ</b>（p は press）</td>
+        <td>決定ボタン、ジャンプ、画面の切り替え</td></tr>
+  </tbody>
+</table>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 250" role="img" aria-label="btn と btnp の違いを示すタイムライン図。キーを 3 から 8 フレームのあいだ押している場合、btn は押している間ずっと True、btnp は 3 フレーム目だけ True になる">
+  <text x="132" y="30" fill="#9aa4c4" font-size="12" text-anchor="end">フレーム</text>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="12" text-anchor="middle">
+    <text x="168" y="30">1</text>
+    <text x="214" y="30">2</text>
+    <text x="260" y="30">3</text>
+    <text x="306" y="30">4</text>
+    <text x="352" y="30">5</text>
+    <text x="398" y="30">6</text>
+    <text x="444" y="30">7</text>
+    <text x="490" y="30">8</text>
+    <text x="536" y="30">9</text>
+    <text x="582" y="30">10</text>
+  </g>
+
+  <g stroke="#232840" stroke-width="1">
+    <line x1="145" y1="38" x2="145" y2="222"/>
+    <line x1="191" y1="38" x2="191" y2="222"/>
+    <line x1="237" y1="38" x2="237" y2="222"/>
+    <line x1="283" y1="38" x2="283" y2="222"/>
+    <line x1="329" y1="38" x2="329" y2="222"/>
+    <line x1="375" y1="38" x2="375" y2="222"/>
+    <line x1="421" y1="38" x2="421" y2="222"/>
+    <line x1="467" y1="38" x2="467" y2="222"/>
+    <line x1="513" y1="38" x2="513" y2="222"/>
+    <line x1="559" y1="38" x2="559" y2="222"/>
+    <line x1="605" y1="38" x2="605" y2="222"/>
+  </g>
+
+  <text x="132" y="66" fill="#e8f0ff" font-size="12" text-anchor="end">← キーの状態</text>
+  <rect x="237" y="46" width="276" height="30" rx="4" fill="#ffcc44" opacity=".85"/>
+  <text x="375" y="66" fill="#10121c" font-size="12" text-anchor="middle" font-weight="bold">押しっぱなし</text>
+
+  <text x="132" y="112" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="end">pyxel.btn</text>
+  <g fill="#2ee6a8">
+    <rect x="240" y="92" width="40" height="30" rx="3"/>
+    <rect x="286" y="92" width="40" height="30" rx="3"/>
+    <rect x="332" y="92" width="40" height="30" rx="3"/>
+    <rect x="378" y="92" width="40" height="30" rx="3"/>
+    <rect x="424" y="92" width="40" height="30" rx="3"/>
+    <rect x="470" y="92" width="40" height="30" rx="3"/>
+  </g>
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="11" text-anchor="middle" font-weight="bold">
+    <text x="260" y="112">True</text>
+    <text x="306" y="112">True</text>
+    <text x="352" y="112">True</text>
+    <text x="398" y="112">True</text>
+    <text x="444" y="112">True</text>
+    <text x="490" y="112">True</text>
+  </g>
+
+  <text x="132" y="158" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="end">pyxel.btnp</text>
+  <rect x="240" y="138" width="40" height="30" rx="3" fill="#ff6b97"/>
+  <text x="260" y="158" fill="#10121c" font-family="Consolas, monospace" font-size="11" text-anchor="middle" font-weight="bold">True</text>
+  <g fill="#3b4166" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="306" y="158">False</text>
+    <text x="352" y="158">False</text>
+    <text x="398" y="158">False</text>
+    <text x="444" y="158">False</text>
+    <text x="490" y="158">False</text>
+  </g>
+
+  <text x="132" y="204" fill="#45b0e8" font-family="Consolas, monospace" font-size="12" text-anchor="end">ship_x（btn）</text>
+  <g fill="#45b0e8" font-family="Consolas, monospace" font-size="12" text-anchor="middle">
+    <text x="168" y="204">80</text>
+    <text x="214" y="204">80</text>
+    <text x="260" y="204">78</text>
+    <text x="306" y="204">76</text>
+    <text x="352" y="204">74</text>
+    <text x="398" y="204">72</text>
+    <text x="444" y="204">70</text>
+    <text x="490" y="204">68</text>
+    <text x="536" y="204">68</text>
+    <text x="582" y="204">68</text>
+  </g>
+</svg>
+</div>
+<figcaption>左キーを 3 〜 8 フレームのあいだ押した場合。<code>btnp</code> にすると True は 3 フレーム目だけなので、<code>ship_x</code> は 78 になったきり動かない</figcaption>
+</figure>
+
+<div class="warn">
+  <b>移動には <code>btn</code> を使う</b>
+  <code>btnp</code> で移動を書くと、キーを押しっぱなしにしても 1 回しか動きません。
+  連打しないと進まないゲームになってしまいます。
+</div>
+
+<h3>1-3. <code>if</code> を 4 つ並べる（<code>elif</code> にしない）</h3>
+
+<p>
+上下左右の 4 方向を、次のように <b><code>if</code> を 4 つ並べて</b>書きます。
+</p>
+
+<pre><code>if pyxel.btn(pyxel.KEY_LEFT):
+    self.ship_x -= SHIP_SPEED
+if pyxel.btn(pyxel.KEY_RIGHT):
+    self.ship_x += SHIP_SPEED
+if pyxel.btn(pyxel.KEY_UP):
+    self.ship_y -= SHIP_SPEED
+if pyxel.btn(pyxel.KEY_DOWN):
+    self.ship_y += SHIP_SPEED</code></pre>
+
+<p>
+つい <code>if / elif / elif / elif</code> と書きたくなりますが、それでは<b>斜めに動けません</b>。
+<code>elif</code> は「前の <code>if</code> が成立しなかったときだけ調べる」という意味なので、
+左と上を同時に押しても、最初に見つかった<b>左だけ</b>が実行されて終わります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" role="img" aria-label="if を 4 つ並べた場合と elif でつないだ場合の比較図。if を並べると左上へ斜めに動き、elif だと左にしか動かない">
+  <text x="160" y="26" fill="#2ee6a8" font-family="Consolas, monospace" font-size="14" text-anchor="middle">if を 4 つ並べる</text>
+  <rect x="40" y="42" width="240" height="180" fill="#10121c" stroke="#3b4166" stroke-width="2" rx="3"/>
+  <g transform="translate(144, 118)">
+    <rect x="14" y="0"  width="4"  height="4"  fill="#e8f0ff"/>
+    <rect x="10" y="4"  width="12" height="4"  fill="#e8f0ff"/>
+    <rect x="6"  y="8"  width="20" height="4"  fill="#45b0e8"/>
+    <rect x="2"  y="12" width="28" height="4"  fill="#45b0e8"/>
+    <rect x="0"  y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="24" y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="12" y="16" width="8"  height="4"  fill="#232840"/>
+    <rect x="12" y="20" width="8"  height="4"  fill="#ffcc44"/>
+    <rect x="14" y="24" width="4"  height="4"  fill="#ff6b97"/>
+  </g>
+  <line x1="144" y1="118" x2="88" y2="74" stroke="#2ee6a8" stroke-width="2.5"/>
+  <path d="M78 66 l18 3 -8 11 z" fill="#2ee6a8"/>
+  <text x="160" y="250" fill="#e8f0ff" font-size="12" text-anchor="middle">← と ↑ を同時に押すと</text>
+  <text x="160" y="272" fill="#2ee6a8" font-size="12" text-anchor="middle">x も y も動く ＝ 斜めに進む</text>
+
+  <text x="480" y="26" fill="#ff6b97" font-family="Consolas, monospace" font-size="14" text-anchor="middle">elif でつなぐ</text>
+  <rect x="360" y="42" width="240" height="180" fill="#10121c" stroke="#3b4166" stroke-width="2" rx="3"/>
+  <g transform="translate(464, 118)">
+    <rect x="14" y="0"  width="4"  height="4"  fill="#e8f0ff"/>
+    <rect x="10" y="4"  width="12" height="4"  fill="#e8f0ff"/>
+    <rect x="6"  y="8"  width="20" height="4"  fill="#45b0e8"/>
+    <rect x="2"  y="12" width="28" height="4"  fill="#45b0e8"/>
+    <rect x="0"  y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="24" y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="12" y="16" width="8"  height="4"  fill="#232840"/>
+    <rect x="12" y="20" width="8"  height="4"  fill="#ffcc44"/>
+    <rect x="14" y="24" width="4"  height="4"  fill="#ff6b97"/>
+  </g>
+  <line x1="464" y1="132" x2="408" y2="132" stroke="#ff6b97" stroke-width="2.5"/>
+  <path d="M398 132 l16 -6 0 12 z" fill="#ff6b97"/>
+  <line x1="464" y1="118" x2="464" y2="78" stroke="#3b4166" stroke-width="2.5" stroke-dasharray="4 4"/>
+  <text x="480" y="250" fill="#e8f0ff" font-size="12" text-anchor="middle">← と ↑ を同時に押しても</text>
+  <text x="480" y="272" fill="#ff6b97" font-size="12" text-anchor="middle">最初の if だけ実行 ＝ 左にしか進まない</text>
+</svg>
+</div>
+<figcaption>4 方向を独立して調べたいので、<code>elif</code> ではなく <code>if</code> を並べる</figcaption>
+</figure>
+
+<div class="note">
+  <b>左右を同時に押したらどうなる？</b>
+  <code>-2</code> してから <code>+2</code> されるので、差し引きゼロでその場に止まります。
+  <code>elif</code> なら左が優先されます。どちらも間違いではありませんが、
+  <b>止まるほうが自然</b>なので、このままにします。
+</div>
+
+<h3>1-4. 画面の外に出さない ＝ 範囲へ押し戻す</h3>
+
+<p>
+このままだと、左キーを押し続ければ宇宙船は画面の外へ消えていきます
+（エラーにはなりませんが、二度と見えません）。そこで、<b>移動させたあとに
+「行きすぎていたら引き戻す」</b>という処理を足します。
+</p>
+
+<p>
+ここで大事なのが、<code>blt</code> に渡す <code>x</code>, <code>y</code> は
+<b>宇宙船の左上のかど</b>だということです（フェーズ 5）。
+だから右端は <code>SCREEN_WIDTH</code>（160）ではなく、
+<b><code>SCREEN_WIDTH - SHIP_WIDTH</code>（144）</b>になります。
+144 のとき、宇宙船の右端がちょうど画面の右端に届きます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 330" role="img" aria-label="宇宙船の左上座標が動ける範囲の図。x は 0 から 144、y は 0 から 104 までで、はみ出した場合は min と max で押し戻される">
+  <text x="40" y="34" fill="#9aa4c4" font-size="12">画面（160 x 120 ドット）を 2 倍で表示</text>
+
+  <rect x="40" y="52" width="320" height="240" fill="#10121c" stroke="#3b4166" stroke-width="2"/>
+  <rect x="40" y="52" width="288" height="208" fill="#45b0e8" opacity=".1"/>
+  <rect x="40" y="52" width="288" height="208" fill="none" stroke="#45b0e8" stroke-width="1.5" stroke-dasharray="6 4"/>
+
+  <text x="184" y="150" fill="#45b0e8" font-size="13" text-anchor="middle">宇宙船の左上が動ける範囲</text>
+  <text x="184" y="174" fill="#45b0e8" font-family="Consolas, monospace" font-size="13" text-anchor="middle">x : 0 〜 144</text>
+  <text x="184" y="196" fill="#45b0e8" font-family="Consolas, monospace" font-size="13" text-anchor="middle">y : 0 〜 104</text>
+
+  <g transform="translate(40, 54)">
+    <rect x="14" y="0"  width="4"  height="4"  fill="#e8f0ff"/>
+    <rect x="10" y="4"  width="12" height="4"  fill="#e8f0ff"/>
+    <rect x="6"  y="8"  width="20" height="4"  fill="#45b0e8"/>
+    <rect x="2"  y="12" width="28" height="4"  fill="#45b0e8"/>
+    <rect x="0"  y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="24" y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="12" y="16" width="8"  height="4"  fill="#232840"/>
+    <rect x="12" y="20" width="8"  height="4"  fill="#ffcc44"/>
+    <rect x="14" y="24" width="4"  height="4"  fill="#ff6b97"/>
+  </g>
+  <rect x="40" y="52" width="32" height="32" fill="none" stroke="#ffcc44" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <circle cx="40" cy="52" r="4" fill="#ffcc44"/>
+  <text x="82" y="72" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">(0, 0)</text>
+
+  <g transform="translate(328, 262)">
+    <rect x="14" y="0"  width="4"  height="4"  fill="#e8f0ff"/>
+    <rect x="10" y="4"  width="12" height="4"  fill="#e8f0ff"/>
+    <rect x="6"  y="8"  width="20" height="4"  fill="#45b0e8"/>
+    <rect x="2"  y="12" width="28" height="4"  fill="#45b0e8"/>
+    <rect x="0"  y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="24" y="16" width="8"  height="4"  fill="#e8f0ff"/>
+    <rect x="12" y="16" width="8"  height="4"  fill="#232840"/>
+    <rect x="12" y="20" width="8"  height="4"  fill="#ffcc44"/>
+    <rect x="14" y="24" width="4"  height="4"  fill="#ff6b97"/>
+  </g>
+  <rect x="328" y="260" width="32" height="32" fill="none" stroke="#ffcc44" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <circle cx="328" cy="260" r="4" fill="#ffcc44"/>
+  <text x="322" y="250" fill="#ffcc44" font-family="Consolas, monospace" font-size="12" text-anchor="end">(144, 104)</text>
+  <text x="368" y="306" fill="#9aa4c4" font-size="11">右端 144 + 16 = 160</text>
+
+  <g opacity=".8">
+    <g transform="translate(420, 136)">
+      <rect x="14" y="0"  width="4"  height="4"  fill="#3b4166"/>
+      <rect x="10" y="4"  width="12" height="4"  fill="#3b4166"/>
+      <rect x="6"  y="8"  width="20" height="4"  fill="#3b4166"/>
+      <rect x="2"  y="12" width="28" height="4"  fill="#3b4166"/>
+      <rect x="0"  y="16" width="8"  height="4"  fill="#3b4166"/>
+      <rect x="24" y="16" width="8"  height="4"  fill="#3b4166"/>
+      <rect x="12" y="20" width="8"  height="4"  fill="#3b4166"/>
+    </g>
+    <rect x="420" y="134" width="32" height="32" fill="none" stroke="#ff6b97" stroke-width="1.5" stroke-dasharray="3 3"/>
+  </g>
+  <line x1="414" y1="150" x2="374" y2="150" stroke="#ff6b97" stroke-width="2.5"/>
+  <path d="M364 150 l16 -6 0 12 z" fill="#ff6b97"/>
+  <text x="404" y="200" fill="#ff6b97" font-size="12">はみ出したら</text>
+  <text x="404" y="222" fill="#ff6b97" font-family="Consolas, monospace" font-size="12">min / max で</text>
+  <text x="404" y="244" fill="#ff6b97" font-size="12">範囲へ押し戻す</text>
+</svg>
+</div>
+<figcaption>宇宙船の座標は「左上のかど」。16 ドットぶん引いておかないと、右端と下端ではみ出す</figcaption>
+</figure>
+
+<p>
+押し戻しは <code>max</code> と <code>min</code> の組み合わせで 1 行に書けます。
+</p>
+
+<pre><code>self.ship_x = max(0, min(self.ship_x, SCREEN_WIDTH - SHIP_WIDTH))</code></pre>
+
+<p>
+入れ子になっていて読みにくいので、<b>内側から</b>読んでください。
+これは次の <code>if</code> 文 2 つと、まったく同じ意味です。
+</p>
+
+<pre><code>if self.ship_x &gt; SCREEN_WIDTH - SHIP_WIDTH:   # 右へ行きすぎ？
+    self.ship_x = SCREEN_WIDTH - SHIP_WIDTH   # → 右端に戻す   ＝ min の役目
+if self.ship_x &lt; 0:                           # 左へ行きすぎ？
+    self.ship_x = 0                           # → 左端に戻す   ＝ max の役目</code></pre>
+
+<div class="term">
+  <b>用語：クランプ（clamp）</b>
+  値を「決めた範囲からはみ出さないよう、両端で止める」ことをクランプといいます。
+  ゲームではキャラクターの座標・体力・音量など、いたるところで使います。
+  <b><code>max(下限, min(値, 上限))</code> は決まり文句</b>として覚えてしまってかまいません。
+</div>
+
+<h2>2. このフェーズで使う API</h2>
+
+<table>
+  <thead><tr><th>API</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.btn(key)</code></td>
+        <td><code>key</code> が<b>押されているあいだ</b> <code>True</code> を返す</td></tr>
+    <tr><td><code>pyxel.btnp(key)</code></td>
+        <td><code>key</code> を<b>押した瞬間の 1 フレームだけ</b> <code>True</code> を返す</td></tr>
+    <tr><td><code>pyxel.btnr(key)</code></td>
+        <td><code>key</code> を<b>離した瞬間の 1 フレームだけ</b> <code>True</code> を返す（今回は使わない）</td></tr>
+    <tr><td><code>pyxel.KEY_LEFT</code> ／ <code>pyxel.KEY_RIGHT</code><br>
+            <code>pyxel.KEY_UP</code> ／ <code>pyxel.KEY_DOWN</code></td>
+        <td>矢印キーを表す定数。中身はただの数値だが、数値のまま書くと何のキーか分からなくなる</td></tr>
+  </tbody>
+</table>
+
+<p>Python の組み込み関数も 2 つ使います。Pyxel とは関係なく、Python にもともとあるものです。</p>
+
+<table>
+  <thead><tr><th>関数</th><th>意味</th><th>例</th></tr></thead>
+  <tbody>
+    <tr><td><code>max(a, b)</code></td><td>大きいほうを返す</td><td><code>max(0, -6)</code> → <code>0</code></td></tr>
+    <tr><td><code>min(a, b)</code></td><td>小さいほうを返す</td><td><code>min(150, 144)</code> → <code>144</code></td></tr>
+  </tbody>
+</table>
+
+<h2>3. コードを書き換える</h2>
+
+<p>
+変更は <b>3 か所だけ</b>です。<code>draw</code> は 1 文字も触りません。
+</p>
+
+<h3>3-1. 定数を足す（<code>SHIP_HEIGHT</code> の下）</h3>
+
+<pre><code>SHIP_SPEED = 2          # 1 フレームに進むドット数</code></pre>
+
+<h3>3-2. <code>move_ship</code> メソッドを足す（<code>text_center</code> の下）</h3>
+
+<pre><code>    def move_ship(self):
+        """矢印キーで宇宙船を動かす。画面の外へは出さない"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.ship_x -= SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.ship_x += SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.ship_y -= SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.ship_y += SHIP_SPEED
+
+        # 画面の外へ出ないように、行きすぎた分を押し戻す
+        self.ship_x = max(0, min(self.ship_x, SCREEN_WIDTH - SHIP_WIDTH))
+        self.ship_y = max(0, min(self.ship_y, SCREEN_HEIGHT - SHIP_HEIGHT))</code></pre>
+
+<div class="warn">
+  <b>インデントに注意</b>
+  <code>def move_ship(self):</code> は <code>def update(self):</code> と<b>同じ深さ</b>
+  （スペース 4 個ぶん）にそろえます。ここがずれると
+  <code>AttributeError: 'App' object has no attribute 'move_ship'</code> になります。
+</div>
+
+<h3>3-3. <code>update</code> の先頭から呼び出す</h3>
+
+<pre><code>    def update(self):
+        """毎フレームの更新処理"""
+        self.move_ship()        # ← 追加：先に宇宙船を動かす
+
+        for star in self.stars:
+            star[1] += star[2]
+            ...（以下はそのまま）</code></pre>
+
+<h3>3-4. 書き換え後の全文</h3>
+
+<pre><code># star_voyager.py
+# step0 フェーズ6：矢印キーで宇宙船を動かす
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+TITLE = "STAR VOYAGER"
+GUIDE = "PRESS ESC TO QUIT"
+
+STAR_COUNT = 40         # 星の数
+STAR_SPEED_MIN = 0.3    # 星の速さの下限（ドット／フレーム）
+STAR_SPEED_MAX = 1.8    # 星の速さの上限
+
+SHIP_U = 0              # 台紙のどこから切り出すか（横）
+SHIP_V = 0              # 台紙のどこから切り出すか（縦）
+SHIP_WIDTH = 16         # 宇宙船の幅
+SHIP_HEIGHT = 16        # 宇宙船の高さ
+SHIP_SPEED = 2          # 1 フレームに進むドット数
+
+
+class App:
+    """このゲーム全体を受け持つ箱"""
+
+    def __init__(self):
+        """箱が作られるときに 1 回だけ呼ばれる。ここで準備をすませる"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Star Voyager")
+        pyxel.load("assets.pyxres")     # 絵と音のファイルを読み込む
+
+        self.stars = []                 # 星をぜんぶ入れるリスト
+        self.make_stars()
+
+        self.ship_x = (SCREEN_WIDTH - SHIP_WIDTH) // 2   # 横は画面の中央
+        self.ship_y = 80                                 # 縦は下のほう
+
+        pyxel.run(self.update, self.draw)
+
+    def make_stars(self):
+        """星を STAR_COUNT 個ぶん作って self.stars に入れる"""
+        for i in range(STAR_COUNT):
+            x = random.randint(0, SCREEN_WIDTH - 1)
+            y = random.randint(0, SCREEN_HEIGHT - 1)
+            speed = random.uniform(STAR_SPEED_MIN, STAR_SPEED_MAX)
+            self.stars.append([x, y, speed])
+
+    def star_color(self, speed):
+        """速い星ほど明るい色にして、奥行きを表す"""
+        if speed &gt; 1.2:
+            return pyxel.COLOR_WHITE
+        if speed &gt; 0.7:
+            return pyxel.COLOR_GRAY
+        return pyxel.COLOR_DARK_BLUE
+
+    def text_center(self, y, s, col):
+        """文字列 s を、画面の横中央に来るように描く"""
+        x = (SCREEN_WIDTH - len(s) * pyxel.FONT_WIDTH) // 2
+        pyxel.text(x, y, s, col)
+
+    def move_ship(self):
+        """矢印キーで宇宙船を動かす。画面の外へは出さない"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.ship_x -= SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.ship_x += SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.ship_y -= SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.ship_y += SHIP_SPEED
+
+        # 画面の外へ出ないように、行きすぎた分を押し戻す
+        self.ship_x = max(0, min(self.ship_x, SCREEN_WIDTH - SHIP_WIDTH))
+        self.ship_y = max(0, min(self.ship_y, SCREEN_HEIGHT - SHIP_HEIGHT))
+
+    def update(self):
+        """毎フレームの更新処理"""
+        self.move_ship()
+
+        for star in self.stars:
+            star[1] += star[2]                                  # y に速さを足す
+
+            if star[1] &gt;= SCREEN_HEIGHT:                        # 画面の下に出たら
+                star[0] = random.randint(0, SCREEN_WIDTH - 1)   # x を引き直して
+                star[1] = 0                                     # いちばん上に戻す
+
+    def draw(self):
+        """毎フレームの描画処理。奥のものから順に描く"""
+        pyxel.cls(0)
+
+        # 1. 星（いちばん奥）
+        for star in self.stars:
+            pyxel.pset(star[0], star[1], self.star_color(star[2]))
+
+        # 2. 宇宙船（星より手前）
+        pyxel.blt(
+            self.ship_x, self.ship_y,   # 画面のどこに貼るか
+            0,                          # どのイメージバンクから取るか
+            SHIP_U, SHIP_V,             # 台紙のどこから切り出すか
+            SHIP_WIDTH, SHIP_HEIGHT,    # 何ドットぶん切り出すか
+            pyxel.COLOR_BLACK,          # この色は塗らない（透過色）
+        )
+
+        # 3. 文字（いちばん手前）
+        self.text_center(20, TITLE, pyxel.COLOR_YELLOW)
+        self.text_center(34, GUIDE, pyxel.COLOR_GRAY)
+
+
+App()
+</code></pre>
+
+<h3>実行して確認</h3>
+
+<pre><code>python step0/star_voyager.py</code></pre>
+
+<ul>
+  <li>矢印キーで宇宙船が<b>上下左右に動く</b></li>
+  <li>キーを<b>押しっぱなしにすると動き続ける</b></li>
+  <li>← と ↑ を同時に押すと<b>斜めに動く</b></li>
+  <li>画面の端まで行くと<b>ぴたりと止まり、はみ出さない</b>（右端では船の右辺が画面の右辺に接する）</li>
+  <li>星は今までどおり流れ続けている</li>
+</ul>
+
+<div class="note">
+  <b>キーが効かないときは</b>
+  Pyxel のウィンドウを一度<b>クリックして選択状態（アクティブ）</b>にしてください。
+  別のウィンドウにフォーカスがあると、キー入力は届きません。
+</div>
+
+<h2>4. コードの解説</h2>
+
+<h3>なぜ <code>update</code> に書くのか。<code>draw</code> ではだめか</h3>
+
+<p>
+<code>draw</code> に書いても動いてしまいますが、書きません。
+step0 概要の「土台 2」で決めたとおり、役割を分けているからです。
+</p>
+
+<ul>
+  <li><b><code>update</code></b>：状態（座標など）を<b>変える</b>。画面には触らない</li>
+  <li><b><code>draw</code></b>：今の状態を<b>絵にするだけ</b>。状態は変えない</li>
+</ul>
+
+<p>
+この分担を守っておくと、あとで「タイトル画面のあいだは動かさない」（step1 の画面遷移）
+のように<b>更新だけを止めたい</b>場面で、素直に書けます。
+</p>
+
+<h3><code>move_ship</code> という別のメソッドに分けた理由</h3>
+
+<p>
+<code>update</code> の中に直接書いても動きます。分けたのは、<code>update</code> が
+<b>「今フレームで何が起きるかの目次」</b>になるからです。
+</p>
+
+<pre><code>    def update(self):
+        self.move_ship()      # 1. 宇宙船を動かす
+        （星を動かす処理）      # 2. 星を動かす</code></pre>
+
+<p>
+step1 以降、ここに「敵を動かす」「当たり判定をする」「スコアを更新する」が並びます。
+<b>1 つの関数が長くなったら、意味のかたまりで切り出して名前を付ける。</b>
+<code>make_stars</code> や <code>text_center</code> と同じ考え方です。
+</p>
+
+<h3><code>self.</code> を付け忘れると別の変数になる</h3>
+
+<p>
+<code>self.ship_x -= SHIP_SPEED</code> の <code>self.</code> を落として
+<code>ship_x -= SHIP_SPEED</code> と書くと、Python はこれを
+<b><code>move_ship</code> の中だけのローカル変数</b>だと解釈します。
+そんな変数はまだ無いので、次のエラーになります。
+</p>
+
+<pre><code>UnboundLocalError: local variable 'ship_x' referenced before assignment</code></pre>
+
+<p>
+<code>self.</code> は「<b>この App が覚えておくデータ</b>」の目印です（フェーズ 5 参照）。
+メソッドをまたいで持ち越したい値には、必ず付けます。
+</p>
+
+<h3><code>KEY_LEFT</code> の正体はただの数値</h3>
+
+<p>
+<code>pyxel.KEY_LEFT</code> を <code>print</code> してみると、
+<code>1073741904</code> のような大きな数値が入っています。
+つまり <code>pyxel.btn(1073741904)</code> と書いても動きますが、
+<b>読んだ人（＝未来の自分）に何のキーか分かりません。</b>
+フェーズ 5 で出てきた<b>マジックナンバー</b>を避ける、という話と同じです。
+</p>
+
+<h3>斜め移動は、ほんの少しだけ速い</h3>
+
+<p>
+左と上を同時に押すと、x が 2、y が 2 動きます。
+実際に進んだ距離は 2 + 2 = 4 ではなく、直角三角形の斜辺なので約 2.83 ドット。
+<b>まっすぐ動くより、斜めのほうが約 1.4 倍速い</b>ことになります。
+本格的なゲームでは補正しますが（step3 のシューティングで扱います）、
+step0 では気にしなくてかまいません。
+</p>
+
+<h3>押し戻しは、4 つの <code>if</code> の<b>あと</b>に書く</h3>
+
+<p>
+順番が大事です。「動かす → はみ出しを直す」の順にしておけば、
+どの方向から来ても、どんな速さでも、<b>最後には必ず範囲内へ収まります</b>。
+先に押し戻してから動かすと、その 1 フレームは画面外に出たまま描画されてしまいます。
+</p>
+
+<h2>5. 試してみよう</h2>
+
+<p>1 つずつ変えて実行し、<b>変えたら元に戻して</b>次へ進んでください。</p>
+
+<table>
+  <thead><tr><th>やってみること</th><th>確かめたいこと</th></tr></thead>
+  <tbody>
+    <tr><td><code>SHIP_SPEED</code> を <code>1</code> ／ <code>8</code> に変える</td>
+        <td>操作感が変わる。<code>8</code> は速すぎて狙った位置に止めにくい。
+            <b>ゲームの気持ちよさは数値の調整で決まる</b></td></tr>
+    <tr><td><code>btn</code> を <code>btnp</code> に変える（4 か所）</td>
+        <td>押しっぱなしでは 1 フレームぶんしか動かない。連打が必要になる</td></tr>
+    <tr><td>押し戻しの 2 行を <code>#</code> でコメントアウトする</td>
+        <td>宇宙船が画面の外へ消える。<b>エラーは出ない</b>。逆方向のキーを押せば戻ってくる</td></tr>
+    <tr><td>押し戻しの上限を <code>SCREEN_WIDTH</code> にする<br>
+            （<code>- SHIP_WIDTH</code> を消す）</td>
+        <td>右端で 16 ドットはみ出す。<b>座標が左上のかどである</b>ことがはっきり分かる</td></tr>
+    <tr><td>4 つの <code>if</code> を <code>if / elif / elif / elif</code> にする</td>
+        <td>斜めに動けなくなる。← と ↑ を押すと左にしか進まない</td></tr>
+    <tr><td>左キーの行を<br>
+            <code>if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.KEY_A):</code><br>
+            に変える（他も <code>KEY_D</code> ／ <code>KEY_W</code> ／ <code>KEY_S</code> で同様に）</td>
+        <td>矢印キーと WASD の<b>両対応</b>になる。<code>or</code> でつなぐだけでよい</td></tr>
+    <tr><td><code>GUIDE</code> を <code>"ARROW KEYS TO MOVE"</code> に変える</td>
+        <td>操作説明が画面に出る。中央ぞろえなので<b>文字数が変わっても位置は自動で決まる</b></td></tr>
+    <tr><td>シフトキーでダッシュさせる。<code>move_ship</code> の先頭に<br>
+            <code>speed = SHIP_SPEED</code><br>
+            <code>if pyxel.btn(pyxel.KEY_SHIFT):</code><br>
+            <code>&nbsp;&nbsp;&nbsp;&nbsp;speed = SHIP_SPEED * 2</code><br>
+            を足し、4 か所の <code>SHIP_SPEED</code> を <code>speed</code> にする</td>
+        <td>押しているあいだだけ速くなる。<b>定数をその場の変数に置き換える</b>という、
+            この先よく使う手が身につく</td></tr>
+  </tbody>
+</table>
+
+<h2>6. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>キーを押しても動かない（エラーなし）</td>
+      <td><code>update</code> に <code>self.move_ship()</code> を書き忘れている。
+          または Pyxel のウィンドウがアクティブになっていない（一度クリックする）</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'move_ship'</code></td>
+      <td><code>def move_ship(self):</code> のインデントがずれて、
+          <code>class App:</code> の外に出てしまっている</td>
+    </tr>
+    <tr>
+      <td><code>UnboundLocalError: local variable 'ship_x' ...</code></td>
+      <td><code>self.</code> の付け忘れ。
+          <code>ship_x -= ...</code> ではなく <code>self.ship_x -= ...</code></td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'SHIP_SPEED' is not defined</code></td>
+      <td>3-1 の定数を書き忘れている。<b>ファイルの上のほう</b>（クラスより前）に書く</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: module 'pyxel' has no attribute 'KEY_LEFT'</code> 系</td>
+      <td>定数名のつづり違い。<code>KEY_LEFT</code> ／ <code>KEY_RIGHT</code> ／
+          <code>KEY_UP</code> ／ <code>KEY_DOWN</code>（すべて大文字、アンダースコアは 1 個）</td>
+    </tr>
+    <tr>
+      <td>押しっぱなしでも 1 回しか動かない</td>
+      <td><code>btnp</code> を使っている。移動は <code>btn</code></td>
+    </tr>
+    <tr>
+      <td>斜めに動かない</td>
+      <td><code>elif</code> でつないでいる。<code>if</code> を 4 つ並べる</td>
+    </tr>
+    <tr>
+      <td>画面の外へ飛び出していく</td>
+      <td>押し戻しの 2 行が無いか、4 つの <code>if</code> より<b>前</b>にある。
+          <b>あと</b>へ移動する</td>
+    </tr>
+    <tr>
+      <td>右端・下端で 16 ドット手前で止まるように見える</td>
+      <td><b>正常</b>です。座標は左上のかどなので、
+          <code>x = 144</code> のとき船の右辺が画面の右辺にぴったり接しています</td>
+    </tr>
+    <tr>
+      <td>上下だけ、または左右だけ動かない</td>
+      <td>その <code>if</code> の中で <code>ship_x</code> と <code>ship_y</code> を
+          取り違えている。上下は <code>ship_y</code></td>
+    </tr>
+    <tr>
+      <td>↑ キーで下に動く</td>
+      <td>符号が逆。<b>y は下向きが正</b>なので、上へ動かすには <code>-=</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>次のフェーズ</b>
+  フェーズ 7 では、ふたたびリソースエディタを開いて <b>BGM を作ります</b>。
+  サウンド（音色とメロディ）とミュージック（複数チャンネルの組み合わせ）を編集し、
+  <code>pyxel.playm</code> でループ再生させます。
+  絵と同じく、音も <code>assets.pyxres</code> の中に保存されます。
+</div>
+
+<footer class="site">
+  <a href="phase5.html">← フェーズ 5</a>　｜
+  <a href="./">step0 概要</a>　｜
+  <a href="../">目次</a>
+</footer>
+
+</div>
+</body>
+</html>
