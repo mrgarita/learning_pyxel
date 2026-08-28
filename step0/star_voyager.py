@@ -1,5 +1,5 @@
 # star_voyager.py
-# step0 フェーズ5: 宇宙船を画面に出す
+# step0 フェーズ6: 矢印キーで宇宙船を動かす
 
 import random
 import pyxel
@@ -18,6 +18,7 @@ SHIP_U = 0              # 台紙のどこから切り出すか（横）
 SHIP_V = 0              # 台紙のどこから切り出すか（縦）
 SHIP_WIDTH = 16         # 宇宙船の幅
 SHIP_HEIGHT = 16        # 宇宙船の高さ
+SHIP_SPEED = 2          # 1 フレームに進むドット数
 
 class App:
     """このゲーム全体を受け持つ箱"""
@@ -57,8 +58,25 @@ class App:
         x = (SCREEN_WIDTH - len(s) * pyxel.FONT_WIDTH) // 2
         pyxel.text(x, y, s, col)
 
+    def move_ship(self):
+        """矢印キーで宇宙船を動かす。画面の外へは出さない"""
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.KEY_A):
+            self.ship_x -= SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.KEY_D):
+            self.ship_x += SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.ship_y -= SHIP_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.ship_y += SHIP_SPEED
+
+        # 画面の外へ出ないように、行きすぎた分を押し戻す
+        self.ship_x = max(0, min(self.ship_x, SCREEN_WIDTH - SHIP_WIDTH))
+        self.ship_y = max(0, min(self.ship_y, SCREEN_HEIGHT - SHIP_HEIGHT))
+
     def update(self):
-        """フレーム毎の更新処理。星を下へ動かす"""
+        """フレーム毎の更新処理"""
+        self.move_ship()
+        
         for star in self.stars:
             star[1] += star[2]                                  # y に速さを足す
 
