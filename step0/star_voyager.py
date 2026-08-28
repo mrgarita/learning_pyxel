@@ -1,5 +1,5 @@
 # star_voyager.py
-# step0 フェーズ4: 素材を描き、クラスにまとめる
+# step0 フェーズ5: 宇宙船を画面に出す
 
 import random
 import pyxel
@@ -14,14 +14,26 @@ STAR_COUNT = 40         # 星の数
 STAR_SPEED_MIN = 0.3    # 星の速さの下限（ドット／フレーム）
 STAR_SPEED_MAX = 1.8    # 星の速さの上限
 
+SHIP_U = 0              # 台紙のどこから切り出すか（横）
+SHIP_V = 0              # 台紙のどこから切り出すか（縦）
+SHIP_WIDTH = 16         # 宇宙船の幅
+SHIP_HEIGHT = 16        # 宇宙船の高さ
+
 class App:
     """このゲーム全体を受け持つ箱"""
 
     def __init__(self):
         """箱が作られるときに1回だけ呼ばれる。ここで準備をすませる"""
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Star Voyager")
+        pyxel.load("assets.pyxres")     # 絵と音のファイルを読み込む
+
         self.stars = []     # 星をぜんぶ入れるリスト
         self.make_stars()
+
+        # 宇宙船の位置を覚えておく
+        self.ship_x = (SCREEN_WIDTH - SHIP_WIDTH) // 2      # 横は画面の中央
+        self.ship_y = 80                                    # 縦は下の方
+
         pyxel.run(self.update, self.draw)
 
     def make_stars(self):
@@ -58,9 +70,20 @@ class App:
         """フレーム毎の描画処理"""
         pyxel.cls(0)
 
+        # 1. 星（いちばん奥）
         for star in self.stars:
             pyxel.pset(star[0], star[1], self.star_color(star[2]))
 
+        # 2. 宇宙船（星より手前）
+        pyxel.blt(
+            self.ship_x, self.ship_y,   # 画面のどこに貼るか
+            0,                          # どのイメージバンクから取るか
+            SHIP_U, SHIP_V,             # 台紙のどこから切り出すか
+            SHIP_WIDTH, SHIP_HEIGHT,    # 何ドット分取り出すか
+            pyxel.COLOR_BLACK,          # この色は塗らない（透過色）
+        )
+
+        # 3. 文字（いちばん手前）
         self.text_center(20, TITLE, pyxel.COLOR_YELLOW)
         self.text_center(34, GUIDE, pyxel.COLOR_GRAY)
 
