@@ -255,9 +255,104 @@ Pyxel の音は 2 段構えになっています。ここを取り違えると�
 
 <ol>
   <li>左上の <b>SOUND</b> が <code>0</code>、<b>SPEED</b> が <code>30</code> であることを確認する</li>
-  <li><code>PageUp</code> / <code>PageDown</code> で <b>OCTAVE を 2</b> にする（画面の左右の細いバーが今の高さを示します）</li>
+  <li><b>OCTAVE を 2 にする</b>（次の「OCTAVE の合わせ方」を参照）</li>
   <li>下の打鍵表のとおり、<b>キーを押して <code>Enter</code></b> を 16 回くり返す</li>
 </ol>
+
+<h4>OCTAVE の合わせ方</h4>
+
+<p>
+OCTAVE は「今、キーボードのキーが<b>どの高さの音に割り当てられているか</b>」の設定です。
+キーは <b>2 オクターブぶん</b>（下段 12 音＋上段 12 音）しかないので、
+それを 5 オクターブある音域のどこに当てるかを、この設定で決めます。
+</p>
+
+<table>
+  <thead><tr><th>OCTAVE</th><th>下段（<code>Z S X D C V G B H N J M</code>）</th><th>上段（<code>Q 2 W 3 E R 5 T 6 Y 7 U</code>）</th></tr></thead>
+  <tbody>
+    <tr><td><code>3</code></td><td>C3 〜 B3</td><td>C4 〜 B4（いちばん高い）</td></tr>
+    <tr><td><b><code>2</code></b></td><td><b>C2 〜 B2</b></td><td><b>C3 〜 B3</b></td></tr>
+    <tr><td><code>1</code></td><td>C1 〜 B1</td><td>C2 〜 B2</td></tr>
+    <tr><td><code>0</code></td><td>C0 〜 B0（いちばん低い）</td><td>C1 〜 B1</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b>OCTAVE の数字は、画面のどこにも表示されません</b>
+  ここが分かりにくいところです。今いくつなのかは、
+  <b>画面の左右にある細いバーの、明るい部分の位置</b>でしか読み取れません。
+  バーは上から順に <code>3</code>・<code>2</code>・<code>1</code>・<code>0</code> の 4 段になっていて、
+  明るい帯が今の OCTAVE を示します（上ほど高い音）。
+</div>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 266" role="img" aria-label="画面左右のオクターブバーの見かた。明るい帯の位置が上から順に OCTAVE 3、2、1、0 を表す">
+  <text x="320" y="24" fill="#9aa4c4" font-size="12" text-anchor="middle">画面の左右にある細いバー（明るい帯の位置で読み取る）</text>
+
+  <g stroke="#3b4166" fill="#232840">
+    <rect x="84"  y="40" width="16" height="172"/>
+    <rect x="224" y="40" width="16" height="172"/>
+    <rect x="364" y="40" width="16" height="172"/>
+    <rect x="504" y="40" width="16" height="172"/>
+  </g>
+  <g fill="#ffcc44">
+    <rect x="87"  y="42"  width="10" height="66"/>
+    <rect x="227" y="76"  width="10" height="66"/>
+    <rect x="367" y="110" width="10" height="66"/>
+    <rect x="507" y="144" width="10" height="66"/>
+  </g>
+
+  <g font-family="Consolas, monospace" font-size="13" text-anchor="middle">
+    <text x="92"  y="234" fill="#9aa4c4">OCTAVE 3</text>
+    <text x="232" y="234" fill="#ffcc44" font-weight="bold">OCTAVE 2</text>
+    <text x="372" y="234" fill="#9aa4c4">OCTAVE 1</text>
+    <text x="512" y="234" fill="#9aa4c4">OCTAVE 0</text>
+  </g>
+  <text x="232" y="256" fill="#ffcc44" font-size="11" text-anchor="middle">▲ 今回はこれ</text>
+
+
+  <line x1="44" y1="60" x2="44" y2="196" stroke="#45b0e8" stroke-width="1.5"/>
+  <path d="M44 52 l-5 12 10 0 z" fill="#45b0e8"/>
+  <text x="34" y="86" fill="#45b0e8" font-size="11" text-anchor="end">高い</text>
+  <text x="34" y="180" fill="#45b0e8" font-size="11" text-anchor="end">低い</text>
+
+  <text x="560" y="112" fill="#9aa4c4" font-size="11">明るい帯は</text>
+  <text x="560" y="128" fill="#9aa4c4" font-size="11">キーで届く</text>
+  <text x="560" y="144" fill="#9aa4c4" font-size="11">2 オクターブ</text>
+  <text x="560" y="160" fill="#9aa4c4" font-size="11">ぶんの範囲</text>
+</svg>
+</div>
+<figcaption>明るい帯の縦の長さは、ちょうど 2 オクターブぶん。ピアノロールのうち「今キーで音を置ける範囲」を示しています</figcaption>
+</figure>
+
+<div class="note">
+  <b>確実に 2 に合わせる方法</b>
+  バーの位置を目で読むのが不安なら、<b>数えて合わせられます</b>。
+  OCTAVE は 0 より下、3 より上には行かない（それ以上押しても変わらない）ので、
+  <ol>
+    <li><code>PageDown</code> を <b>4 回以上</b>押す → 確実にいちばん下（<code>0</code>）になる</li>
+    <li>そこから <code>PageUp</code> を <b>ちょうど 2 回</b>押す → <code>2</code> になる</li>
+  </ol>
+  なお、<b>エディタを開いた直後は 2</b> です。まだ <code>PageUp</code> / <code>PageDown</code> を
+  押しておらず、バーをクリックもしていなければ、そのままで大丈夫です。
+</div>
+
+<div class="term">
+  <b>耳で確かめる方法</b>
+  OCTAVE 2 のとき、<code>N</code> キーの音は <b>A2 ＝ 440 Hz</b>。
+  楽器のチューニングに使われる、いちばん有名な「ラ」の音です。
+  キーを押している間は音が鳴る（＝試聴できる）ので、押してみて
+  <b>高すぎず低すぎない、はっきりした「ラ」</b>に聞こえれば合っています。
+</div>
+
+<div class="note">
+  <b>もし OCTAVE がずれていても、曲は成立します</b>
+  1 つずれると全体が高く（低く）なるだけで、<b>メロディの形は変わりません</b>。
+  打ち込んでみて「なんだか高すぎる」と思ったら、
+  <code>Ctrl</code> + <code>Z</code> でまとめて戻すか、OCTAVE を直して打ち直してください。
+  失敗しても壊れるものはありません。
+</div>
 
 <p>
 鍵盤は<b>パソコンのキーボードに割り当てられて</b>います。下段が今の OCTAVE、
@@ -394,7 +489,8 @@ Pyxel の音は 2 段構えになっています。ここを取り違えると�
 <h3>2-3. ベースを作る（SOUND 1）</h3>
 
 <p>
-左上の <b>SOUND</b> の数字を <code>1</code> に変え、<b>OCTAVE を 1</b> に下げます。
+左上の <b>SOUND</b> の数字を <code>1</code> に変え、<b>OCTAVE を 1 に下げます</b>
+（<code>PageDown</code> を 1 回。バーの明るい帯が 1 段ぶん下へ動きます）。
 今度は 4 拍に 1 回だけ、低い音を置きます。
 </p>
 
