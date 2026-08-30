@@ -192,6 +192,174 @@ print(len(t))   # → 3
   「特殊メソッドは<b>定義するけれど、呼ばない</b>」と覚えてください。
 </div>
 
+<h3 id="split-functions">Q. 処理をどこで関数に分ければいい？ 分ける基準は？</h3>
+<p>
+<b>A.</b> 行数ではなく <b>「名前がつけられるか」</b> で決めます。
+「この 5 行は何をしているか」を短い名前で言い切れるなら、それは関数にしてよいまとまりです。
+逆に <code>move_and_grow</code> のように「〜と〜」でしか言えないなら、
+まだ 2 つの仕事が混ざっているサインです。
+</p>
+
+<h4>分けどきの 4 つのサイン</h4>
+
+<table>
+  <thead><tr><th>サイン</th><th>具体例</th></tr></thead>
+  <tbody>
+    <tr><td><b>名前が「〜と〜をする」になる</b></td>
+        <td>「花を動かし<b>て</b>ヒヨコを大きくする」としか言えない</td></tr>
+    <tr><td><b>主語が違うものが混ざっている</b></td>
+        <td><code>move_flower()</code> の中にヒヨコの大きさのルールが書いてある</td></tr>
+    <tr><td><b>同じコードが 2 か所に出た</b></td>
+        <td>足元のY座標を求める式を初期化と衝突時の両方で書いている</td></tr>
+    <tr><td><b><code>update()</code> を読んでも流れが分からない</b></td>
+        <td>呼び出しが並んでいるのに、何をしているゲームか読み取れない</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b><code>update()</code> は「目次」になっているのが理想</b>
+  中身を読まなくても、呼び出しの並びだけでゲームの流れが分かる状態を目指します。
+<pre><code>    def update(self):
+        self.make_flower()      # 花を作る
+        self.move_flowers()     # 花を動かす
+        self.move_hiyoko()      # ヒヨコを動かす</code></pre>
+  これが読めれば、関数分割はうまくいっています。
+</div>
+
+<h4>「主語が違う」の見つけ方</h4>
+
+<p>
+いちばん見落としやすいのがこれです。関数の名前は <b>花</b> の話をしているのに、
+中身に <b>ヒヨコ</b> のルールが紛れ込んでいる、という状態です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 330" role="img" aria-label="move_flower の中にヒヨコの処理が混ざっている状態と、grow_hiyoko として切り出したあとの状態を比べた図">
+  <style>
+    .sf-h   { font: bold 13px var(--font-body); fill: var(--c-text); }
+    .sf-lbl { font: 12px var(--font-body); fill: var(--c-text-dim); }
+    .sf-cd  { font: 12px var(--font-code); fill: var(--c-text); }
+    .sf-cdd { font: 12px var(--font-code); fill: var(--c-text-dim); }
+    .sf-tag { font: bold 11px var(--font-body); }
+  </style>
+
+  <!-- 左：before -->
+  <text class="sf-h" x="20" y="18">混ざっている</text>
+
+  <rect x="20" y="30" width="300" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="sf-cd" x="32" y="47">update()</text>
+
+  <rect x="44" y="66" width="276" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-accent-2)"/>
+  <text class="sf-cd" x="56" y="83">make_flower()</text>
+  <text class="sf-tag" x="308" y="83" fill="var(--c-accent-2)" text-anchor="end">花</text>
+
+  <rect x="44" y="98" width="276" height="122" rx="4" fill="var(--c-panel)" stroke="var(--c-accent-2)"/>
+  <text class="sf-cd" x="56" y="115">move_flower()</text>
+  <text class="sf-tag" x="308" y="115" fill="var(--c-accent-2)" text-anchor="end">花</text>
+  <text class="sf-cdd" x="68" y="135">x += vx / y += vy</text>
+  <text class="sf-cdd" x="68" y="153">当たり判定</text>
+
+  <!-- 異物 -->
+  <rect x="60" y="162" width="248" height="48" rx="4" fill="var(--c-bg-soft)" stroke="var(--c-pink)" stroke-dasharray="4 3"/>
+  <text class="sf-cd" x="72" y="180" fill="var(--c-pink)">hiyoko_scale += 1</text>
+  <text class="sf-cd" x="72" y="198" fill="var(--c-pink)">min(..., 16) / put_on_ground()</text>
+
+  <rect x="44" y="228" width="276" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-accent)"/>
+  <text class="sf-cd" x="56" y="245">move_hiyoko()</text>
+  <text class="sf-tag" x="308" y="245" fill="var(--c-accent)" text-anchor="end">ヒヨコ</text>
+
+  <text class="sf-lbl" x="20" y="280">花の関数の中に<tspan fill="var(--c-pink)">ヒヨコのルール</tspan>がある。</text>
+  <text class="sf-lbl" x="20" y="298">大きくなる条件が増えたとき、</text>
+  <text class="sf-lbl" x="20" y="316">上限チェックを書き忘れる。</text>
+
+  <!-- 矢印 -->
+  <path d="M 340 150 L 372 150" stroke="var(--c-green)" stroke-width="2" fill="none"/>
+  <path d="M 364 144 L 374 150 L 364 156 Z" fill="var(--c-green)"/>
+
+  <!-- 右：after -->
+  <text class="sf-h" x="392" y="18">切り出したあと</text>
+
+  <rect x="392" y="30" width="290" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="sf-cd" x="404" y="47">update()</text>
+
+  <rect x="416" y="66" width="266" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-accent-2)"/>
+  <text class="sf-cd" x="428" y="83">make_flower()</text>
+  <text class="sf-tag" x="670" y="83" fill="var(--c-accent-2)" text-anchor="end">花</text>
+
+  <rect x="416" y="98" width="266" height="86" rx="4" fill="var(--c-panel)" stroke="var(--c-accent-2)"/>
+  <text class="sf-cd" x="428" y="115">move_flowers()</text>
+  <text class="sf-tag" x="670" y="115" fill="var(--c-accent-2)" text-anchor="end">花</text>
+  <text class="sf-cdd" x="440" y="135">x += vx / y += vy</text>
+  <text class="sf-cdd" x="440" y="153">当たり判定</text>
+  <text class="sf-cd"  x="440" y="173" fill="var(--c-green)">grow_hiyoko()　←呼ぶだけ</text>
+
+  <rect x="416" y="192" width="266" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-accent)"/>
+  <text class="sf-cd" x="428" y="209">grow_hiyoko()</text>
+  <text class="sf-tag" x="670" y="209" fill="var(--c-accent)" text-anchor="end">ヒヨコ</text>
+
+  <rect x="416" y="224" width="266" height="24" rx="4" fill="var(--c-panel)" stroke="var(--c-accent)"/>
+  <text class="sf-cd" x="428" y="241">move_hiyoko()</text>
+  <text class="sf-tag" x="670" y="241" fill="var(--c-accent)" text-anchor="end">ヒヨコ</text>
+
+  <text class="sf-lbl" x="392" y="280">花の関数は<tspan fill="var(--c-accent-2)">花の話</tspan>だけ。</text>
+  <text class="sf-lbl" x="392" y="298">大きさのルールは</text>
+  <text class="sf-lbl" x="392" y="316"><tspan fill="var(--c-accent)">grow_hiyoko</tspan> の 1 か所にまとまる。</text>
+</svg>
+</div>
+<figcaption>関数の「名前が指している主語」と、中身の主語を合わせる</figcaption>
+</figure>
+
+<p>切り出すと、呼び出し側は 1 行で意図が読めるようになります。</p>
+
+<pre><code>HIYOKO_SCALE_MAX = 16   # ヒヨコの大きさの上限
+
+    def grow_hiyoko(self):
+        """ヒヨコを1段階大きくする（上限まで）"""
+        self.hiyoko_scale = min(self.hiyoko_scale + 1, HIYOKO_SCALE_MAX)
+        self.put_on_ground()
+
+    # 呼び出し側（花の移動処理の中）
+            if pyxel.pget(x + 1, y + 2) == pyxel.COLOR_YELLOW:
+                self.grow_hiyoko()      # ヒヨコが大きくなる
+                continue</code></pre>
+
+<h4>名前のつけ方</h4>
+
+<ul>
+  <li><b>動詞 + 対象</b>で揃える — <code>make_flower</code> / <code>move_flowers</code> /
+      <code>move_hiyoko</code> / <code>grow_hiyoko</code>。規則が一貫していると、
+      中身を読まずに役割が推測できます</li>
+  <li><b>単数・複数を使い分ける</b> — 1 個作る <code>make_flower</code> は単数、
+      全部を動かす <code>move_flowers</code> は複数。あとで「1 個だけ動かす関数」が
+      欲しくなったときに名前が空きます</li>
+  <li><b><code>16</code> のような数字は定数にする</b> — 名前がつくと、
+      その数字が何のための値なのかがコードから読み取れます</li>
+</ul>
+
+<h4>逆に、分けてはいけないとき</h4>
+
+<div class="warn">
+  <b>「長いから」だけの理由で分けない</b>
+  無理に切ると、<code>update()</code> から呼ばれる関数が 20 個並んで、かえって流れが追えなくなります。
+  分ける理由はつねに「まとまりに名前がついたから」であって、行数ではありません。
+</div>
+
+<p>
+たとえば <code>pyxel.btn()</code> による入力の読み取りが <code>move_hiyoko</code> と
+<code>make_flower</code> の両方に散らばっていても、この規模なら問題ありません
+（Pyxel 付属のサンプルもこの書き方です）。
+「タイトル画面では入力を無視したい」のように<b>実際に困りごとが起きてから</b>、
+入力係の関数へまとめれば十分です。
+</p>
+
+<div class="note">
+  <b>先回りして分けない</b>
+  「いつか必要になりそう」で関数を増やすと、使われないまま残って読む量だけが増えます。
+  同じコードが <b>2 回目</b>に出てきたとき、あるいは名前が「〜と〜」になったときが、
+  実際に手を動かすタイミングです。
+</div>
+
 <h2>Pyxel について</h2>
 
 <h3 id="pyxres-inside">Q. <code>.pyxres</code> ファイルの中身は読める？ 何が入っている？</h3>
