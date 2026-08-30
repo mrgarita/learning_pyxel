@@ -419,6 +419,188 @@ data = [[0, 0, 0, 0, 0, 0, 6, 7, 7, 6, 0], [0, 0, 0, 6, 6, 6, 6, 7, 7, 6, ...
   Python は型が混ざっても計算できるので、動作に問題はありません。
 </div>
 
+<h3 id="blt-scale">Q. <code>blt()</code> の <code>scale</code> で絵を大きくしたら位置がズレた。XY はどう計算する？</h3>
+<p>
+<b>A.</b> <code>scale</code> は <b>絵の中心を固定したまま</b>拡大します。
+<code>blt()</code> に渡す <code>x, y</code> は「<b><code>scale</code> が 1 のときの左上</b>」を指す座標のままで、
+<code>scale</code> を上げると<b>そこから上下左右へ均等に</b>絵が広がります。
+</p>
+
+<p>
+4×4 の絵を <code>blt(10, 10, img, 0, 0, 4, 4, None, 0, scale)</code> で描き、
+実際に色が付いたドットを <code>pget</code> で数えた結果です。
+</p>
+
+<table>
+  <thead><tr><th><code>scale</code></th><th>描かれた x</th><th>描かれた y</th><th>中心</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>10 〜 13</td><td>10 〜 13</td><td>(12, 12)</td></tr>
+    <tr><td>2</td><td>8 〜 15</td><td>8 〜 15</td><td>(12, 12)</td></tr>
+    <tr><td>3</td><td>6 〜 17</td><td>6 〜 17</td><td>(12, 12)</td></tr>
+  </tbody>
+</table>
+
+<p>
+どの <code>scale</code> でも中心は <code>(12, 12)</code> のまま動いていません。
+幅をマイナスにして左右反転させても（<code>w = -4</code>）、結果はまったく同じでした。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 480 300" role="img" aria-label="scale を 1・2・3 と上げても中心座標は変わらず、絵が中心から上下左右へ均等に広がることを示す図">
+  <style>
+    .bs-lbl { font: 13px var(--font-body); fill: var(--c-text-dim); }
+    .bs-cd  { font: 13px var(--font-code); fill: var(--c-text); }
+    .bs-ac  { font: bold 13px var(--font-code); fill: var(--c-accent); }
+  </style>
+
+  <!-- scale=3 -->
+  <rect x="152" y="102" width="96" height="96" rx="3" fill="none" stroke="var(--c-line)" stroke-width="2"/>
+  <text class="bs-lbl" x="266" y="112">scale = 3</text>
+  <line x1="248" y1="107" x2="262" y2="107" stroke="var(--c-line)" stroke-width="2"/>
+
+  <!-- scale=2 -->
+  <rect x="168" y="118" width="64" height="64" rx="3" fill="none" stroke="var(--c-accent-2)" stroke-width="2"/>
+  <text class="bs-lbl" x="266" y="140">scale = 2</text>
+  <line x1="232" y1="135" x2="262" y2="135" stroke="var(--c-accent-2)" stroke-width="2"/>
+
+  <!-- scale=1 -->
+  <rect x="184" y="134" width="32" height="32" rx="2" fill="var(--c-panel)" stroke="var(--c-green)" stroke-width="2"/>
+  <text class="bs-lbl" x="266" y="168">scale = 1</text>
+  <line x1="216" y1="163" x2="262" y2="163" stroke="var(--c-green)" stroke-width="2"/>
+
+  <!-- 中心 -->
+  <line x1="188" y1="150" x2="212" y2="150" stroke="var(--c-pink)" stroke-width="1.5"/>
+  <line x1="200" y1="138" x2="200" y2="162" stroke="var(--c-pink)" stroke-width="1.5"/>
+  <text class="bs-lbl" x="266" y="196">中心 — <tspan fill="var(--c-pink)">動かない</tspan></text>
+  <line x1="206" y1="156" x2="262" y2="191" stroke="var(--c-pink)" stroke-width="1.5"/>
+
+  <!-- 渡した x, y -->
+  <circle cx="184" cy="134" r="4" fill="var(--c-accent)"/>
+  <text class="bs-ac" x="20" y="126">blt に渡す (x, y)</text>
+  <line x1="150" y1="122" x2="180" y2="132" stroke="var(--c-accent)" stroke-width="1.5"/>
+  <text class="bs-lbl" x="20" y="146">scale=1 のときの左上</text>
+
+  <!-- 広がる方向 -->
+  <g stroke="var(--c-text-dim)" stroke-width="1.5" fill="none">
+    <path d="M 200 96 L 200 78"/><path d="M 195 84 L 200 76 L 205 84"/>
+    <path d="M 200 204 L 200 224"/><path d="M 195 218 L 200 226 L 205 218"/>
+    <path d="M 146 150 L 128 150"/><path d="M 134 145 L 126 150 L 134 155"/>
+    <path d="M 254 150 L 272 150"/><path d="M 266 145 L 274 150 L 266 155"/>
+  </g>
+  <text class="bs-lbl" x="200" y="62" text-anchor="middle">上下左右へ均等に広がる</text>
+
+  <text class="bs-cd" x="20" y="264">上端 = 中心Y − 高さ × scale ÷ 2</text>
+  <text class="bs-cd" x="20" y="286">下端 = 中心Y + 高さ × scale ÷ 2　←「足元」はここ</text>
+</svg>
+</div>
+<figcaption><code>scale</code> を上げても中心は動かない。<code>x, y</code> は「<code>scale</code>=1 のときの左上」を指したまま</figcaption>
+</figure>
+
+<h4>足元を地面に固定したいとき</h4>
+
+<p>
+キャラクターが大きくなっても地面に立っているように見せたい、というのはよくある要求です。
+「下端＝地面のY」になるよう、上の式を <code>y</code> について解きます。
+</p>
+
+<pre><code>中心Y + 高さ × scale ÷ 2 = 地面Y
+       ↓  中心Y = y + 高さ ÷ 2 を代入して整理
+
+y = 地面Y − 高さ × (scale + 1) ÷ 2</code></pre>
+
+<p>
+<b><code>x</code> は補正が要りません。</b>横方向の中心は <code>scale</code> によらず保たれるので、
+<code>x</code> を触ると逆にズレます。直すのは <code>y</code> だけです。
+</p>
+
+<p>高さ 16 ドット・地面 Y = 111 で計算するとこうなります。</p>
+
+<table>
+  <thead><tr><th><code>scale</code></th><th><code>y</code> の値</th><th>実際に描かれる範囲</th><th>足元</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>111 − 16 = <b>95</b></td><td>95 〜 110</td><td>111</td></tr>
+    <tr><td>2</td><td>111 − 24 = <b>87</b></td><td>79 〜 110</td><td>111</td></tr>
+    <tr><td>3</td><td>111 − 32 = <b>79</b></td><td>63 〜 110</td><td>111</td></tr>
+  </tbody>
+</table>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 520 300" role="img" aria-label="scale が 1・2・3 と大きくなっても足元のY座標が地面に揃っている様子。渡す x,y の点は絵の内側へ入っていく">
+  <style>
+    .gs-lbl { font: 12px var(--font-body); fill: var(--c-text-dim); }
+    .gs-cd  { font: 13px var(--font-code); fill: var(--c-accent-2); }
+    .gs-ac  { font: bold 12px var(--font-code); fill: var(--c-accent); }
+  </style>
+
+  <!-- 地面 -->
+  <rect x="20" y="250" width="480" height="18" fill="var(--c-bg-soft)" stroke="var(--c-line)"/>
+  <line x1="20" y1="250" x2="500" y2="250" stroke="var(--c-green)" stroke-width="2"/>
+  <text class="gs-lbl" x="20" y="286">地面Y = 111 — この線に足元をそろえる</text>
+
+  <!-- scale=1 -->
+  <rect x="70" y="218" width="32" height="32" rx="2" fill="var(--c-panel)" stroke="var(--c-green)" stroke-width="2"/>
+  <circle cx="70" cy="218" r="4" fill="var(--c-accent)"/>
+  <text class="gs-lbl" x="86" y="208" text-anchor="middle">scale = 1</text>
+  <text class="gs-cd"  x="86" y="190" text-anchor="middle">y = 95</text>
+
+  <!-- scale=2 -->
+  <rect x="180" y="186" width="64" height="64" rx="2" fill="var(--c-panel)" stroke="var(--c-accent-2)" stroke-width="2"/>
+  <circle cx="196" cy="202" r="4" fill="var(--c-accent)"/>
+  <text class="gs-lbl" x="212" y="176" text-anchor="middle">scale = 2</text>
+  <text class="gs-cd"  x="212" y="158" text-anchor="middle">y = 87</text>
+
+  <!-- scale=3 -->
+  <rect x="340" y="154" width="96" height="96" rx="2" fill="var(--c-panel)" stroke="var(--c-line)" stroke-width="2"/>
+  <circle cx="372" cy="186" r="4" fill="var(--c-accent)"/>
+  <text class="gs-lbl" x="388" y="144" text-anchor="middle">scale = 3</text>
+  <text class="gs-cd"  x="388" y="126" text-anchor="middle">y = 79</text>
+
+  <!-- 渡した点の注記 -->
+  <text class="gs-ac"  x="448" y="204" text-anchor="middle">● = blt に渡す (x, y)</text>
+  <text class="gs-lbl" x="448" y="222" text-anchor="middle">絵の左上ではなくなる</text>
+  <line x1="440" y1="196" x2="378" y2="188" stroke="var(--c-accent)" stroke-width="1.5"/>
+</svg>
+</div>
+<figcaption>足元（下端）をそろえると、<code>y</code> は <code>scale</code> が 1 増えるごとに高さの半分だけ小さくなる</figcaption>
+</figure>
+
+<h4>コードの形</h4>
+
+<p>
+「ぶつかった瞬間に差分を引く」のではなく、<b><code>scale</code> から毎回 Y を計算し直す</b>形にしておくと、
+あとで縮ませたりリセットしたりしても崩れません。
+</p>
+
+<pre><code>GROUND_Y = 111          # ヒヨコの足元を置くY座標
+
+    def put_on_ground(self):
+        """ヒヨコの足元が地面につくようにY座標を決める"""
+        self.hiyoko_y = GROUND_Y - HIYOKO_HEIGHT * (self.hiyoko_scale + 1) // 2</code></pre>
+
+<p>あとは大きさを変えたところで呼ぶだけです。</p>
+
+<pre><code>        self.hiyoko_scale = 1           # 初期化のとき
+        self.put_on_ground()
+
+        self.hiyoko_scale += 1          # 花にぶつかって大きくなったとき
+        self.put_on_ground()</code></pre>
+
+<div class="note">
+  <b>整数で持つなら <code>//</code> を使う</b>
+  <code>/</code> で割ると結果が小数（<code>float</code>）になります。座標に小数を渡しても
+  Pyxel は四捨五入して描いてくれる（<a href="#float-coord">→ 小数の座標</a>）ので動きますが、
+  ここは必ず割り切れる計算なので <code>//</code> で整数のままにしておくほうが素直です。
+</div>
+
+<div class="warn">
+  <b>画面端の判定も <code>scale</code> の影響を受ける</b>
+  <code>max()</code> / <code>min()</code> で左右の動ける範囲を決めている場合、
+  幅を <code>HIYOKO_WIDTH</code> 固定で書いていると、大きくなったぶんだけ画面外へはみ出します。
+  見えている絵の幅は <code>HIYOKO_WIDTH * scale</code> なので、はみ出しを厳密に止めたいときはこちらを使います。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>
