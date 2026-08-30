@@ -16,8 +16,5 @@ pyxel_examples/
 # VS Code の Code Runner 拡張が「選択範囲だけ実行」時に作る一時ファイル
 tempCodeRunnerFile.py
 
-# step0 の練習用フォルダ（自作アニメーション制作中。完成したらこの行を消してコミットする）
-step0-learning/
-
 # pyxel package が作る中間ファイル（いつでも作り直せるので追跡しない）
 *.pyxapp

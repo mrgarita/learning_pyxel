@@ -11,6 +11,7 @@ Python のゲームライブラリ **[Pyxel](https://github.com/kitao/pyxel)** �
 学習の解説・備忘録は `docs/site/` に静的 HTML として置き、GitHub Pages で公開します。
 
 - **公開 URL：https://mrgarita.github.io/learning_pyxel/**
+- **step0 の作品「Star Voyager」（ブラウザでそのまま動きます）：https://mrgarita.github.io/learning_pyxel/site/step0/star_voyager.html**
 
 ## 学習ステップ
 
@@ -39,10 +40,11 @@ pip install pyxel
 
 ```
 learning_pyxel/
-├── docs/site/    解説 HTML（GitHub Pages で公開）
-├── step0/        step0 の作品コード
-├── CLAUDE.md     Claude Code 向けの作業指針
-└── project.txt   学習計画の原本
+├── docs/site/          解説 HTML（GitHub Pages で公開）
+├── step0/              step0 の作品コード
+├── step0-learning/     step0 で学んだことの復習作品
+├── CLAUDE.md           Claude Code 向けの作業指針
+└── project.txt         学習計画の原本
 ```
 
 ## ライセンス / 素材について
