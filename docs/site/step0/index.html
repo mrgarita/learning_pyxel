@@ -16,7 +16,7 @@
 
 <p class="crumb"><a href="../">← 目次にもどる</a></p>
 
-<h2>1. 完成イメージ</h2>
+<h2 id="goal">1. 完成イメージ</h2>
 
 <p>
 真っ暗な宇宙空間を、星が手前へ流れていきます。画面中央下に自作のドット絵の宇宙船がいて、
@@ -87,7 +87,34 @@
   動くことを確かめてから次に進みます。
 </div>
 
-<h2>2. この step で学ぶ技術項目</h2>
+<h2 id="phases">2. フェーズ分割</h2>
+
+<p>完成までを 8 つのフェーズに分けます。上から順に、少しずつ書き足していきます。
+見出しのリンクから、それぞれの解説ページへ直接移動できます。</p>
+
+<table>
+  <thead><tr><th>フェーズ</th><th>やること</th><th>主に使う API・機能</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-no">1</td><td><a href="phase1.html"><b>ウィンドウを出して、黒い画面を表示する</b></a></td><td><code>pyxel.init</code> / <code>pyxel.run</code> / <code>pyxel.cls</code></td></tr>
+    <tr><td class="phase-no">2</td><td><a href="phase2.html"><b>タイトル文字を画面に表示する</b></a></td><td><code>pyxel.text</code>、色番号</td></tr>
+    <tr><td class="phase-no">3</td><td><a href="phase3.html"><b>星を並べ、手前に流れるアニメーションにする</b></a></td><td><code>pyxel.pset</code>、リスト、<code>random</code></td></tr>
+    <tr><td class="phase-no">4</td><td><a href="phase4.html"><b>リソースエディタで宇宙船のドット絵を描く<br>あわせてコードをクラスにまとめ直す</b></a></td><td><code>pyxel edit</code>、<code>.pyxres</code>、<code>class</code></td></tr>
+    <tr><td class="phase-no">5</td><td><a href="phase5.html"><b>描いた宇宙船を画面に表示する</b></a></td><td><code>pyxel.load</code> / <code>pyxel.blt</code>、透過色</td></tr>
+    <tr><td class="phase-no">6</td><td><a href="phase6.html"><b>矢印キーで宇宙船を動かす（画面外に出ないように制限する）</b></a></td><td><code>pyxel.btn</code>、<code>pyxel.KEY_LEFT</code> ほか</td></tr>
+    <tr><td class="phase-no">7</td><td><a href="phase7.html"><b>リソースエディタで BGM を作り、流し続ける</b></a></td><td>サウンド／ミュージック編集、<code>pyxel.playm</code></td></tr>
+    <tr><td class="phase-no">8</td><td><a href="phase8.html"><b>作品をパッケージ化し、Web で公開する</b></a></td><td><code>pyxel package</code> / <code>pyxel app2html</code>、GitHub Pages</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>進め方</b>
+  1 フェーズごとに「考え方 → 必要な API → コード → 解説」を読み、コードを自分で入力して
+  実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
+  うまく動かないときや疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。<br>
+  はじめて読むときは、この下の<a href="#topics">3. 学ぶ技術項目</a>と<a href="#basics">4. 先に押さえておきたい 2 つの土台</a>に目を通してから、フェーズ 1 へ進んでください。
+</div>
+
+<h2 id="topics">3. この step で学ぶ技術項目</h2>
 
 <table>
   <thead><tr><th>分類</th><th>項目</th><th>登場フェーズ</th></tr></thead>
@@ -133,7 +160,7 @@
   </tbody>
 </table>
 
-<h2>3. 先に押さえておきたい 2 つの土台</h2>
+<h2 id="basics">4. 先に押さえておきたい 2 つの土台</h2>
 
 <h3>土台 1：画面の座標系</h3>
 
@@ -235,31 +262,6 @@ Pyxel のゲームは <b>1 秒間に 30 回</b>、同じ処理を繰り返し続
   「描画（draw）の中で座標を増やす」と、一見動いて見えるのに、あとで画面を止めたり
   やり直したりする機能を足したときに破綻します。<b>動かすのは update、描くのは draw</b>
   と最初から分けておいてください。
-</div>
-
-<h2>4. フェーズ分割</h2>
-
-<p>完成までを 8 つのフェーズに分けます。上から順に、少しずつ書き足していきます。</p>
-
-<table>
-  <thead><tr><th>フェーズ</th><th>やること</th><th>主に使う API・機能</th></tr></thead>
-  <tbody>
-    <tr><td class="phase-no">1</td><td><a href="phase1.html"><b>ウィンドウを出して、黒い画面を表示する</b></a></td><td><code>pyxel.init</code> / <code>pyxel.run</code> / <code>pyxel.cls</code></td></tr>
-    <tr><td class="phase-no">2</td><td><a href="phase2.html"><b>タイトル文字を画面に表示する</b></a></td><td><code>pyxel.text</code>、色番号</td></tr>
-    <tr><td class="phase-no">3</td><td><a href="phase3.html"><b>星を並べ、手前に流れるアニメーションにする</b></a></td><td><code>pyxel.pset</code>、リスト、<code>random</code></td></tr>
-    <tr><td class="phase-no">4</td><td><a href="phase4.html"><b>リソースエディタで宇宙船のドット絵を描く<br>あわせてコードをクラスにまとめ直す</b></a></td><td><code>pyxel edit</code>、<code>.pyxres</code>、<code>class</code></td></tr>
-    <tr><td class="phase-no">5</td><td><a href="phase5.html"><b>描いた宇宙船を画面に表示する</b></a></td><td><code>pyxel.load</code> / <code>pyxel.blt</code>、透過色</td></tr>
-    <tr><td class="phase-no">6</td><td><a href="phase6.html"><b>矢印キーで宇宙船を動かす（画面外に出ないように制限する）</b></a></td><td><code>pyxel.btn</code>、<code>pyxel.KEY_LEFT</code> ほか</td></tr>
-    <tr><td class="phase-no">7</td><td><a href="phase7.html"><b>リソースエディタで BGM を作り、流し続ける</b></a></td><td>サウンド／ミュージック編集、<code>pyxel.playm</code></td></tr>
-    <tr><td class="phase-no">8</td><td><a href="phase8.html"><b>作品をパッケージ化し、Web で公開する</b></a></td><td><code>pyxel package</code> / <code>pyxel app2html</code>、GitHub Pages</td></tr>
-  </tbody>
-</table>
-
-<div class="note">
-  <b>進め方</b>
-  1 フェーズごとに「考え方 → 必要な API → コード → 解説」を読み、コードを自分で入力して
-  実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
-  うまく動かないときや疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。
 </div>
 
 <p style="text-align:center; margin:2.5rem 0 0">
