@@ -769,6 +769,145 @@ y = 地面Y − 高さ × (scale + 1) ÷ 2</code></pre>
   見えている絵の幅は <code>HIYOKO_WIDTH * scale</code> なので、はみ出しを厳密に止めたいときはこちらを使います。
 </div>
 
+<h3 id="package-multi">Q. 1 つのフォルダに複数の作品がある。<code>pyxel package</code> で別々にパッケージ化できる？</h3>
+<p>
+<b>A.</b> <b>できますが、そのままだと出力が上書きされます。</b>
+<code>pyxel package</code> は「フォルダの中身を丸ごと」ZIP に詰め、
+<b>どれを起動スクリプトにするかを記録するだけ</b>のコマンドです。
+出力ファイル名は <b>フォルダ名で決まる</b>ため、同じフォルダを 2 回パッケージ化すると
+2 回目が 1 回目を警告なしに上書きします。
+</p>
+
+<pre><code>pyxel package step0-learning step0-learning/hiyoko_anime.py
+  → step0-learning.pyxapp    起動 = hiyoko_anime.py
+
+pyxel package step0-learning step0-learning/fish_clock.py
+  → step0-learning.pyxapp    起動 = fish_clock.py　← 同じ名前で上書き</code></pre>
+
+<p>
+中身も毎回フォルダ内の<b>全ファイル</b>が入ります。作品が 2 つあれば、
+どちらの <code>.pyxapp</code> にも相手のスクリプトとリソースが同梱されます。
+</p>
+
+<h4>解決：作品ごとにサブフォルダを切る</h4>
+
+<p>
+<code>APP_DIR</code> の<b>いちばん下のフォルダ名</b>が出力名になります。
+作品ごとにフォルダを分ければ、名前は自動で分かれ、中身も必要なファイルだけになります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 300" role="img" aria-label="1つのフォルダにまとめた場合は出力が同名で上書きされ、作品ごとにフォルダを分けると別名で出力されることを比べた図">
+  <style>
+    .pk-h   { font: bold 13px var(--font-body); fill: var(--c-text); }
+    .pk-cd  { font: 12px var(--font-code); fill: var(--c-text); }
+    .pk-cdd { font: 12px var(--font-code); fill: var(--c-text-dim); }
+    .pk-lbl { font: 12px var(--font-body); fill: var(--c-text-dim); }
+  </style>
+
+  <!-- 左：1フォルダ -->
+  <text class="pk-h" x="20" y="18">1 つのフォルダにまとめた場合</text>
+
+  <rect x="20" y="30" width="200" height="112" rx="5" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="pk-cd"  x="34" y="50">step0-learning/</text>
+  <text class="pk-cdd" x="50" y="70">hiyoko_anime.py</text>
+  <text class="pk-cdd" x="50" y="88">learning_bgm.pyxres</text>
+  <text class="pk-cdd" x="50" y="106">fish_clock.py</text>
+  <text class="pk-cdd" x="50" y="124">fish_clock.pyxres</text>
+
+  <path d="M 228 74 L 262 74"  stroke="var(--c-text-dim)" stroke-width="1.5" fill="none"/>
+  <path d="M 254 68 L 264 74 L 254 80 Z" fill="var(--c-text-dim)"/>
+  <path d="M 228 106 L 262 106" stroke="var(--c-text-dim)" stroke-width="1.5" fill="none"/>
+  <path d="M 254 100 L 264 106 L 254 112 Z" fill="var(--c-text-dim)"/>
+
+  <rect x="270" y="58" width="180" height="32" rx="4" fill="var(--c-panel)" stroke="var(--c-pink)"/>
+  <text class="pk-cd" x="282" y="78" fill="var(--c-pink)">step0-learning.pyxapp</text>
+  <rect x="270" y="90" width="180" height="32" rx="4" fill="var(--c-panel)" stroke="var(--c-pink)"/>
+  <text class="pk-cd" x="282" y="110" fill="var(--c-pink)">step0-learning.pyxapp</text>
+
+  <text class="pk-lbl" x="270" y="140">同じ名前 — 2 回目が 1 回目を上書きする</text>
+  <text class="pk-lbl" x="270" y="158">中身はどちらも全 4 ファイル（4610 B）</text>
+
+  <!-- 区切り -->
+  <line x1="20" y1="176" x2="680" y2="176" stroke="var(--c-line)"/>
+
+  <!-- 下：フォルダを分ける -->
+  <text class="pk-h" x="20" y="200">作品ごとにフォルダを分けた場合</text>
+
+  <rect x="20" y="212" width="200" height="58" rx="5" fill="var(--c-panel)" stroke="var(--c-accent-2)"/>
+  <text class="pk-cd"  x="34" y="232">hiyoko_anime/</text>
+  <text class="pk-cdd" x="50" y="250">hiyoko_anime.py</text>
+  <text class="pk-cdd" x="50" y="264">learning_bgm.pyxres</text>
+
+  <rect x="240" y="212" width="180" height="58" rx="5" fill="var(--c-panel)" stroke="var(--c-accent-2)"/>
+  <text class="pk-cd"  x="254" y="232">fish_clock/</text>
+  <text class="pk-cdd" x="270" y="250">fish_clock.py</text>
+  <text class="pk-cdd" x="270" y="264">fish_clock.pyxres</text>
+
+  <path d="M 428 240 L 460 240" stroke="var(--c-green)" stroke-width="1.5" fill="none"/>
+  <path d="M 452 234 L 462 240 L 452 246 Z" fill="var(--c-green)"/>
+
+  <rect x="468" y="212" width="212" height="30" rx="4" fill="var(--c-panel)" stroke="var(--c-green)"/>
+  <text class="pk-cd" x="480" y="231" fill="var(--c-green)">hiyoko_anime.pyxapp　2883 B</text>
+  <rect x="468" y="246" width="212" height="30" rx="4" fill="var(--c-panel)" stroke="var(--c-green)"/>
+  <text class="pk-cd" x="480" y="265" fill="var(--c-green)">fish_clock.pyxapp　1878 B</text>
+</svg>
+</div>
+<figcaption>出力名は <code>APP_DIR</code> のいちばん下のフォルダ名で決まる</figcaption>
+</figure>
+
+<pre><code>step0-learning/
+├── hiyoko_anime/
+│   ├── hiyoko_anime.py
+│   └── learning_bgm.pyxres
+└── fish_clock/
+    ├── fish_clock.py
+    └── fish_clock.pyxres</code></pre>
+
+<pre><code>pyxel package step0-learning/hiyoko_anime step0-learning/hiyoko_anime/hiyoko_anime.py
+pyxel app2html hiyoko_anime.pyxapp
+
+pyxel package step0-learning/fish_clock step0-learning/fish_clock/fish_clock.py
+pyxel app2html fish_clock.pyxapp</code></pre>
+
+<p>実測したサイズの差です（作品 2 つ・pyxel 2.9.9）。</p>
+
+<table>
+  <thead><tr><th>ファイル</th><th>1 フォルダにまとめた場合</th><th>フォルダを分けた場合</th></tr></thead>
+  <tbody>
+    <tr><td><code>hiyoko_anime.pyxapp</code></td><td>4610 B</td><td><b>2883 B</b></td></tr>
+    <tr><td><code>fish_clock.pyxapp</code></td><td>4608 B</td><td><b>1878 B</b></td></tr>
+    <tr><td><code>hiyoko_anime.html</code></td><td>6367 B</td><td><b>4063 B</b></td></tr>
+    <tr><td><code>fish_clock.html</code></td><td>6361 B</td><td><b>2721 B</b></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>コードの変更は要りません</b>
+  <code>pyxel.load("learning_bgm.pyxres")</code> の相対パスは
+  <b>実行するスクリプトがあるディレクトリを基準</b>に解決されます。
+  スクリプトとリソースを同じフォルダに入れたまま移動する限り、書き換えは不要です。
+  実行も <code>pyxel run step0-learning/hiyoko_anime/hiyoko_anime.py</code> で
+  これまでどおり動きます。
+</div>
+
+<div class="warn">
+  <b>フォルダを分けずに済ませたいとき</b>
+  <code>.pyxapp</code> ができた直後に別名へリネームすれば、上書きは避けられます
+  （<code>pyxel app2html</code> はリネーム後のファイルでも正しく動き、
+  起動スクリプトの記録も保たれることを確認済みです）。
+  ただし<b>どちらの <code>.pyxapp</code> にも全作品のファイルが入ったまま</b>なので、
+  作品が増えるほど無駄が膨らみます。フォルダを分けるほうが素直です。
+</div>
+
+<div class="note">
+  <b><code>.pyxapp</code> の中身</b>
+  実体は ZIP です。<code>フォルダ名/.pyxapp_startup_script</code> に
+  起動するスクリプト名が 1 行だけ書かれていて、あとは元のファイルがそのまま入っています。
+  <code>zipfile</code> モジュールで中を確認できます（<a href="#pyxres-inside">→ .pyxres の中身</a>と同じ要領）。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>
