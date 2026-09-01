@@ -13,6 +13,7 @@ Python のゲームライブラリ **[Pyxel](https://github.com/kitao/pyxel)** �
 - **公開 URL：https://mrgarita.github.io/learning_pyxel/**
 - **step0 の作品「Star Voyager」（ブラウザでそのまま動きます）：https://mrgarita.github.io/learning_pyxel/site/step0/star_voyager.html**
 - **step0 の復習作品「dot_fish」（魚が泳ぐデジタル時計）：https://mrgarita.github.io/learning_pyxel/site/step0-learning/fish_clock.html**
+- **step0 の復習作品「Hiyoko Anime」（花を降らせてヒヨコを育てる）：https://mrgarita.github.io/learning_pyxel/site/step0-learning/hiyoko_anime.html**
 
 ## 学習ステップ
 
