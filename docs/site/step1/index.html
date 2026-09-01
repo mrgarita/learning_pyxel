@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 お菓子集めゲーム ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">step1 </span>お菓子集めゲーム</h1>
+  <p>お化けに捕まらずに、どれだけお菓子を集められるか</p>
+</header>
+
+<p class="crumb"><a href="../">← 目次にもどる</a></p>
+
+<h2 id="goal">1. 完成イメージ</h2>
+
+<p>
+男の子を矢印キーで動かし、画面に出てくるお菓子を拾い集めます。お化けが男の子を追いかけてきて、
+触れられたらゲームオーバー。<b>集めたお菓子の数がそのままスコア</b>です。
+お菓子を集めるほどお化けが増えていくので、後半になるほど逃げ場がなくなります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 340 270" role="img" aria-label="完成イメージ：左上にスコア、画面内に男の子・お化け 2 体・お菓子 3 個が散らばっているゲーム画面">
+  <rect x="10" y="10" width="320" height="240" fill="#10121c" stroke="#3b4166" stroke-width="2" rx="3"/>
+  <text x="18" y="30" fill="#ffcc44" font-family="Consolas, monospace" font-size="14" letter-spacing="1">SCORE 12</text>
+  <rect x="158" y="122" width="2" height="2" fill="#232840"/><rect x="160" y="122" width="2" height="2" fill="#232840"/><rect x="162" y="122" width="2" height="2" fill="#232840"/><rect x="164" y="122" width="2" height="2" fill="#232840"/><rect x="156" y="124" width="2" height="2" fill="#232840"/><rect x="158" y="124" width="2" height="2" fill="#232840"/><rect x="160" y="124" width="2" height="2" fill="#232840"/><rect x="162" y="124" width="2" height="2" fill="#232840"/><rect x="164" y="124" width="2" height="2" fill="#232840"/><rect x="166" y="124" width="2" height="2" fill="#232840"/><rect x="158" y="126" width="2" height="2" fill="#ffcc44"/><rect x="160" y="126" width="2" height="2" fill="#ffcc44"/><rect x="162" y="126" width="2" height="2" fill="#ffcc44"/><rect x="164" y="126" width="2" height="2" fill="#ffcc44"/><rect x="156" y="128" width="2" height="2" fill="#ffcc44"/><rect x="158" y="128" width="2" height="2" fill="#10121c"/><rect x="160" y="128" width="2" height="2" fill="#ffcc44"/><rect x="162" y="128" width="2" height="2" fill="#ffcc44"/><rect x="164" y="128" width="2" height="2" fill="#10121c"/><rect x="166" y="128" width="2" height="2" fill="#ffcc44"/><rect x="156" y="130" width="2" height="2" fill="#45b0e8"/><rect x="158" y="130" width="2" height="2" fill="#45b0e8"/><rect x="160" y="130" width="2" height="2" fill="#45b0e8"/><rect x="162" y="130" width="2" height="2" fill="#45b0e8"/><rect x="164" y="130" width="2" height="2" fill="#45b0e8"/><rect x="166" y="130" width="2" height="2" fill="#45b0e8"/><rect x="156" y="132" width="2" height="2" fill="#45b0e8"/><rect x="158" y="132" width="2" height="2" fill="#45b0e8"/><rect x="160" y="132" width="2" height="2" fill="#45b0e8"/><rect x="162" y="132" width="2" height="2" fill="#45b0e8"/><rect x="164" y="132" width="2" height="2" fill="#45b0e8"/><rect x="166" y="132" width="2" height="2" fill="#45b0e8"/><rect x="158" y="134" width="2" height="2" fill="#9aa4c4"/><rect x="164" y="134" width="2" height="2" fill="#9aa4c4"/><rect x="158" y="136" width="2" height="2" fill="#9aa4c4"/><rect x="164" y="136" width="2" height="2" fill="#9aa4c4"/><rect x="70" y="46" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="46" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="46" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="46" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="48" width="2" height="2" fill="#e8f0ff"/><rect x="70" y="48" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="48" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="48" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="48" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="48" width="2" height="2" fill="#e8f0ff"/><rect x="66" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="70" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="80" y="50" width="2" height="2" fill="#e8f0ff"/><rect x="66" y="52" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="52" width="2" height="2" fill="#10121c"/><rect x="70" y="52" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="52" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="52" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="52" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="52" width="2" height="2" fill="#10121c"/><rect x="80" y="52" width="2" height="2" fill="#e8f0ff"/><rect x="66" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="70" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="80" y="54" width="2" height="2" fill="#e8f0ff"/><rect x="66" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="70" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="80" y="56" width="2" height="2" fill="#e8f0ff"/><rect x="66" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="70" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="76" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="80" y="58" width="2" height="2" fill="#e8f0ff"/><rect x="66" y="60" width="2" height="2" fill="#e8f0ff"/><rect x="68" y="60" width="2" height="2" fill="#e8f0ff"/><rect x="72" y="60" width="2" height="2" fill="#e8f0ff"/><rect x="74" y="60" width="2" height="2" fill="#e8f0ff"/><rect x="78" y="60" width="2" height="2" fill="#e8f0ff"/><rect x="80" y="60" width="2" height="2" fill="#e8f0ff"/><rect x="250" y="178" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="178" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="178" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="178" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="180" width="2" height="2" fill="#e8f0ff"/><rect x="250" y="180" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="180" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="180" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="180" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="180" width="2" height="2" fill="#e8f0ff"/><rect x="246" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="250" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="260" y="182" width="2" height="2" fill="#e8f0ff"/><rect x="246" y="184" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="184" width="2" height="2" fill="#10121c"/><rect x="250" y="184" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="184" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="184" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="184" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="184" width="2" height="2" fill="#10121c"/><rect x="260" y="184" width="2" height="2" fill="#e8f0ff"/><rect x="246" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="250" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="260" y="186" width="2" height="2" fill="#e8f0ff"/><rect x="246" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="250" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="260" y="188" width="2" height="2" fill="#e8f0ff"/><rect x="246" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="250" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="256" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="260" y="190" width="2" height="2" fill="#e8f0ff"/><rect x="246" y="192" width="2" height="2" fill="#e8f0ff"/><rect x="248" y="192" width="2" height="2" fill="#e8f0ff"/><rect x="252" y="192" width="2" height="2" fill="#e8f0ff"/><rect x="254" y="192" width="2" height="2" fill="#e8f0ff"/><rect x="258" y="192" width="2" height="2" fill="#e8f0ff"/><rect x="260" y="192" width="2" height="2" fill="#e8f0ff"/><rect x="56" y="188" width="2" height="2" fill="#ff6b97"/><rect x="58" y="188" width="2" height="2" fill="#ff6b97"/><rect x="50" y="190" width="2" height="2" fill="#ffcc44"/><rect x="54" y="190" width="2" height="2" fill="#ff6b97"/><rect x="56" y="190" width="2" height="2" fill="#ff6b97"/><rect x="58" y="190" width="2" height="2" fill="#ff6b97"/><rect x="60" y="190" width="2" height="2" fill="#ff6b97"/><rect x="64" y="190" width="2" height="2" fill="#ffcc44"/><rect x="50" y="192" width="2" height="2" fill="#ffcc44"/><rect x="52" y="192" width="2" height="2" fill="#ffcc44"/><rect x="54" y="192" width="2" height="2" fill="#ff6b97"/><rect x="56" y="192" width="2" height="2" fill="#ff6b97"/><rect x="58" y="192" width="2" height="2" fill="#ff6b97"/><rect x="60" y="192" width="2" height="2" fill="#ff6b97"/><rect x="62" y="192" width="2" height="2" fill="#ffcc44"/><rect x="64" y="192" width="2" height="2" fill="#ffcc44"/><rect x="50" y="194" width="2" height="2" fill="#ffcc44"/><rect x="52" y="194" width="2" height="2" fill="#ffcc44"/><rect x="54" y="194" width="2" height="2" fill="#ff6b97"/><rect x="56" y="194" width="2" height="2" fill="#ff6b97"/><rect x="58" y="194" width="2" height="2" fill="#ff6b97"/><rect x="60" y="194" width="2" height="2" fill="#ff6b97"/><rect x="62" y="194" width="2" height="2" fill="#ffcc44"/><rect x="64" y="194" width="2" height="2" fill="#ffcc44"/><rect x="50" y="196" width="2" height="2" fill="#ffcc44"/><rect x="54" y="196" width="2" height="2" fill="#ff6b97"/><rect x="56" y="196" width="2" height="2" fill="#ff6b97"/><rect x="58" y="196" width="2" height="2" fill="#ff6b97"/><rect x="60" y="196" width="2" height="2" fill="#ff6b97"/><rect x="64" y="196" width="2" height="2" fill="#ffcc44"/><rect x="56" y="198" width="2" height="2" fill="#ff6b97"/><rect x="58" y="198" width="2" height="2" fill="#ff6b97"/><rect x="268" y="64" width="2" height="2" fill="#ff6b97"/><rect x="270" y="64" width="2" height="2" fill="#ff6b97"/><rect x="262" y="66" width="2" height="2" fill="#ffcc44"/><rect x="266" y="66" width="2" height="2" fill="#ff6b97"/><rect x="268" y="66" width="2" height="2" fill="#ff6b97"/><rect x="270" y="66" width="2" height="2" fill="#ff6b97"/><rect x="272" y="66" width="2" height="2" fill="#ff6b97"/><rect x="276" y="66" width="2" height="2" fill="#ffcc44"/><rect x="262" y="68" width="2" height="2" fill="#ffcc44"/><rect x="264" y="68" width="2" height="2" fill="#ffcc44"/><rect x="266" y="68" width="2" height="2" fill="#ff6b97"/><rect x="268" y="68" width="2" height="2" fill="#ff6b97"/><rect x="270" y="68" width="2" height="2" fill="#ff6b97"/><rect x="272" y="68" width="2" height="2" fill="#ff6b97"/><rect x="274" y="68" width="2" height="2" fill="#ffcc44"/><rect x="276" y="68" width="2" height="2" fill="#ffcc44"/><rect x="262" y="70" width="2" height="2" fill="#ffcc44"/><rect x="264" y="70" width="2" height="2" fill="#ffcc44"/><rect x="266" y="70" width="2" height="2" fill="#ff6b97"/><rect x="268" y="70" width="2" height="2" fill="#ff6b97"/><rect x="270" y="70" width="2" height="2" fill="#ff6b97"/><rect x="272" y="70" width="2" height="2" fill="#ff6b97"/><rect x="274" y="70" width="2" height="2" fill="#ffcc44"/><rect x="276" y="70" width="2" height="2" fill="#ffcc44"/><rect x="262" y="72" width="2" height="2" fill="#ffcc44"/><rect x="266" y="72" width="2" height="2" fill="#ff6b97"/><rect x="268" y="72" width="2" height="2" fill="#ff6b97"/><rect x="270" y="72" width="2" height="2" fill="#ff6b97"/><rect x="272" y="72" width="2" height="2" fill="#ff6b97"/><rect x="276" y="72" width="2" height="2" fill="#ffcc44"/><rect x="268" y="74" width="2" height="2" fill="#ff6b97"/><rect x="270" y="74" width="2" height="2" fill="#ff6b97"/><rect x="136" y="144" width="2" height="2" fill="#ff6b97"/><rect x="138" y="144" width="2" height="2" fill="#ff6b97"/><rect x="130" y="146" width="2" height="2" fill="#ffcc44"/><rect x="134" y="146" width="2" height="2" fill="#ff6b97"/><rect x="136" y="146" width="2" height="2" fill="#ff6b97"/><rect x="138" y="146" width="2" height="2" fill="#ff6b97"/><rect x="140" y="146" width="2" height="2" fill="#ff6b97"/><rect x="144" y="146" width="2" height="2" fill="#ffcc44"/><rect x="130" y="148" width="2" height="2" fill="#ffcc44"/><rect x="132" y="148" width="2" height="2" fill="#ffcc44"/><rect x="134" y="148" width="2" height="2" fill="#ff6b97"/><rect x="136" y="148" width="2" height="2" fill="#ff6b97"/><rect x="138" y="148" width="2" height="2" fill="#ff6b97"/><rect x="140" y="148" width="2" height="2" fill="#ff6b97"/><rect x="142" y="148" width="2" height="2" fill="#ffcc44"/><rect x="144" y="148" width="2" height="2" fill="#ffcc44"/><rect x="130" y="150" width="2" height="2" fill="#ffcc44"/><rect x="132" y="150" width="2" height="2" fill="#ffcc44"/><rect x="134" y="150" width="2" height="2" fill="#ff6b97"/><rect x="136" y="150" width="2" height="2" fill="#ff6b97"/><rect x="138" y="150" width="2" height="2" fill="#ff6b97"/><rect x="140" y="150" width="2" height="2" fill="#ff6b97"/><rect x="142" y="150" width="2" height="2" fill="#ffcc44"/><rect x="144" y="150" width="2" height="2" fill="#ffcc44"/><rect x="130" y="152" width="2" height="2" fill="#ffcc44"/><rect x="134" y="152" width="2" height="2" fill="#ff6b97"/><rect x="136" y="152" width="2" height="2" fill="#ff6b97"/><rect x="138" y="152" width="2" height="2" fill="#ff6b97"/><rect x="140" y="152" width="2" height="2" fill="#ff6b97"/><rect x="144" y="152" width="2" height="2" fill="#ffcc44"/><rect x="136" y="154" width="2" height="2" fill="#ff6b97"/><rect x="138" y="154" width="2" height="2" fill="#ff6b97"/>
+  <g stroke="#2ee6a8" stroke-width="1.5" fill="none" opacity=".85">
+    <path d="M148 130 l-12 0 M140 126 l-4 4 4 4"/>
+    <path d="M186 130 l12 0  M194 126 l4 4 -4 4"/>
+    <path d="M167 116 l0 -12 M163 108 l4 -4 4 4"/>
+    <path d="M167 144 l0 12  M163 152 l4 4 4 -4"/>
+  </g>
+  <g stroke="#ff6b97" stroke-width="1.2" fill="none" opacity=".7" stroke-dasharray="3 3">
+    <path d="M76 52 L156 124"/>
+    <path d="M254 184 L184 140"/>
+  </g>
+</svg>
+</div>
+<figcaption>完成イメージ（実際の画面は 160×120 ドット。図は概念図です）</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>項目</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>画面サイズ</td><td>160 × 120 ドット（step0 と同じ）</td></tr>
+    <tr><td>操作</td><td>矢印キーで上下左右に移動。Enter でゲーム開始・再挑戦</td></tr>
+    <tr><td>スコア</td><td>集めたお菓子の数。画面左上に表示する</td></tr>
+    <tr><td>終了条件</td><td>お化けに触れられたらゲームオーバー（制限時間はなし）</td></tr>
+    <tr><td>難易度</td><td>お菓子 5 個ごとにお化けが 1 体増える（最大 4 体）</td></tr>
+    <tr><td>画面</td><td>タイトル／ゲーム／ゲームオーバーの 3 画面</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>作品の規模感</b>
+  最終的なコードはおよそ 150〜200 行です。step0 の 2 倍以上ありますが、
+  10 のフェーズに分け、1 フェーズあたり 15〜25 行ずつ書き足していきます。
+  各フェーズの終わりで必ず一度実行し、動くことを確かめてから次に進みます。
+</div>
+
+<div class="note">
+  <b>参考にした記事</b>
+  ゲームの題材は
+  <a href="https://qiita.com/rwatanab1999/items/d5c0bb876f0b44cac2f0">こちらの記事</a>を参考にしています。
+  コードや画像は転載せず、<b>ドット絵はリソースエディタで自分で描き、コードもフェーズごとに
+  一から組み立てます</b>。仕様も、この学習に合わせて一部変えています。
+</div>
+
+<h2 id="phases">2. フェーズ分割</h2>
+
+<p>
+完成までを 10 のフェーズに分けます。上から順に、少しずつ書き足していきます。
+<b>解説ページは、フェーズを進めるたびに追加していきます。</b>
+</p>
+
+<table>
+  <thead><tr><th>フェーズ</th><th>やること</th><th>主に使う API・機能</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-no">1</td><td><b>リソースエディタで 3 つのドット絵を描く</b><br>男の子・お化け・お菓子</td><td><code>pyxel edit</code>、イメージバンク、<code>.pyxres</code></td></tr>
+    <tr><td class="phase-no">2</td><td><b>画面を出して、男の子を矢印キーで動かす</b><br>step0 の復習にあたる土台づくり</td><td><code>pyxel.init</code> / <code>run</code> / <code>cls</code> / <code>blt</code> / <code>btn</code></td></tr>
+    <tr><td class="phase-no">3</td><td><b>お菓子を 1 個置き、重なったら消して次を出す</b><br>この step の山場のひとつ</td><td>当たり判定、<code>random</code>、関数の戻り値</td></tr>
+    <tr><td class="phase-no">4</td><td><b>集めた数をスコアとして画面に表示する</b></td><td><code>pyxel.text</code>、カウント用の変数</td></tr>
+    <tr><td class="phase-no">5</td><td><b>お化けを 1 体出して、男の子を追いかけさせる</b></td><td>相対位置による場合分け</td></tr>
+    <tr><td class="phase-no">6</td><td><b>お化けに捕まったらゲームオーバー画面へ</b></td><td>状態変数、シーンごとの処理の振り分け</td></tr>
+    <tr><td class="phase-no">7</td><td><b>タイトル画面を足して 3 画面にする</b><br>もう一度あそべるようにする</td><td>画面遷移の完成、ゲームの初期化</td></tr>
+    <tr><td class="phase-no">8</td><td><b>お菓子を集めるほどお化けを増やす（最大 4 体）</b></td><td>リストで複数を管理、繰り返しで当たり判定</td></tr>
+    <tr><td class="phase-no">9</td><td><b>効果音と BGM をつける</b></td><td><code>pyxel.play</code> / <code>playm</code>、サウンド編集</td></tr>
+    <tr><td class="phase-no">10</td><td><b>パッケージ化して Web で公開する</b></td><td><code>pyxel package</code> / <code>pyxel app2html</code></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>進め方</b>
+  1 フェーズごとに「考え方 → 必要な API → コード → 解説」を読み、コードを自分で入力して
+  実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
+  疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。<br>
+  はじめて読むときは、この下の<a href="#topics">3. 学ぶ技術項目</a>と
+  <a href="#basics">4. 先に押さえておきたい 2 つの土台</a>に目を通してから、フェーズ 1 へ進んでください。
+</div>
+
+<h2 id="topics">3. この step で学ぶ技術項目</h2>
+
+<p>
+step0 が「Pyxel の機能を広く浅く体験する」だったのに対し、step1 は
+<b>「ゲームとして成立させるための仕組み」</b>を学びます。
+描画やキー入力は step0 で身につけたものをそのまま使い、新しいのは次の 4 つが柱です。
+</p>
+
+<table>
+  <thead><tr><th>分類</th><th>項目</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="2">当たり判定</td><td><b>四角どうしの重なりを調べる</b>（横と縦の 2 方向で見る）</td><td>3・6</td></tr>
+    <tr><td>判定する範囲を絵の見た目より小さくして、遊びやすくする</td><td>6</td></tr>
+    <tr><td rowspan="2">ゲーム進行</td><td><b>状態変数による画面遷移</b>（タイトル／ゲーム／ゲームオーバー）</td><td>6・7</td></tr>
+    <tr><td>ゲームの初期化と、もう一度あそべるようにする処理</td><td>7</td></tr>
+    <tr><td rowspan="2">敵の動き</td><td><b>相対位置で場合分けして追いかける</b></td><td>5</td></tr>
+    <tr><td>難易度を段階的に上げる（数を増やす）</td><td>8</td></tr>
+    <tr><td rowspan="2">データの持ち方</td><td><b>リストで同じものを複数まとめて管理する</b></td><td>8</td></tr>
+    <tr><td>繰り返しで、全員ぶんの移動と当たり判定を回す</td><td>8</td></tr>
+    <tr><td rowspan="2">画面表示</td><td>スコアの表示（HUD）</td><td>4</td></tr>
+    <tr><td>複数のドット絵を 1 つのイメージバンクに並べて使い分ける</td><td>1・2</td></tr>
+    <tr><td>サウンド</td><td>効果音の再生（<code>pyxel.play</code>）と BGM の使い分け</td><td>9</td></tr>
+    <tr><td>公開</td><td>パッケージ化と Web 公開（step0 の復習）</td><td>10</td></tr>
+  </tbody>
+</table>
+
+<h3>あわせて新しく出てくる Python の概念</h3>
+
+<p>
+step0 でクラスと二次元リストを扱いました。step1 ではさらに次の 3 つが登場します。
+<b>出てきたフェーズで、必要になった理由とセットで解説します。</b>
+</p>
+
+<table>
+  <thead><tr><th>概念</th><th>なぜ必要になるか</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>関数が値を返す<br>（<code>return</code> と真偽値）</td>
+      <td>「当たっているか」を調べる処理は、何度も別の場所から呼びたくなります。
+      結果を <code>True</code> / <code>False</code> で持ち帰る書き方を覚えると、
+      <code>if</code> の条件がそのまま日本語のように読めるようになります。</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>定数で「状態」を表す</td>
+      <td>画面が 3 つに増えると <code>scene == 1</code> のような数字では意味が読み取れません。
+      <code>SCENE_TITLE = 0</code> のように名前を付けて扱います。</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>リストの要素を安全に取り除く</td>
+      <td>お化けやお菓子を複数持つと、「繰り返しの最中にリストから消す」場面が出てきます。
+      step0 の復習作品で使った「残すものだけ新しいリストに詰め直す」書き方を、あらためて整理します。</td>
+      <td>8</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="basics">4. 先に押さえておきたい 2 つの土台</h2>
+
+<h3>土台 1：当たり判定は「横」と「縦」に分けて考える</h3>
+
+<p>
+「男の子とお菓子が重なったか」を一度に考えようとすると難しく感じますが、
+<b>横だけ・縦だけに分けると、どちらもただの数直線の問題</b>になります。
+そして<b>横も縦も重なっているときだけ</b>、2 つの四角は本当に重なっています。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" role="img" aria-label="2 つの四角の当たり判定。横の範囲が重なり、かつ縦の範囲も重なっているときだけ当たったと判定する図">
+  <text x="20" y="26" fill="#e8f0ff" font-size="13">2 つの四角が重なっているか</text>
+
+  <rect x="120" y="60" width="120" height="90" fill="#45b0e8" opacity=".28" stroke="#45b0e8" stroke-width="2"/>
+  <text x="128" y="80" fill="#45b0e8" font-family="Consolas, monospace" font-size="12">男の子</text>
+  <rect x="196" y="112" width="96" height="72" fill="#ff6b97" opacity=".28" stroke="#ff6b97" stroke-width="2"/>
+  <text x="232" y="178" fill="#ff6b97" font-family="Consolas, monospace" font-size="12">お菓子</text>
+  <rect x="196" y="112" width="44" height="38" fill="#ffcc44" opacity=".45"/>
+  <text x="300" y="136" fill="#ffcc44" font-size="12">← 重なっている部分</text>
+
+  <g stroke="#3b4166" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="120" y1="150" x2="120" y2="232"/>
+    <line x1="240" y1="150" x2="240" y2="232"/>
+    <line x1="196" y1="184" x2="196" y2="252"/>
+    <line x1="292" y1="184" x2="292" y2="252"/>
+  </g>
+  <line x1="120" y1="238" x2="240" y2="238" stroke="#45b0e8" stroke-width="3"/>
+  <line x1="196" y1="258" x2="292" y2="258" stroke="#ff6b97" stroke-width="3"/>
+  <text x="112" y="242" fill="#45b0e8" font-family="Consolas, monospace" font-size="11" text-anchor="end">男の子の横</text>
+  <text x="188" y="262" fill="#ff6b97" font-family="Consolas, monospace" font-size="11" text-anchor="end">お菓子の横</text>
+  <text x="310" y="252" fill="#ffcc44" font-size="12">横の範囲が重なっている</text>
+
+  <g stroke="#3b4166" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="240" y1="60"  x2="470" y2="60"/>
+    <line x1="240" y1="150" x2="470" y2="150"/>
+    <line x1="292" y1="112" x2="500" y2="112"/>
+    <line x1="292" y1="184" x2="500" y2="184"/>
+  </g>
+  <line x1="476" y1="60"  x2="476" y2="150" stroke="#45b0e8" stroke-width="3"/>
+  <line x1="506" y1="112" x2="506" y2="184" stroke="#ff6b97" stroke-width="3"/>
+  <text x="524" y="100" fill="#45b0e8" font-family="Consolas, monospace" font-size="11">男の子の縦</text>
+  <text x="524" y="160" fill="#ff6b97" font-family="Consolas, monospace" font-size="11">お菓子の縦</text>
+  <text x="524" y="206" fill="#ffcc44" font-size="12">縦の範囲も</text>
+  <text x="524" y="222" fill="#ffcc44" font-size="12">重なっている</text>
+
+  <text x="20" y="292" fill="#2ee6a8" font-size="13">横と縦、どちらも重なっているときだけ「当たった」</text>
+</svg>
+</div>
+<figcaption>横の範囲が重なり、かつ縦の範囲も重なっているときだけ「当たった」と判定する</figcaption>
+</figure>
+
+<p>
+四角の位置は左上の座標で持っているので、たとえば横の範囲は
+「左端 = <code>x</code>」から「右端 = <code>x + 幅</code>」までです。
+2 つの範囲が重なっている条件は、次の 2 つが<b>同時に</b>成り立つことだと言いかえられます。
+</p>
+
+<ul>
+  <li>男の子の左端が、お菓子の右端より<b>左</b>にある</li>
+  <li>お菓子の左端が、男の子の右端より<b>左</b>にある</li>
+</ul>
+
+<p>
+縦もまったく同じ形になります。この 4 つの条件をすべて満たしたときが「当たり」です。
+<b>実際のコードはフェーズ 3 で書きます。</b>
+</p>
+
+<div class="note">
+  <b>この考え方の名前</b>
+  四角どうしの当たり判定は <b>AABB</b>（軸に沿った四角形どうしの判定）と呼ばれ、
+  2D ゲームでもっとも基本的な方法です。step2 の倉庫番でも、step3 のシューティングでも使います。
+</div>
+
+<h3>土台 2：画面が増えたら「今どの画面か」を変数で覚える</h3>
+
+<p>
+step0 の作品は画面が 1 つだけでした。step1 では<b>タイトル・ゲーム・ゲームオーバーの 3 つ</b>を
+行き来します。このとき、画面ごとに別のプログラムを作るのではなく、
+<b>「今どの画面か」を覚えておく変数を 1 つ用意する</b>のが定石です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 250" role="img" aria-label="タイトル画面・ゲーム画面・ゲームオーバー画面の 3 つを行き来する状態遷移の図">
+  <text x="20" y="30" fill="#e8f0ff" font-size="13">1 つの変数 <tspan font-family="Consolas, monospace" fill="#ffcc44">scene</tspan> が「今どの画面か」を覚えている</text>
+
+  <g font-size="13" text-anchor="middle">
+    <rect x="40"  y="70" width="140" height="70" rx="4" fill="#232840" stroke="#ffcc44" stroke-width="2"/>
+    <text x="110" y="100" fill="#ffcc44">タイトル画面</text>
+    <text x="110" y="122" fill="#9aa4c4" font-size="11" font-family="Consolas, monospace">scene = 0</text>
+
+    <rect x="250" y="70" width="140" height="70" rx="4" fill="#232840" stroke="#2ee6a8" stroke-width="2"/>
+    <text x="320" y="100" fill="#2ee6a8">ゲーム画面</text>
+    <text x="320" y="122" fill="#9aa4c4" font-size="11" font-family="Consolas, monospace">scene = 1</text>
+
+    <rect x="460" y="70" width="140" height="70" rx="4" fill="#232840" stroke="#ff6b97" stroke-width="2"/>
+    <text x="530" y="100" fill="#ff6b97">ゲームオーバー</text>
+    <text x="530" y="122" fill="#9aa4c4" font-size="11" font-family="Consolas, monospace">scene = 2</text>
+  </g>
+
+  <g stroke="#9aa4c4" stroke-width="2" fill="none">
+    <path d="M180 105 L242 105"/><path d="M236 100 l6 5 -6 5" fill="#9aa4c4"/>
+    <path d="M390 105 L452 105"/><path d="M446 100 l6 5 -6 5" fill="#9aa4c4"/>
+    <path d="M530 140 L530 196 L110 196 L110 145"/><path d="M105 151 l5 -6 5 6" fill="#9aa4c4"/>
+  </g>
+  <g fill="#9aa4c4" font-size="11" text-anchor="middle">
+    <text x="211" y="58">Enter を押す</text>
+    <text x="421" y="58">お化けに触れる</text>
+    <text x="320" y="214">Enter を押す（もう一度あそぶ）</text>
+  </g>
+  <g stroke="#3b4166" stroke-width="1" stroke-dasharray="2 2">
+    <line x1="211" y1="64" x2="211" y2="100"/>
+    <line x1="421" y1="64" x2="421" y2="100"/>
+  </g>
+
+  <text x="20" y="240" fill="#9aa4c4" font-size="12">update() と draw() は、どちらも scene の値で処理を振り分ける</text>
+</svg>
+</div>
+<figcaption>変数 <code>scene</code> の値を書き換えることが、そのまま画面の切り替えになる</figcaption>
+</figure>
+
+<p>
+毎フレーム呼ばれる <code>update()</code> と <code>draw()</code> は、どちらも最初に
+<b>「今どの画面か」で処理を振り分けます</b>。タイトル画面なら、動かすものは何もなく、
+タイトル文字を描くだけ。ゲーム画面なら、男の子とお化けを動かして当たり判定をする、という具合です。
+</p>
+
+<div class="note">
+  <b>なぜ変数 1 つで足りるのか</b>
+  画面はいつでも<b>どれか 1 つだけ</b>が表示されています。同時に 2 つ表示されることはありません。
+  「同時に 1 つしか成り立たないもの」は、変数 1 つで表せます。
+  ゲームオーバーになったら <code>scene</code> を書き換えるだけで、次のフレームから
+  <code>update()</code> も <code>draw()</code> も自動的にゲームオーバー画面のふるまいに変わります。
+</div>
+
+<div class="warn">
+  <b>画面を切り替えるときは、忘れずに片づける</b>
+  ゲームオーバーからタイトルに戻り、もう一度あそび始めるとき、
+  スコアやお化けの数が前回のまま残っていては困ります。
+  <b>「ゲームを始める」処理をひとつの関数にまとめておく</b>と、初期化のし忘れを防げます。
+  これはフェーズ 7 で扱います。
+</div>
+
+<footer class="site">
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
