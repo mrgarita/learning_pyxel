@@ -1352,22 +1352,37 @@ Chrome なら右上の <b>⋮</b> メニューの中に全画面のアイコン�
     padding: 8px 14px; color: #fff; background: rgba(50,50,50,.8);
     border: 1px solid #888; border-radius: 6px; cursor: pointer;
   }
+  /* 全画面のあいだはボタンを隠す（抜けるときは ESC） */
+  :root:fullscreen #fs-btn { display: none; }
+  :root:-webkit-full-screen #fs-btn { display: none; }
 &lt;/style&gt;
 &lt;button id="fs-btn"&gt;全画面&lt;/button&gt;
 &lt;script&gt;
-const btn = document.getElementById("fs-btn");
-btn.addEventListener("click", async () =&gt; {
-  if (document.fullscreenElement) {
-    await document.exitFullscreen();
-  } else {
+const fsBtn = document.getElementById("fs-btn");
+
+fsBtn.addEventListener("click", async () =&gt; {
+  try {
     await document.documentElement.requestFullscreen();
+  } catch (e) {
+    console.log("[fs] 全画面にできませんでした:", e.name, e.message);
   }
   document.getElementById("canvas").focus();   // キー入力を戻す
 });
+
 document.addEventListener("fullscreenchange", () =&gt; {
-  btn.textContent = document.fullscreenElement ? "全画面をやめる" : "全画面";
+  fsBtn.hidden = !!document.fullscreenElement;   // 全画面のあいだは隠す
+  document.getElementById("canvas").focus();
 });
 &lt;/script&gt;</code></pre>
+
+<div class="note">
+  <b>全画面のあいだはボタンを隠し、ESC で抜ける</b>
+  ボタンが出たままだと見栄えが悪いので、全画面中は隠しています。
+  <b>ESC で全画面を抜けられることは、ブラウザが保証しています。</b>
+  ページ側の JavaScript がどれだけキーを横取りしても、この動作だけは止められません
+  （<code>navigator.keyboard.lock()</code> という専用の API を使わないかぎり）。
+  <code>pyxel.js</code> がこの API を使っていないことは確認済みです。
+</div>
 
 <figure>
 <div class="fig-box">

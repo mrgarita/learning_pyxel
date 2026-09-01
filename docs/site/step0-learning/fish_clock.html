@@ -15,18 +15,18 @@ launchPyxel({ command: "play", name: "fish_clock.pyxapp", gamepad: "enabled", ba
     opacity: .55; transition: opacity .15s;
   }
   #fs-btn:hover, #fs-btn:focus { opacity: 1; }
+
+  /* 全画面のあいだはボタンを隠す（抜けるときは ESC） */
+  :root:fullscreen #fs-btn { display: none; }
+  :root:-webkit-full-screen #fs-btn { display: none; }
 </style>
-<button id="fs-btn" title="ゲーム画面をブラウザいっぱいに広げます">全画面</button>
+<button id="fs-btn" title="ゲーム画面をブラウザいっぱいに広げます（もどるときは ESC）">全画面</button>
 <script>
 const fsBtn = document.getElementById("fs-btn");
 
 fsBtn.addEventListener("click", async () => {
   try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await document.documentElement.requestFullscreen();
-    }
+    await document.documentElement.requestFullscreen();
   } catch (e) {
     console.log("[fs] 全画面にできませんでした:", e.name, e.message);
   }
@@ -35,7 +35,10 @@ fsBtn.addEventListener("click", async () => {
   if (canvas) { canvas.focus(); }
 });
 
+// 全画面のあいだはボタンを隠す。ESC で抜けたら戻す
 document.addEventListener("fullscreenchange", () => {
-  fsBtn.textContent = document.fullscreenElement ? "全画面をやめる" : "全画面";
+  fsBtn.hidden = !!document.fullscreenElement;
+  const canvas = document.getElementById("canvas");
+  if (canvas) { canvas.focus(); }
 });
 </script>
