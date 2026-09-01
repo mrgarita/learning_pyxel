@@ -1295,6 +1295,153 @@ SPEED は「1 音の長さ」で、<code>120</code> で 1 音 1 秒。エディ�
   <b>エディタの中だけで完結する「音を並べる」方法のほうが、あとから自分が混乱しません。</b>
 </div>
 
+<h3 id="web-fullscreen">Q. Web に公開した Pyxel 作品を全画面にしたい。F11 が効かない</h3>
+<p>
+<b>A.</b> <b>ページに「全画面」ボタンを自分で足します。</b>
+<code>pyxel app2html</code> が出力する HTML には、全画面にする仕組みが<b>まったく入っていません</b>。
+読み込まれる <code>pyxel.js</code>（2.9.9）を確認しましたが、
+<code>requestFullscreen</code> に類する処理は 1 行もありませんでした。
+</p>
+
+<h4>なぜ F11 が効かなくなるのか</h4>
+
+<p>
+<b>アプリが起動した瞬間から</b>、Pyxel の wasm ランタイムが <code>document</code> に
+キー入力のハンドラを付け、自分が使うキーの<b>既定の動作を打ち消します</b>。
+F11 もその対象に入っているため、ブラウザの全画面切り替えまで一緒に止まってしまいます。
+</p>
+
+<p>
+実際に <code>keydown</code> を投げて、既定動作が打ち消されるか（<code>defaultPrevented</code>）を測りました。
+</p>
+
+<table>
+  <thead><tr><th>押したキー</th><th>CLICK TO START の画面</th><th>ゲーム起動後</th></tr></thead>
+  <tbody>
+    <tr><td><code>F11</code></td><td>打ち消されない</td><td><b>打ち消される</b></td></tr>
+    <tr><td><code>ArrowLeft</code></td><td>打ち消されない</td><td><b>打ち消される</b></td></tr>
+    <tr><td><code>Space</code></td><td>打ち消されない</td><td>打ち消されない</td></tr>
+  </tbody>
+</table>
+
+<p>
+起動前は素通りしていたものが、起動後だけ打ち消されています。
+<b>ページ側の JavaScript が原因</b>で、ブラウザの設定や Pyxel の不具合ではありません。
+</p>
+
+<h4>対策 1：ブラウザのメニューから全画面にする（コード変更なし）</h4>
+
+<p>
+Chrome なら右上の <b>⋮</b> メニューの中に全画面のアイコンがあります。
+メニュー操作はページのキー処理を経由しないので、こちらからなら全画面にできます。
+今すぐ確かめたいときはこれが手軽です。
+</p>
+
+<h4>対策 2：公開する HTML に「全画面」ボタンを足す</h4>
+
+<p>
+<code>app2html</code> が出力する HTML は、実質 4 行しかない小さなファイルです。
+その後ろにボタンとスクリプトを足すだけで、全画面ボタンを付けられます。
+</p>
+
+<pre><code>&lt;meta charset="utf-8"&gt;
+
+&lt;style&gt;
+  #fs-btn {
+    position: fixed; right: 12px; bottom: 12px; z-index: 9999;
+    padding: 8px 14px; color: #fff; background: rgba(50,50,50,.8);
+    border: 1px solid #888; border-radius: 6px; cursor: pointer;
+  }
+&lt;/style&gt;
+&lt;button id="fs-btn"&gt;全画面&lt;/button&gt;
+&lt;script&gt;
+const btn = document.getElementById("fs-btn");
+btn.addEventListener("click", async () =&gt; {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+  } else {
+    await document.documentElement.requestFullscreen();
+  }
+  document.getElementById("canvas").focus();   // キー入力を戻す
+});
+document.addEventListener("fullscreenchange", () =&gt; {
+  btn.textContent = document.fullscreenElement ? "全画面をやめる" : "全画面";
+});
+&lt;/script&gt;</code></pre>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 230" role="img" aria-label="通常のブラウザ表示ではタブバーとアドレスバーの分だけゲーム画面が小さくなり、全画面にするとその分まで広がることを示す図">
+  <text x="20" y="24" fill="#9aa4c4" font-size="12">通常の表示</text>
+  <rect x="20" y="36" width="270" height="170" fill="#10121c" stroke="#3b4166" stroke-width="2" rx="4"/>
+  <rect x="20" y="36" width="270" height="20" fill="#232840"/>
+  <rect x="28" y="41" width="52" height="10" fill="#3b4166" rx="2"/>
+  <rect x="20" y="56" width="270" height="18" fill="#1b1f33"/>
+  <rect x="28" y="61" width="180" height="8" fill="#3b4166" rx="4"/>
+  <rect x="20" y="74" width="270" height="132" fill="#232840"/>
+  <text x="155" y="146" fill="#9aa4c4" font-size="12" text-anchor="middle">ゲーム画面</text>
+  <text x="155" y="222" fill="#9aa4c4" font-size="11" text-anchor="middle">上の 38px 分が使えない</text>
+
+  <g stroke="#ffcc44" stroke-width="2" fill="none">
+    <path d="M320 120 L370 120"/><path d="M364 114 l6 6 -6 6" fill="#ffcc44"/>
+  </g>
+  <text x="345" y="108" fill="#ffcc44" font-size="11" text-anchor="middle">全画面</text>
+
+  <text x="400" y="24" fill="#2ee6a8" font-size="12">requestFullscreen() のあと</text>
+  <rect x="400" y="36" width="220" height="170" fill="#232840" stroke="#2ee6a8" stroke-width="2" rx="4"/>
+  <text x="510" y="126" fill="#2ee6a8" font-size="12" text-anchor="middle">ゲーム画面</text>
+  <text x="510" y="222" fill="#2ee6a8" font-size="11" text-anchor="middle">ウィンドウ全部がゲーム画面になる</text>
+</svg>
+</div>
+<figcaption>
+ゲーム画面はもともとウィンドウいっぱいに広がる。全画面にすると、タブバーとアドレスバーの分まで使えるようになる
+</figcaption>
+</figure>
+
+<h4>足すときに引っかかった 3 点</h4>
+
+<div class="warn">
+  <b>1. <code>&lt;meta charset="utf-8"&gt;</code> を忘れると日本語が化ける</b>
+  <code>app2html</code> の出力には <b>文字コードの指定が入っていません</b>。
+  絵と音しか入っていないうちは問題になりませんが、
+  ボタンに日本語を書いたとたん化けます（実際に化けました）。
+  ファイルの先頭、<code>&lt;!doctype html&gt;</code> の次の行に足しておきます。
+</div>
+
+<div class="warn">
+  <b>2. 全画面にしたあと <code>canvas.focus()</code> を呼ぶ</b>
+  ボタンをクリックすると、キーボードの入力先がボタンに移ります。
+  そのままだと矢印キーがゲームに届かなくなるので、
+  <b>入力先を canvas に戻す</b>必要があります。
+</div>
+
+<div class="warn">
+  <b>3. <code>requestFullscreen()</code> はクリックの中からしか呼べない</b>
+  ブラウザの安全策で、全画面はユーザーが操作したときにしか許可されません。
+  ページを開いた直後に自動で全画面にする、といった書き方はできません
+  （試すと <code>TypeError not granted</code> で拒否されます）。
+</div>
+
+<div class="note">
+  <b>ページの構造</b>
+  <code>pyxel.js</code> は次の形で画面を作ります。ボタンを足す位置を考えるときの参考に。
+  <pre><code>&lt;body&gt;
+  &lt;div id="pyxel-screen"&gt;
+    &lt;canvas id="canvas"&gt;   ← ゲーム画面。ウィンドウの大きさに合わせて拡大される
+  &lt;/div&gt;
+  &lt;button id="fs-btn"&gt;    ← ここに足す
+&lt;/body&gt;</code></pre>
+  <code>canvas</code> の表示サイズを測ったところ、ウィンドウの内側と<b>ぴったり同じ</b>でした。
+  つまり全画面にすれば、そのぶんそのままゲーム画面が大きくなります。
+</div>
+
+<div class="note">
+  <b><code>pyxel.fullscreen()</code> は使えないのか</b>
+  Python 側には <code>pyxel.fullscreen(enabled)</code> という関数があります。
+  ただしこれは<b>パソコンで直接実行するとき用</b>のもので、
+  Web 版で頼りにするものではありません。Web では上のボタン方式が確実です。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>

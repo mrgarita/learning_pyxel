@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ1：3 つのドット絵を描く ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 1 </span>3 つのドット絵を描く</h1>
+  <p>男の子・お化け・お菓子を用意し、画面に出して確かめる</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 1</p>
+
+<h2>ゴール</h2>
+
+<p>
+リソースエディタで <b>8×8 ドットの絵を 3 つ</b>描いて保存し、
+それを画面に並べて表示するところまでを確認します。
+このフェーズで書くコードは 20 行ほどで、動きはまだありません。
+</p>
+
+<div class="note">
+  <b>このフェーズで作るファイル</b>
+  <code>step1/</code> フォルダを作り、その中に次の 2 つを置きます。
+  <b>フォルダとファイルはご自身で作ってください。</b>
+  <pre><code>step1/
+├── candy_hunt.py       これから書くコード
+└── candy_hunt.pyxres   リソースエディタで作る絵</code></pre>
+  名前は好きなもので構いませんが、以降のページはこの名前で説明します。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. コードより先に、絵を用意する</h3>
+
+<p>
+step0 では「星を <code>pset</code> で描く」ところから始めて、あとから宇宙船の絵を足しました。
+今回は<b>最初に絵を作ります</b>。動かす対象が 3 種類あり、
+それぞれ「どんな見た目か」が決まっていないと、位置や大きさの数字を決められないからです。
+</p>
+
+<p>
+絵のサイズは <b>8×8 ドット</b>にします。画面が 160×120 なので、
+横に 20 個・縦に 15 個ぶん並ぶ計算です。追いかけっこをするのにちょうどよい大きさで、
+step0 の宇宙船（16×16）の 4 分の 1 の面積になります。
+</p>
+
+<h3>1-2. 「どこに置くか」を先に決めておく</h3>
+
+<p>
+ここがこのフェーズの本題です。イメージバンクは <b>256×256 ドットの 1 枚の大きな紙</b>で、
+3 つの絵はその紙の上に並べて描きます。コードから絵を呼び出すときは、
+名前ではなく<b>「紙のどこから、何ドットぶん切り出すか」という座標</b>で指定します。
+</p>
+
+<p>
+つまり<b>配置がそのままコードの中の数字になります</b>。
+あとから絵の位置を動かすと、コードの数字も全部直すことになります。
+先に決めておきましょう。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" role="img" aria-label="イメージバンク 0 の左上に、男の子・お化け・お菓子を 8 ドットおきに横一列に並べた配置図">
+  <text x="20" y="26" fill="#e8f0ff" font-size="13">イメージバンク 0 の左上（切り出し位置 u・v の数字が、そのままコードに出てくる）</text>
+  <rect x="118" y="62" width="11" height="11" fill="#232840"/><rect x="129" y="62" width="11" height="11" fill="#232840"/><rect x="140" y="62" width="11" height="11" fill="#232840"/><rect x="151" y="62" width="11" height="11" fill="#232840"/><rect x="107" y="73" width="11" height="11" fill="#232840"/><rect x="118" y="73" width="11" height="11" fill="#232840"/><rect x="129" y="73" width="11" height="11" fill="#232840"/><rect x="140" y="73" width="11" height="11" fill="#232840"/><rect x="151" y="73" width="11" height="11" fill="#232840"/><rect x="162" y="73" width="11" height="11" fill="#232840"/><rect x="118" y="84" width="11" height="11" fill="#ffcc44"/><rect x="129" y="84" width="11" height="11" fill="#ffcc44"/><rect x="140" y="84" width="11" height="11" fill="#ffcc44"/><rect x="151" y="84" width="11" height="11" fill="#ffcc44"/><rect x="107" y="95" width="11" height="11" fill="#ffcc44"/><rect x="118" y="95" width="11" height="11" fill="#10121c"/><rect x="129" y="95" width="11" height="11" fill="#ffcc44"/><rect x="140" y="95" width="11" height="11" fill="#ffcc44"/><rect x="151" y="95" width="11" height="11" fill="#10121c"/><rect x="162" y="95" width="11" height="11" fill="#ffcc44"/><rect x="107" y="106" width="11" height="11" fill="#45b0e8"/><rect x="118" y="106" width="11" height="11" fill="#45b0e8"/><rect x="129" y="106" width="11" height="11" fill="#45b0e8"/><rect x="140" y="106" width="11" height="11" fill="#45b0e8"/><rect x="151" y="106" width="11" height="11" fill="#45b0e8"/><rect x="162" y="106" width="11" height="11" fill="#45b0e8"/><rect x="107" y="117" width="11" height="11" fill="#45b0e8"/><rect x="118" y="117" width="11" height="11" fill="#45b0e8"/><rect x="129" y="117" width="11" height="11" fill="#45b0e8"/><rect x="140" y="117" width="11" height="11" fill="#45b0e8"/><rect x="151" y="117" width="11" height="11" fill="#45b0e8"/><rect x="162" y="117" width="11" height="11" fill="#45b0e8"/><rect x="118" y="128" width="11" height="11" fill="#9aa4c4"/><rect x="151" y="128" width="11" height="11" fill="#9aa4c4"/><rect x="118" y="139" width="11" height="11" fill="#9aa4c4"/><rect x="151" y="139" width="11" height="11" fill="#9aa4c4"/><text x="140" y="262" fill="#e8f0ff" font-size="12" text-anchor="middle">男の子</text><text x="140" y="280" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">u = 0</text><rect x="206" y="62" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="62" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="62" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="62" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="73" width="11" height="11" fill="#e8f0ff"/><rect x="206" y="73" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="73" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="73" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="73" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="73" width="11" height="11" fill="#e8f0ff"/><rect x="184" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="206" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="261" y="84" width="11" height="11" fill="#e8f0ff"/><rect x="184" y="95" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="95" width="11" height="11" fill="#10121c"/><rect x="206" y="95" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="95" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="95" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="95" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="95" width="11" height="11" fill="#10121c"/><rect x="261" y="95" width="11" height="11" fill="#e8f0ff"/><rect x="184" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="206" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="261" y="106" width="11" height="11" fill="#e8f0ff"/><rect x="184" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="206" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="261" y="117" width="11" height="11" fill="#e8f0ff"/><rect x="184" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="206" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="239" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="261" y="128" width="11" height="11" fill="#e8f0ff"/><rect x="184" y="139" width="11" height="11" fill="#e8f0ff"/><rect x="195" y="139" width="11" height="11" fill="#e8f0ff"/><rect x="217" y="139" width="11" height="11" fill="#e8f0ff"/><rect x="228" y="139" width="11" height="11" fill="#e8f0ff"/><rect x="250" y="139" width="11" height="11" fill="#e8f0ff"/><rect x="261" y="139" width="11" height="11" fill="#e8f0ff"/><text x="228" y="262" fill="#e8f0ff" font-size="12" text-anchor="middle">お化け</text><text x="228" y="280" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">u = 8</text><rect x="305" y="73" width="11" height="11" fill="#ff6b97"/><rect x="316" y="73" width="11" height="11" fill="#ff6b97"/><rect x="272" y="84" width="11" height="11" fill="#ffcc44"/><rect x="294" y="84" width="11" height="11" fill="#ff6b97"/><rect x="305" y="84" width="11" height="11" fill="#ff6b97"/><rect x="316" y="84" width="11" height="11" fill="#ff6b97"/><rect x="327" y="84" width="11" height="11" fill="#ff6b97"/><rect x="349" y="84" width="11" height="11" fill="#ffcc44"/><rect x="272" y="95" width="11" height="11" fill="#ffcc44"/><rect x="283" y="95" width="11" height="11" fill="#ffcc44"/><rect x="294" y="95" width="11" height="11" fill="#ff6b97"/><rect x="305" y="95" width="11" height="11" fill="#ff6b97"/><rect x="316" y="95" width="11" height="11" fill="#ff6b97"/><rect x="327" y="95" width="11" height="11" fill="#ff6b97"/><rect x="338" y="95" width="11" height="11" fill="#ffcc44"/><rect x="349" y="95" width="11" height="11" fill="#ffcc44"/><rect x="272" y="106" width="11" height="11" fill="#ffcc44"/><rect x="283" y="106" width="11" height="11" fill="#ffcc44"/><rect x="294" y="106" width="11" height="11" fill="#ff6b97"/><rect x="305" y="106" width="11" height="11" fill="#ff6b97"/><rect x="316" y="106" width="11" height="11" fill="#ff6b97"/><rect x="327" y="106" width="11" height="11" fill="#ff6b97"/><rect x="338" y="106" width="11" height="11" fill="#ffcc44"/><rect x="349" y="106" width="11" height="11" fill="#ffcc44"/><rect x="272" y="117" width="11" height="11" fill="#ffcc44"/><rect x="294" y="117" width="11" height="11" fill="#ff6b97"/><rect x="305" y="117" width="11" height="11" fill="#ff6b97"/><rect x="316" y="117" width="11" height="11" fill="#ff6b97"/><rect x="327" y="117" width="11" height="11" fill="#ff6b97"/><rect x="349" y="117" width="11" height="11" fill="#ffcc44"/><rect x="305" y="128" width="11" height="11" fill="#ff6b97"/><rect x="316" y="128" width="11" height="11" fill="#ff6b97"/><text x="316" y="262" fill="#e8f0ff" font-size="12" text-anchor="middle">お菓子</text><text x="316" y="280" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">u = 16</text><rect x="360" y="62" width="88" height="88" fill="#1b1f33"/><text x="404" y="110" fill="#3b4166" font-size="12" text-anchor="middle">空き</text><rect x="96" y="150" width="352" height="88" fill="#1b1f33"/><text x="272" y="198" fill="#3b4166" font-size="12" text-anchor="middle">この段は空けておく（あとで動きをつけたくなったとき用）</text>
+  <line x1="96" y1="62" x2="96" y2="238" stroke="#3b4166" stroke-width="1.5"/><text x="96" y="52" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">0</text><line x1="184" y1="62" x2="184" y2="238" stroke="#3b4166" stroke-width="1.5"/><text x="184" y="52" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">8</text><line x1="272" y1="62" x2="272" y2="238" stroke="#3b4166" stroke-width="1.5"/><text x="272" y="52" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">16</text><line x1="360" y1="62" x2="360" y2="238" stroke="#3b4166" stroke-width="1.5"/><text x="360" y="52" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">24</text><line x1="448" y1="62" x2="448" y2="238" stroke="#3b4166" stroke-width="1.5"/><text x="448" y="52" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">32</text><line x1="96" y1="62" x2="448" y2="62" stroke="#3b4166" stroke-width="1.5"/><text x="86" y="66" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">0</text><line x1="96" y1="150" x2="448" y2="150" stroke="#3b4166" stroke-width="1.5"/><text x="86" y="154" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">8</text><line x1="96" y1="238" x2="448" y2="238" stroke="#3b4166" stroke-width="1.5"/><text x="86" y="242" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">16</text>
+</svg>
+</div>
+<figcaption>3 つを左上から横一列に、8 ドットおきに並べる</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>絵</th><th>切り出し位置</th><th>大きさ</th></tr></thead>
+  <tbody>
+    <tr><td>男の子</td><td><code>u = 0</code>, <code>v = 0</code></td><td>8 × 8</td></tr>
+    <tr><td>お化け</td><td><code>u = 8</code>, <code>v = 0</code></td><td>8 × 8</td></tr>
+    <tr><td>お菓子</td><td><code>u = 16</code>, <code>v = 0</code></td><td>8 × 8</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>なぜ 8 の倍数の位置に置くのか</b>
+  絵が 8×8 なので、8 ドットおきに置くと<b>切り出し位置がきれいな数字</b>になります。
+  もし 5 ドットずらして描いてしまうと <code>u = 5</code>、<code>u = 13</code> のような数字を
+  コードに書くことになり、あとで読み返したときに何のことか分からなくなります。
+  エディタの方眼も 8 ドット単位なので、目でも合わせやすくなります。
+</div>
+
+<div class="note">
+  <b>2 段目を空けておく理由</b>
+  今回はまだ使いませんが、あとで「歩いているように見せたい」と思ったときに、
+  2 コマ目の絵を<b>すぐ下（<code>v = 8</code>）に足せる</b>ようにしておきます。
+  step0 の魚が 2 枚の絵を切り替えて泳いでいたのと同じ仕組みです。
+</div>
+
+<h3>1-3. 背景は黒のままにする</h3>
+
+<p>
+絵の背景（何も描かない部分）は<b>黒＝色番号 0 のまま</b>にしておきます。
+画面に出すとき「この色は透明として扱う」と指定することで、
+四角い枠が見えず、キャラクターの形だけが表示されます。step0 の宇宙船と同じやり方です。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel edit ファイル名.pyxres</code></td><td>リソースエディタを開く。ファイルが無ければ新規作成される</td></tr>
+    <tr><td><code>pyxel.load("ファイル名.pyxres")</code></td><td>作った絵をプログラムから読み込む</td></tr>
+    <tr><td><code>pyxel.blt(x, y, img, u, v, w, h, colkey)</code></td><td>イメージバンクから切り出して画面に貼る</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>エディタの操作は step0 で扱いました</b>
+  画面の見方・ペンや塗りつぶしの使い方・保存のしかたは
+  <a href="../step0/phase4.html">step0 フェーズ 4</a> にまとめてあります。
+  操作を忘れたときはそちらを開いてください。ここでは<b>配置</b>だけに集中します。
+</div>
+
+<h2>3. 手順</h2>
+
+<h3>3-1. エディタを開く</h3>
+
+<p>
+<code>step1</code> フォルダを作ったら、その中で次を実行します。
+ファイルがまだ無いので、新しく作られます。
+</p>
+
+<pre><code>cd step1
+pyxel edit candy_hunt.pyxres</code></pre>
+
+<h3>3-2. 3 つの絵を描く</h3>
+
+<p>
+イメージバンク 0 のタブを開き、上の配置図のとおり<b>左上から横一列</b>に描いていきます。
+1 つ描くごとに <code>Ctrl</code> + <code>S</code> で保存しておくと安心です。
+</p>
+
+<div class="term">
+  <b>描くときのコツ</b>
+  8×8 は思ったより狭く、細かい描き込みはできません。<b>形の輪郭で見分けがつくか</b>を優先します。
+  <ul>
+    <li><b>男の子</b> — 頭・体・足の 3 段に分けると人らしく見えます。頭は大きめに</li>
+    <li><b>お化け</b> — 下の辺をギザギザにすると、それだけでお化けらしくなります。色は明るく</li>
+    <li><b>お菓子</b> — 男の子やお化けと<b>違う色</b>にするのがいちばん大事です。拾う対象がひと目で分かるように</li>
+  </ul>
+  迷ったら、目を細めて画面を見てください。3 つが<b>色と大きさだけで区別できる</b>なら成功です。
+</div>
+
+<h3>3-3. 保存して閉じる</h3>
+
+<p>
+<code>Ctrl</code> + <code>S</code> で保存し、<code>Esc</code> でエディタを閉じます。
+<code>step1</code> フォルダに <code>candy_hunt.pyxres</code> ができていれば完了です。
+</p>
+
+<h2>4. コード</h2>
+
+<p>
+描いた絵がちゃんと出るかを確かめます。<code>step1/candy_hunt.py</code> に次を入力してください。
+</p>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ1：描いた 3 つの絵を並べて表示する
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理（まだ何もしない）"""
+        pass
+
+    def draw(self):
+        """描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(40, 56, 0,  0, 0, 8, 8, pyxel.COLOR_BLACK)    # 男の子
+        pyxel.blt(76, 56, 0,  8, 0, 8, 8, pyxel.COLOR_BLACK)    # お化け
+        pyxel.blt(112, 56, 0, 16, 0, 8, 8, pyxel.COLOR_BLACK)   # お菓子
+
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step1
+python candy_hunt.py</code></pre>
+
+<p>
+黒い画面の真ん中あたりに、描いた 3 つの絵が横に並んで表示されれば成功です。
+まだ何も動きません。
+</p>
+
+<h2>6. コードの解説</h2>
+
+<h3><code>pass</code> は「ここは何もしない」の印</h3>
+
+<p>
+Python では、<code>def</code> の中身を空っぽにするとエラーになります。
+かといって今の <code>update()</code> には書くことがありません。
+そこで <b>「何もしないことを、はっきり書いておく」</b>ための命令が <code>pass</code> です。
+</p>
+
+<p>
+次のフェーズで男の子を動かす処理を書くので、この <code>pass</code> は<b>すぐに消えます</b>。
+「あとで中身が入る場所」の目印だと思ってください。
+</p>
+
+<h3><code>blt()</code> の 8 個の数字</h3>
+
+<p>
+step0 でも使いましたが、引数が多いので改めて整理します。
+</p>
+
+<pre><code>pyxel.blt(40, 56, 0,  0, 0, 8, 8, pyxel.COLOR_BLACK)
+          ~~~~~~  ~   ~~~~  ~~~~  ~~~~~~~~~~~~~~~~~
+          (1)    (2)  (3)   (4)   (5)</code></pre>
+
+<table>
+  <thead><tr><th></th><th>値</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td>(1)</td><td><code>40, 56</code></td><td><b>画面の</b>どこに貼るか（左上の座標）</td></tr>
+    <tr><td>(2)</td><td><code>0</code></td><td>どのイメージバンクを使うか</td></tr>
+    <tr><td>(3)</td><td><code>0, 0</code></td><td><b>絵のほうの</b>どこから切り出すか（<code>u</code>, <code>v</code>）</td></tr>
+    <tr><td>(4)</td><td><code>8, 8</code></td><td>切り出す幅と高さ</td></tr>
+    <tr><td>(5)</td><td><code>pyxel.COLOR_BLACK</code></td><td>透明として扱う色</td></tr>
+  </tbody>
+</table>
+
+<p>
+3 行の違いは <b>(1) の貼る位置</b>と <b>(3) の切り出し位置</b>だけです。
+切り出し位置が <code>0</code> → <code>8</code> → <code>16</code> と変わっているのが、
+さきほど決めた配置に対応しています。
+</p>
+
+<div class="warn">
+  <b>数字がじかに書いてあるのは、今だけです</b>
+  <code>40</code>、<code>56</code>、<code>8</code> といった数字がコードに散らばっていますが、
+  次のフェーズからは <code>SPRITE_SIZE = 8</code> のように<b>名前を付けた定数</b>に置き換えていきます。
+  今は「どの数字が何を指しているか」を目で確かめるために、あえてそのまま書いています。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>黒い画面のまま、何も出ない</td>
+      <td>絵を描いた場所がずれている可能性があります。エディタを開き直して、
+      <b>左上の角ぴったり</b>から描けているか確かめてください。
+      また、イメージバンクの <b>0 番</b>のタブに描けているかも確認します</td>
+    </tr>
+    <tr>
+      <td><code>FileNotFoundError</code> と出る</td>
+      <td><code>.pyxres</code> が見つかっていません。<code>pyxel.load()</code> の相対パスは
+      <b>実行するスクリプトの置き場所</b>を基準に解決されるので、
+      <code>candy_hunt.py</code> と <code>candy_hunt.pyxres</code> が
+      <b>同じフォルダ</b>にあるか確認してください</td>
+    </tr>
+    <tr>
+      <td>絵のまわりに黒い四角が見える</td>
+      <td>透過色の指定が抜けています。<code>blt()</code> の最後の
+      <code>pyxel.COLOR_BLACK</code> があるか確認してください</td>
+    </tr>
+    <tr>
+      <td>絵が途中で切れている</td>
+      <td>切り出す幅と高さが合っていません。<code>8, 8</code> になっているか確認します</td>
+    </tr>
+    <tr>
+      <td>となりの絵が混ざって表示される</td>
+      <td>8 ドットの区切りをまたいで描いてしまっています。
+      はみ出した部分をエディタで消してください</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+絵が用意できました。次は<b>男の子を矢印キーで動かします</b>。
+このフェーズで書いた <code>candy_hunt.py</code> がそのまま土台になり、
+<code>update()</code> の <code>pass</code> が中身に置き換わります。
+</p>
+
+<footer class="site">
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
