@@ -16,5 +16,8 @@ pyxel_examples/
 # VS Code の Code Runner 拡張が「選択範囲だけ実行」時に作る一時ファイル
 tempCodeRunnerFile.py
 
-# pyxel package が作る中間ファイル（いつでも作り直せるので追跡しない）
+# pyxel package / app2html が作る生成物（いつでも作り直せるので追跡しない）
+# 公開用は docs/site/ 側にコピーしたものだけを追跡する
 *.pyxapp
+step0/*.html
+step0-learning/*.html
