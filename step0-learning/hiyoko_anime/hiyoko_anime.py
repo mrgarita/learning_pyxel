@@ -25,7 +25,7 @@ class App:
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title = "Hiyoko Anime")
 
         # リソース読み込み
-        pyxel.load("learning_bgm.pyxres")
+        pyxel.load("hiyoko_anime.pyxres")
         pyxel.playm(0, loop = True)     # BGM を鳴らす
 
         # ヒヨコの初期位置

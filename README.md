@@ -43,9 +43,15 @@ learning_pyxel/
 ├── docs/site/          解説 HTML（GitHub Pages で公開）
 ├── step0/              step0 の作品コード
 ├── step0-learning/     step0 で学んだことの復習作品
+│   ├── hiyoko_anime/   復習作品 1（作品ごとにサブフォルダへ分ける）
+│   └── fish_clock/     復習作品 2
 ├── CLAUDE.md           Claude Code 向けの作業指針
 └── project.txt         学習計画の原本
 ```
+
+`step0-learning/` を作品ごとのサブフォルダに分けているのは、`pyxel package`
+の出力ファイル名が指定したフォルダ名で決まるためです。同じフォルダに複数の
+作品を置くと、あとから package した作品で上書きされてしまいます。
 
 ## ライセンス / 素材について
 
