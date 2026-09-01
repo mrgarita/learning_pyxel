@@ -30,7 +30,6 @@ class App:
 
         # ヒヨコの初期位置
         self.hiyoko_x = (SCREEN_WIDTH - HIYOKO_WIDTH) // 2
-        self.hiyoko_y = 95
         self.hiyoko_direction = 1       # ヒヨコ 画像の向き（1: 順方向 -1: 左右反転）
         self.hiyoko_scale = 1           # ヒヨコ の大きさ
         self.put_on_ground()            # 足元を地面に合わせる
@@ -40,7 +39,7 @@ class App:
 
     def put_on_ground(self):
         """ヒヨコの足元が地面につくようにY座標を決める"""
-        self.hiyoko_y = GROUND_Y - HIYOKO_HEIGHT * (self.hiyoko_scale + 1) // 2
+        self.hiyoko_y = GROUND_Y - HIYOKO_HEIGHT * (self.hiyoko_scale + 1) / 2
 
     def grow_hiyoko(self):
         """ヒヨコを1段階大きくする（上限まで）"""
@@ -117,7 +116,7 @@ class App:
         pyxel.blt(
             self.hiyoko_x, self.hiyoko_y,                           # ヒヨコ の表示位置XY
             0,                                                      # イメージバンク番号
-            (pyxel.frame_count // 5) % 2 * HIYOKO_WIDTH, HIYOKO_V,  # 切り出し位置XY
+            HIYOKO_U + (pyxel.frame_count // 5) % 2 * HIYOKO_WIDTH, HIYOKO_V,  # 切り出し位置XY
             HIYOKO_WIDTH * self.hiyoko_direction, HIYOKO_HEIGHT,    # 切り出す幅（向きを考慮）と高さ
             pyxel.COLOR_BLACK,                                      # 透過色
             0,                                                      # 回転角

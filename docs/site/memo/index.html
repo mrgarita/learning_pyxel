@@ -360,6 +360,147 @@ print(len(t))   # → 3
   実際に手を動かすタイミングです。
 </div>
 
+<h3 id="floor-div">Q. <code>/</code> と <code>//</code> はどう使い分ける？</h3>
+<p>
+<b>A.</b> <code>/</code> は<b>ふつうの割り算</b>で、答えはつねに小数（<code>float</code>）になります。
+<code>//</code> は<b>切り捨て除算</b>で、小数点以下を捨てます。
+「1 きざみの整数でないと意味がないもの」には <code>//</code>、
+「途中の値にも意味があるもの」には <code>/</code> を使う、というのが基本の分かれ道です。
+</p>
+
+<table>
+  <thead><tr><th>式</th><th>結果</th><th>型</th><th>ひとこと</th></tr></thead>
+  <tbody>
+    <tr><td><code>7 / 2</code></td><td><code>3.5</code></td><td>float</td><td>小数のまま残る</td></tr>
+    <tr><td><code>7 // 2</code></td><td><code>3</code></td><td>int</td><td>小数点以下を捨てる</td></tr>
+    <tr><td><code>4 / 2</code></td><td><code>2.0</code></td><td>float</td><td><b>割り切れても float</b></td></tr>
+    <tr><td><code>4 // 2</code></td><td><code>2</code></td><td>int</td><td>整数どうしなら int</td></tr>
+    <tr><td><code>7.4 // 2</code></td><td><code>3.0</code></td><td>float</td><td>片方が小数なら型は float。<b>値は切り捨て済み</b></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b><code>//</code> は「整数にする命令」ではありません</b>
+  <code>7.4 // 2</code> の答えは <code>3.0</code> で、型は <code>float</code> のままです。
+  <code>//</code> が保証するのは「値が整数ちょうどになる」ことだけで、
+  <b>型が <code>int</code> になるとはかぎりません</b>。
+</div>
+
+<h4>使い分けの目安</h4>
+
+<table>
+  <thead><tr><th></th><th><code>//</code> を使う</th><th><code>/</code> を使う</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>対象</b></td>
+      <td>個数・番号・マス目<br>（1 きざみでないと意味がない）</td>
+      <td>位置・速さ・大きさ<br>（途中の値にも意味がある）</td>
+    </tr>
+    <tr>
+      <td><b>例</b></td>
+      <td><code>(pyxel.frame_count // 5) % 2</code><br>5 フレームごとに切り替わる<b>コマ番号</b></td>
+      <td><code>GROUND_Y - HIYOKO_HEIGHT * (scale + 1) / 2</code><br>ヒヨコの<b>Y 座標</b></td>
+    </tr>
+    <tr>
+      <td><b>理由</b></td>
+      <td>「1.4 コマ目」は存在しない</td>
+      <td>Pyxel が小数の座標を受け取り、描くときに四捨五入してくれる<br>（<a href="#float-coord">→ 小数の座標</a>）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>実例：ヒヨコの足元が地面に沈んだ話</h4>
+
+<p>
+<code>put_on_ground()</code> を最初こう書いていました。
+<code>hiyoko_scale</code> は花を当てるたびに <code>0.2</code> ずつ増えるので、<b>途中から小数になります</b>。
+</p>
+
+<pre><code>self.hiyoko_y = GROUND_Y - HIYOKO_HEIGHT * (self.hiyoko_scale + 1) // 2</code></pre>
+
+<p>
+すると足元の位置が地面（<code>GROUND_Y = 111</code>）から最大 <code>0.8</code> ドットずれます。
+</p>
+
+<table>
+  <thead><tr><th><code>hiyoko_scale</code></th><th>1.0</th><th>1.2</th><th>1.4</th><th>1.6</th><th>1.8</th><th>2.0</th></tr></thead>
+  <tbody>
+    <tr><td><b><code>//</code> のときの足元</b></td><td>111.0</td><td>111.6</td><td>111.2</td><td>111.8</td><td>111.4</td><td>111.0</td></tr>
+    <tr><td><b><code>/</code> のときの足元</b></td><td>111.0</td><td>111.0</td><td>111.0</td><td>111.0</td><td>111.0</td><td>111.0</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>//</code> で切り捨てると <b>引く量が減る</b> ので、Y 座標が下へずれて足元が地面へ埋まります。
+<code>111.6</code> や <code>111.8</code> は描画時に四捨五入されて <code>112</code>、
+つまり<b>地面のタイルに 1 ドット食い込んだ状態</b>です。
+大きくなるたびに沈んだり戻ったりするので、見た目がわずかに揺れます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 240" role="img" aria-label="割り算の記号の違いでヒヨコの足元が地面に 1 ドット沈むことを示す図。左は / を使って足元が地面の上にそろう例、右は // を使って足元が地面のタイルに食い込む例">
+  <text x="60" y="24" fill="#2ee6a8" font-family="Consolas, monospace" font-size="14">/ を使う（正しい）</text>
+  <text x="60" y="44" fill="#9aa4c4" font-size="12">111 - 16 * 2.2 / 2 = 93.4</text>
+
+  <text x="52" y="76" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">110</text>
+  <text x="52" y="106" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">111</text>
+  <text x="52" y="136" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">112</text>
+  <text x="52" y="166" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">113</text>
+
+  <rect x="60" y="56" width="180" height="28" fill="#ffcc44" opacity=".3"/>
+  <rect x="60" y="84" width="180" height="28" fill="#ffcc44"/>
+  <text x="150" y="103" fill="#10121c" font-size="12" text-anchor="middle" font-weight="bold">ヒヨコの最下行</text>
+  <rect x="60" y="112" width="180" height="58" fill="#2ee6a8" opacity=".35"/>
+  <text x="150" y="147" fill="#e8f0ff" font-size="12" text-anchor="middle">地面のタイル</text>
+  <line x1="60" y1="112" x2="240" y2="112" stroke="#2ee6a8" stroke-width="2"/>
+  <text x="150" y="196" fill="#2ee6a8" font-size="12" text-anchor="middle">足元 111.0 → 地面にぴたりとのる</text>
+
+  <text x="400" y="24" fill="#ff6b97" font-family="Consolas, monospace" font-size="14">// を使う（沈む）</text>
+  <text x="400" y="44" fill="#9aa4c4" font-size="12">111 - 16 * 2.2 // 2 = 94.0</text>
+
+  <text x="392" y="76" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">110</text>
+  <text x="392" y="106" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">111</text>
+  <text x="392" y="136" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">112</text>
+  <text x="392" y="166" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">113</text>
+
+  <rect x="400" y="112" width="180" height="58" fill="#2ee6a8" opacity=".35"/>
+  <text x="490" y="162" fill="#e8f0ff" font-size="12" text-anchor="middle">地面のタイル</text>
+  <rect x="400" y="84" width="180" height="28" fill="#ffcc44" opacity=".3"/>
+  <rect x="400" y="112" width="180" height="28" fill="#ffcc44"/>
+  <text x="490" y="131" fill="#10121c" font-size="12" text-anchor="middle" font-weight="bold">ヒヨコの最下行</text>
+  <rect x="400" y="112" width="180" height="28" fill="none" stroke="#ff6b97" stroke-width="2" stroke-dasharray="4 3"/>
+  <line x1="400" y1="112" x2="580" y2="112" stroke="#2ee6a8" stroke-width="2"/>
+  <text x="490" y="196" fill="#ff6b97" font-size="12" text-anchor="middle">足元 111.6 → 四捨五入されて 112</text>
+  <text x="490" y="214" fill="#ff6b97" font-size="12" text-anchor="middle">地面に 1 ドット食い込む</text>
+</svg>
+</div>
+<figcaption>
+ドットを拡大した図。<code>//</code> で切り捨てると引く量が減り、ヒヨコ全体が 1 ドット下へずれる。
+</figcaption>
+</figure>
+
+<h4>つまずきやすい 2 点</h4>
+
+<div class="warn">
+  <b>1. <code>*</code> と <code>//</code> は同じ強さ。左から順に計算される</b>
+  <code>16 * (scale + 1) // 2</code> は
+  <code>(16 * (scale + 1)) // 2</code> であって、<code>16 * ((scale + 1) // 2)</code> ではありません。
+  かけ算のあとに切り捨てるので、答えが変わります。
+  <pre><code>16 * (1.2 + 1) // 2      # → 17.0   最後に切り捨て
+16 * ((1.2 + 1) // 2)    # → 16.0   先に切り捨てるとこうなる</code></pre>
+  <code>*</code>, <code>/</code>, <code>//</code>, <code>%</code> はすべて同じ優先順位です。
+  迷ったら<b>かっこを付ける</b>のがいちばん安全です。
+</div>
+
+<div class="warn">
+  <b>2. 負の数では「0 に近づける」丸めではない</b>
+  <code>//</code> は<b>小さいほう（数直線の左）へ</b>丸めます。0 方向へ丸める <code>int()</code> とは結果が違います。
+  <pre><code>-7 // 2      # → -4   小さいほうへ
+int(-7 / 2)  # → -3   0 に近いほうへ</code></pre>
+  画面の左端より外（マイナスの座標）を扱うときに、1 ドットずれる原因になります。
+</div>
+
 <h2>Pyxel について</h2>
 
 <h3 id="pyxres-inside">Q. <code>.pyxres</code> ファイルの中身は読める？ 何が入っている？</h3>
@@ -745,21 +886,23 @@ y = 地面Y − 高さ × (scale + 1) ÷ 2</code></pre>
 
     def put_on_ground(self):
         """ヒヨコの足元が地面につくようにY座標を決める"""
-        self.hiyoko_y = GROUND_Y - HIYOKO_HEIGHT * (self.hiyoko_scale + 1) // 2</code></pre>
+        self.hiyoko_y = GROUND_Y - HIYOKO_HEIGHT * (self.hiyoko_scale + 1) / 2</code></pre>
 
 <p>あとは大きさを変えたところで呼ぶだけです。</p>
 
 <pre><code>        self.hiyoko_scale = 1           # 初期化のとき
         self.put_on_ground()
 
-        self.hiyoko_scale += 1          # 花にぶつかって大きくなったとき
+        self.hiyoko_scale = min(self.hiyoko_scale + 0.2, HIYOKO_SCALE_MAX)  # 花にぶつかって大きくなったとき
         self.put_on_ground()</code></pre>
 
-<div class="note">
-  <b>整数で持つなら <code>//</code> を使う</b>
-  <code>/</code> で割ると結果が小数（<code>float</code>）になります。座標に小数を渡しても
-  Pyxel は四捨五入して描いてくれる（<a href="#float-coord">→ 小数の座標</a>）ので動きますが、
-  ここは必ず割り切れる計算なので <code>//</code> で整数のままにしておくほうが素直です。
+<div class="warn">
+  <b>ここは <code>//</code> ではなく <code>/</code> で割る</b>
+  <code>scale</code> を <code>0.2</code> きざみで増やすと、<code>HIYOKO_HEIGHT * (scale + 1)</code> は
+  <b>割り切れない小数</b>になります。ここで <code>//</code>（切り捨て）を使うと引く量が減り、
+  足元が地面へ最大 <code>0.8</code> ドット沈みます。座標に小数を渡しても Pyxel は四捨五入して
+  描いてくれる（<a href="#float-coord">→ 小数の座標</a>）ので、<code>/</code> のままで問題ありません。
+  <a href="#floor-div">→ <code>/</code> と <code>//</code> の使い分け</a>
 </div>
 
 <div class="warn">
