@@ -1051,6 +1051,250 @@ pyxel app2html fish_clock.pyxapp</code></pre>
   <code>zipfile</code> モジュールで中を確認できます（<a href="#pyxres-inside">→ .pyxres の中身</a>と同じ要領）。
 </div>
 
+<h3 id="once-on-change">Q. 「分が 00 の間ずっと」のような条件で、1 回だけ処理したい</h3>
+<p>
+<b>A.</b> <b>「前回の値」を覚えておき、変わった瞬間だけ動かします。</b>
+条件そのものを厳しくしても解決しません。<code>update()</code> は 1 秒に <code>fps</code> 回呼ばれるので、
+「分が 00」のような条件は<b>その 1 分間ずっと真</b>だからです。
+</p>
+
+<p>
+時報で起きたのがこれでした。<code>fps=15</code> なので <code>play_chime()</code> が 900 回呼ばれ、
+<code>pyxel.play()</code> は<b>呼ぶたびに先頭から鳴らし直す</b>ため、
+チャイムの出だしだけが延々と繰り返される音になります。
+</p>
+
+<h4>書き方</h4>
+
+<p><code>__init__()</code> で「前回の値」を用意します。</p>
+
+<pre><code>        self.last_minute = datetime.now().minute    # 前回のフレームで見た「分」</code></pre>
+
+<p><code>update()</code> では、値が変わったときだけ中を通します。</p>
+
+<pre><code>        # 分が変わった瞬間だけ判定する
+        if self.minute != self.last_minute:
+            if self.minute == 0:
+                self.play_chime()
+            self.last_minute = self.minute      # これが無いと 1 分間鳴り続ける</code></pre>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 214" role="img" aria-label="フレームごとの分の値と、時報が鳴るタイミングを比べた図。前回の値と比べない書き方では分が 0 の間ずっと鳴り続け、前回の値と比べる書き方では変わった瞬間の 1 回だけ鳴る">
+  <text x="185" y="30" fill="#9aa4c4" font-size="12" text-anchor="end">フレーム</text>
+  <text x="200" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">1</text>
+  <text x="252" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">2</text>
+  <text x="304" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">3</text>
+  <text x="356" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">4</text>
+  <text x="408" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">5</text>
+  <text x="460" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">6</text>
+  <text x="512" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">7</text>
+  <text x="564" y="30" font-family="Consolas, monospace" fill="#9aa4c4" font-size="12" text-anchor="middle">8</text>
+
+  <text x="185" y="62" fill="#45b0e8" font-size="12" text-anchor="end">minute（今の分）</text>
+  <text x="200" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">59</text>
+  <text x="252" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">59</text>
+  <text x="304" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">59</text>
+  <text x="356" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">0</text>
+  <text x="408" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">0</text>
+  <text x="460" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">0</text>
+  <text x="512" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">0</text>
+  <text x="564" y="62" font-family="Consolas, monospace" fill="#45b0e8" font-size="13" text-anchor="middle">0</text>
+
+  <text x="185" y="92" fill="#9aa4c4" font-size="12" text-anchor="end">last_minute（前回）</text>
+  <text x="200" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">59</text>
+  <text x="252" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">59</text>
+  <text x="304" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">59</text>
+  <text x="356" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">59</text>
+  <text x="408" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">0</text>
+  <text x="460" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">0</text>
+  <text x="512" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">0</text>
+  <text x="564" y="92" font-family="Consolas, monospace" fill="#9aa4c4" font-size="13" text-anchor="middle">0</text>
+
+  <line x1="330" y1="14" x2="330" y2="196" stroke="#ffcc44" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="336" y="16" fill="#ffcc44" font-size="11">分が変わった</text>
+
+  <text x="185" y="134" fill="#ff6b97" font-size="12" text-anchor="end">前回と比べないと</text>
+  <text x="200" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle"></text>
+  <text x="252" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle"></text>
+  <text x="304" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle"></text>
+  <text x="356" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle">♪</text>
+  <text x="408" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle">♪</text>
+  <text x="460" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle">♪</text>
+  <text x="512" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle">♪</text>
+  <text x="564" y="134" font-family="Consolas, monospace" fill="#ff6b97" font-size="18" text-anchor="middle">♪</text>
+  <text x="200" y="154" fill="#ff6b97" font-size="11" text-anchor="start">1 分間ずっと鳴り直す</text>
+
+  <text x="185" y="184" fill="#2ee6a8" font-size="12" text-anchor="end">前回と比べると</text>
+  <text x="200" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="252" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="304" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="356" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle">♪</text>
+  <text x="408" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="460" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="512" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="564" y="184" font-family="Consolas, monospace" fill="#2ee6a8" font-size="18" text-anchor="middle"></text>
+  <text x="356" y="184" fill="#2ee6a8" font-size="11" text-anchor="start">← ここだけ鳴る</text>
+</svg>
+</div>
+<figcaption>
+<code>minute</code> が <code>59</code> から <code>0</code> に変わったフレームだけ <code>last_minute</code> と食い違う。
+そこを捕まえて 1 回だけ鳴らす。
+</figcaption>
+</figure>
+
+<div class="note">
+  <b><code>btn()</code> と <code>btnp()</code> の関係と同じです</b>
+  <code>pyxel.btn()</code> は「押されている間ずっと真」、<code>pyxel.btnp()</code> は「押した瞬間だけ真」。
+  Pyxel がキーに対してやってくれていることを、自分で <code>last_minute</code> を持って
+  「分」に対してやっているのがこの書き方です。
+</div>
+
+<div class="warn">
+  <b>初期値を <code>-1</code> にしない</b>
+  <code>self.last_minute = -1</code> にすると、たまたま <code>10:00:30</code> に起動したとき
+  <b>いきなりチャイムが鳴ります</b>（<code>0 != -1</code> なので条件が成立してしまう）。
+  「今の分」を入れておけば、起動後に<b>分が変わったときから</b>判定が始まります。
+</div>
+
+<p>
+この形は時報だけのものではありません。
+「HP が 0 になった瞬間にゲームオーバーの音を鳴らす」「スコアが 1000 を超えた瞬間に演出を出す」など、
+<b>状態がずっと続くのに処理は 1 回でいい</b>場面すべてで同じ書き方をします。
+</p>
+
+<h3 id="long-note">Q. 音をもっと長く伸ばしたい。SPEED が 99 までしか入らない</h3>
+<p>
+<b>A.</b> <b>SPEED を上げるのではなく、同じ音を複数ステップ並べます。</b>
+そのうえで <b>EFX は最後のステップだけ</b>に付けるのがコツです。
+</p>
+
+<p>
+SPEED は「1 音の長さ」で、<code>120</code> で 1 音 1 秒。エディタの入力欄は 2 桁なので
+<code>99</code>（＝0.825 秒）が上限になります。長さが足りないときは<b>音の数を増やす</b>のが素直な解決です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 244" role="img" aria-label="時報の音量を 100 ミリ秒ごとに測った棒グラフ。いまの設定は 1 秒で減衰する。同じ音を 4 つ並べて全部に F を付けると 4 回鳴り直す。最後だけ F にすると 2 秒鳴り続けてから減衰する">
+  <text x="8" y="28" fill="#9aa4c4" font-size="12">いまの設定（1 音＋休符・F）</text>
+  <text x="632" y="28" fill="#9aa4c4" font-size="11" text-anchor="end">1.00 秒</text>
+  <rect x="8" y="36" width="18" height="42" fill="#9aa4c4" rx="1"/>
+  <rect x="28" y="41" width="18" height="37" fill="#9aa4c4" rx="1"/>
+  <rect x="48" y="50" width="18" height="28" fill="#9aa4c4" rx="1"/>
+  <rect x="68" y="59" width="18" height="19" fill="#9aa4c4" rx="1"/>
+  <rect x="88" y="73" width="18" height="5" fill="#9aa4c4" rx="1"/>
+  <rect x="108" y="77" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="128" y="77" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="148" y="77" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="168" y="77" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="188" y="77" width="18" height="1" fill="#3b4166" rx="1"/>
+  <line x1="8" y1="79" x2="632" y2="79" stroke="#3b4166" stroke-width="1"/>
+<text x="8" y="102" fill="#ff6b97" font-size="12">4 つ並べて 全部 F</text>
+  <text x="632" y="102" fill="#9aa4c4" font-size="11" text-anchor="end">2.50 秒</text>
+  <rect x="8" y="110" width="18" height="42" fill="#ff6b97" rx="1"/>
+  <rect x="28" y="119" width="18" height="33" fill="#ff6b97" rx="1"/>
+  <rect x="48" y="129" width="18" height="23" fill="#ff6b97" rx="1"/>
+  <rect x="68" y="138" width="18" height="14" fill="#ff6b97" rx="1"/>
+  <rect x="88" y="147" width="18" height="5" fill="#ff6b97" rx="1"/>
+  <rect x="108" y="110" width="18" height="42" fill="#ff6b97" rx="1"/>
+  <rect x="128" y="119" width="18" height="33" fill="#ff6b97" rx="1"/>
+  <rect x="148" y="129" width="18" height="23" fill="#ff6b97" rx="1"/>
+  <rect x="168" y="138" width="18" height="14" fill="#ff6b97" rx="1"/>
+  <rect x="188" y="147" width="18" height="5" fill="#ff6b97" rx="1"/>
+  <rect x="208" y="110" width="18" height="42" fill="#ff6b97" rx="1"/>
+  <rect x="228" y="119" width="18" height="33" fill="#ff6b97" rx="1"/>
+  <rect x="248" y="129" width="18" height="23" fill="#ff6b97" rx="1"/>
+  <rect x="268" y="138" width="18" height="14" fill="#ff6b97" rx="1"/>
+  <rect x="288" y="147" width="18" height="5" fill="#ff6b97" rx="1"/>
+  <rect x="308" y="110" width="18" height="42" fill="#ff6b97" rx="1"/>
+  <rect x="328" y="119" width="18" height="33" fill="#ff6b97" rx="1"/>
+  <rect x="348" y="129" width="18" height="23" fill="#ff6b97" rx="1"/>
+  <rect x="368" y="138" width="18" height="14" fill="#ff6b97" rx="1"/>
+  <rect x="388" y="147" width="18" height="5" fill="#ff6b97" rx="1"/>
+  <rect x="408" y="151" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="428" y="151" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="448" y="151" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="468" y="151" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="488" y="151" width="18" height="1" fill="#3b4166" rx="1"/>
+  <line x1="8" y1="153" x2="632" y2="153" stroke="#3b4166" stroke-width="1"/>
+<text x="8" y="176" fill="#ffcc44" font-size="12">4 つ並べて 最後だけ F</text>
+  <text x="632" y="176" fill="#9aa4c4" font-size="11" text-anchor="end">2.50 秒</text>
+  <rect x="8" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="28" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="48" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="68" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="88" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="108" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="128" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="148" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="168" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="188" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="208" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="228" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="248" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="268" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="288" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="308" y="184" width="18" height="42" fill="#ffcc44" rx="1"/>
+  <rect x="328" y="193" width="18" height="33" fill="#ffcc44" rx="1"/>
+  <rect x="348" y="203" width="18" height="23" fill="#ffcc44" rx="1"/>
+  <rect x="368" y="212" width="18" height="14" fill="#ffcc44" rx="1"/>
+  <rect x="388" y="221" width="18" height="5" fill="#ffcc44" rx="1"/>
+  <rect x="408" y="225" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="428" y="225" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="448" y="225" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="468" y="225" width="18" height="1" fill="#3b4166" rx="1"/>
+  <rect x="488" y="225" width="18" height="1" fill="#3b4166" rx="1"/>
+  <line x1="8" y1="227" x2="632" y2="227" stroke="#3b4166" stroke-width="1"/>
+  <text x="8" y="238" fill="#9aa4c4" font-size="11">棒 1 本 = 100 ミリ秒。高さは音量</text>
+</svg>
+</div>
+<figcaption>
+<code>Sound.save()</code> で WAV に書き出し、100 ミリ秒ごとの音量を測ったもの。
+音を並べても EFX を全部に付けると 1 音ごとに鳴り直す。
+</figcaption>
+</figure>
+
+<p>
+エディタでの操作は「同じ音を 4 回入力し、EFX 欄は <b>4 つ目だけ</b> <code>F</code>」です。
+同じ高さの音が続くので途切れず、最後だけきれいに減衰します。
+もっと伸ばしたいときは音の数を増やします（8 つ並べれば約 4.5 秒）。
+</p>
+
+<h4>EFX で減衰の始まりを変える</h4>
+
+<table>
+  <thead><tr><th>EFX</th><th>意味</th><th>音量カーブ（1 音 0.5 秒）</th></tr></thead>
+  <tbody>
+    <tr><td><code>N</code>（空欄）</td><td>なし</td><td><code>999999</code> 最後まで鳴って急に止まる</td></tr>
+    <tr><td><code>F</code></td><td>フェードアウト</td><td><code>986410</code> 最初から減衰する</td></tr>
+    <tr><td><code>H</code></td><td>半分フェードアウト</td><td><code>999730</code> 後半だけ減衰する</td></tr>
+    <tr><td><code>Q</code></td><td>1/4 フェードアウト</td><td><code>999970</code> 最後の 1/4 だけ減衰する</td></tr>
+    <tr><td><code>S</code> / <code>V</code></td><td>スライド / ビブラート</td><td>音程を変える効果。長さには影響しない</td></tr>
+  </tbody>
+</table>
+
+<p>
+並べる方法と組み合わせて「4 つ並べて最後だけ <code>H</code>」にすると
+<code>9999999999999999997300000</code> となり、いちばん長く伸びます。
+</p>
+
+<h4>どうしても SPEED を大きくしたいとき</h4>
+
+<p>
+<b><code>99</code> の制限はエディタの入力欄が 2 桁だからで、値そのものに上限はありません。</b>
+<code>pyxel.load()</code> の直後にコードから書き換えられます。
+</p>
+
+<pre><code>        pyxel.sounds[0].speed = 200     # エディタの上限 99 を超えて設定できる</code></pre>
+
+<div class="warn">
+  <b>エディタの試聴と実際の音が食い違う</b>
+  コードで <code>speed</code> を書き換えても <code>.pyxres</code> には保存されません。
+  あとでエディタを開いて音を確かめると、ゲーム中に鳴る音と違って聞こえます。
+  <b>エディタの中だけで完結する「音を並べる」方法のほうが、あとから自分が混乱しません。</b>
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>
