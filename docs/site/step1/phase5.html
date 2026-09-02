@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ5：お化けに追いかけさせる ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 5 </span>お化けに追いかけさせる</h1>
+  <p>相手の座標と自分の座標を見くらべて、近づく向きへ動かす</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 5</p>
+
+<h2>ゴール</h2>
+
+<p>
+お化けを 1 体登場させ、<b>男の子をどこまでも追いかけてくる</b>ようにします。
+まだ捕まっても何も起きません（それはフェーズ 6 です）。
+このフェーズは<b>「追いかける」という動きだけ</b>を作ります。
+</p>
+
+<p>
+書き足すのは 15 行ほどです。フェーズ 2 で書いた <code>move_boy()</code> と
+よく似た形になりますが、<b>1 か所だけ決定的に違う</b>ところがあります。そこが今回の山です。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 「追いかける」＝ 座標を見くらべて、近づく向きへ動く</h3>
+
+<p>
+むずかしそうに聞こえますが、やることは<b>「相手の座標と自分の座標のどちらが大きいか」を
+見て、小さいほうへ寄せていく</b>だけです。横と縦を別々に考えます。
+</p>
+
+<pre><code>お化けの x が男の子の x より小さい  → お化けの x を増やす（右へ）
+お化けの x が男の子の x より大きい  → お化けの x を減らす（左へ）
+同じ                                → x は動かさない</code></pre>
+
+<p>
+縦もまったく同じです。<b>横と縦をそれぞれ独立に決める</b>ので、
+斜め方向にいる男の子には自然と斜めに近づいていきます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 330" role="img" aria-label="男の子を中心とした 3 かける 3 の位置関係で、お化けがどちらの向きへ動くかを示す図">
+  <text x="20" y="26" fill="#e8f0ff" font-size="13">お化けが男の子から見てどこにいるかで、動く向きが決まる</text>
+
+  <g stroke="#3b4166" stroke-width="1.5" fill="none">
+    <rect x="140" y="50" width="80" height="80"/><rect x="220" y="50" width="80" height="80"/><rect x="300" y="50" width="80" height="80"/>
+    <rect x="140" y="130" width="80" height="80"/><rect x="220" y="130" width="80" height="80"/><rect x="300" y="130" width="80" height="80"/>
+    <rect x="140" y="210" width="80" height="80"/><rect x="220" y="210" width="80" height="80"/><rect x="300" y="210" width="80" height="80"/>
+  </g>
+
+  <rect x="248" y="158" width="24" height="24" fill="#45b0e8"/>
+  <text x="260" y="200" fill="#45b0e8" font-size="11" text-anchor="middle">男の子</text>
+
+  <g stroke="#ff6b97" stroke-width="2.5" fill="none">
+    <path d="M162 72 l30 30"/><path d="M260 72 v30"/><path d="M358 72 l-30 30"/>
+    <path d="M162 170 h30"/><path d="M358 170 h-30"/>
+    <path d="M162 268 l30 -30"/><path d="M260 268 v-30"/><path d="M358 268 l-30 -30"/>
+  </g>
+  <g fill="#ff6b97">
+    <path d="M196 106 l-11 -3 l3 11 z"/><path d="M260 108 l-5 -11 h10 z"/><path d="M324 106 l11 -3 l-3 11 z"/>
+    <path d="M198 170 l-11 -5 v10 z"/><path d="M322 170 l11 -5 v10 z"/>
+    <path d="M196 234 l-11 3 l3 -11 z"/><path d="M260 232 l-5 11 h10 z"/><path d="M324 234 l11 3 l-3 -11 z"/>
+  </g>
+
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="10" text-anchor="middle">
+    <text x="180" y="66">x 小 / y 小</text><text x="260" y="66">x 同 / y 小</text><text x="340" y="66">x 大 / y 小</text>
+    <text x="180" y="146">x 小 / y 同</text><text x="260" y="146">重なっている</text><text x="340" y="146">x 大 / y 同</text>
+    <text x="180" y="226">x 小 / y 大</text><text x="260" y="226">x 同 / y 大</text><text x="340" y="226">x 大 / y 大</text>
+  </g>
+  <text x="260" y="310" fill="#9aa4c4" font-size="11" text-anchor="middle">お化けがいるマス → 矢印の向きへ 1 ドット動く</text>
+
+  <text x="410" y="70" fill="#e8f0ff" font-size="12">横の向きと縦の向きを</text>
+  <text x="410" y="90" fill="#e8f0ff" font-size="12"><tspan font-weight="bold">別々に決める</tspan>だけで、</text>
+  <text x="410" y="110" fill="#e8f0ff" font-size="12">8 方向すべてがそろう</text>
+
+  <text x="410" y="152" fill="#ffcc44" font-size="12">中央のマス（真上に重なった</text>
+  <text x="410" y="172" fill="#ffcc44" font-size="12">状態）だけは動かさない</text>
+
+  <text x="410" y="216" fill="#9aa4c4" font-size="11">「x が同じ」のときに動かして</text>
+  <text x="410" y="234" fill="#9aa4c4" font-size="11">しまうと、左右にふるえます</text>
+  <text x="410" y="252" fill="#9aa4c4" font-size="11">（→ 5 章で詳しく）</text>
+</svg>
+</div>
+<figcaption>横の向き（3 通り）と縦の向き（3 通り）を独立に決めれば、8 方向の追跡ができる</figcaption>
+</figure>
+
+<h3>1-2. ここは <code>elif</code> を使う（フェーズ 2 とは逆）</h3>
+
+<p>
+フェーズ 2 では「<code>elif</code> にせず <code>if</code> を 4 つ並べる」と説明しました。
+今回は<b>逆で、<code>elif</code> が正解</b>です。理由は条件の性質が違うからです。
+</p>
+
+<table>
+  <thead><tr><th></th><th>条件どうしの関係</th><th>書き方</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>フェーズ 2<br>（男の子の移動）</td>
+      <td><b>同時に成り立ちうる</b><br>← と ↑ は同時に押せる</td>
+      <td><code>if</code> を並べる</td>
+    </tr>
+    <tr>
+      <td>フェーズ 5<br>（お化けの追跡）</td>
+      <td><b>同時には成り立たない</b><br>「相手より左」と「相手より右」は両立しない</td>
+      <td><code>if</code> / <code>elif</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+どちらも「あてはまるものを全部やるのか、1 つだけ選ぶのか」で決まります。
+<b>横の動きは 3 択から 1 つ</b>なので <code>elif</code>、
+<b>キー入力は押されているものすべて</b>なので <code>if</code> の並列、というわけです。
+</p>
+
+<h3>1-3. お化けは男の子より遅くする</h3>
+
+<p>
+男の子は 1 フレームに 2 ドット進みます。お化けを同じ速さにすると、
+<b>いちど追いつかれたら二度と離れられません</b>。
+<code>GHOST_SPEED = 1</code>（男の子の半分）にして、逃げ切れる余地を作ります。
+</p>
+
+<div class="term">
+  <b>速さの差がそのまま難しさになります</b>
+  お化けが遅すぎると簡単すぎ、速すぎると理不尽になります。
+  この step では<b>お化けの数を増やすことで難しくする</b>方針（フェーズ 8）なので、
+  1 体あたりの速さは控えめにしておきます。
+  遊んでみて手ごたえが足りなければ、あとから <code>GHOST_SPEED</code> を調整できます。
+</div>
+
+<h3>1-4. お化けは画面の外に出ない（押し戻しがいらない）</h3>
+
+<p>
+男の子には <code>max</code> / <code>min</code> で押し戻す処理を書きましたが、
+<b>お化けには要りません</b>。お化けは「男の子の座標へ近づく」ようにしか動かず、
+その男の子が画面内に収まっているからです。
+</p>
+
+<p>
+しかも <code>GHOST_SPEED = 1</code> なら 1 ドットずつしか動かないので、
+男の子の座標を<b>行き過ぎることもありません</b>。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<p>
+新しい API は<b>ありません</b>。すでに知っているものだけで書けます。
+</p>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>if</code> / <code>elif</code></td><td>3 つの選択肢から 1 つだけ選ぶ</td></tr>
+    <tr><td><code>&lt;</code> <code>&gt;</code></td><td>2 つの座標のどちらが大きいか比べる</td></tr>
+    <tr><td><code>pyxel.blt()</code></td><td>お化けを描く（切り出し位置は <code>u = 8</code>）</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<h3>3-1. 定数を足す</h3>
+
+<pre><code>CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_SPEED = 1         # 1 フレームで進むドット数（男の子の半分）</code></pre>
+
+<h3>3-2. お化けの初期位置を決める</h3>
+
+<p>
+<code>__init__</code> に 2 行足します。男の子は画面の中央にいるので、
+お化けは<b>左上の角</b>から始めます。
+</p>
+
+<pre><code>        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.ghost_x = 0                                    # ← 足す
+        self.ghost_y = 0                                    # ← 足す
+        self.score = 0
+        self.place_candy()</code></pre>
+
+<h3>3-3. 追いかける処理を書く</h3>
+
+<p>
+<code>update()</code> に 1 行足します。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+        self.move_ghost()       # ← 足す
+        self.check_candy()</code></pre>
+
+<p>
+<code>move_boy()</code> の下に <code>move_ghost()</code> を書きます。
+</p>
+
+<pre><code>    def move_ghost(self):
+        """お化けを男の子に近づける"""
+        if self.ghost_x &lt; self.boy_x:
+            self.ghost_x += GHOST_SPEED
+        elif self.ghost_x &gt; self.boy_x:
+            self.ghost_x -= GHOST_SPEED
+
+        if self.ghost_y &lt; self.boy_y:
+            self.ghost_y += GHOST_SPEED
+        elif self.ghost_y &gt; self.boy_y:
+            self.ghost_y -= GHOST_SPEED</code></pre>
+
+<h3>3-4. お化けを描く</h3>
+
+<p>
+<code>draw()</code> の、お菓子と男の子の<b>あいだ</b>に 1 つ足します。
+</p>
+
+<pre><code>        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.ghost_x, self.ghost_y, 0, 8, 0,
+                  GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)    # お化け  ← 足す
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子</code></pre>
+
+<p>
+実行して、左上からお化けが近づいてくれば完成です。
+捕まってもまだ何も起きません。男の子のほうが速いので、逃げ続けられるはずです。
+</p>
+
+<h2>4. できあがりのコード</h2>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ5：お化けに追いかけさせる
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_SPEED = 1         # 1 フレームで進むドット数（男の子の半分）
+
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.ghost_x = 0
+        self.ghost_y = 0
+        self.score = 0
+        self.place_candy()
+
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+        self.move_ghost()
+        self.check_candy()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def move_ghost(self):
+        """お化けを男の子に近づける"""
+        if self.ghost_x &lt; self.boy_x:
+            self.ghost_x += GHOST_SPEED
+        elif self.ghost_x &gt; self.boy_x:
+            self.ghost_x -= GHOST_SPEED
+
+        if self.ghost_y &lt; self.boy_y:
+            self.ghost_y += GHOST_SPEED
+        elif self.ghost_y &gt; self.boy_y:
+            self.ghost_y -= GHOST_SPEED
+
+    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break
+
+    def check_candy(self):
+        """お菓子に重なったら、スコアを増やして次の場所へ置きなおす"""
+        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                  self.candy_x, self.candy_y, CANDY_SIZE):
+            self.score += 1
+            self.place_candy()
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.ghost_x, self.ghost_y, 0, 8, 0,
+                  GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)    # お化け
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)
+
+App()</code></pre>
+
+<div class="note">
+  <b>当たり判定を縮めた場合</b>
+  備忘録の<a href="../memo/#hitbox-size">「取った感じが薄い」</a>に沿って
+  <code>HIT_SIZE</code> / <code>HIT_OFFSET</code> を入れている場合は、
+  <code>check_candy()</code> がそちらの形になっているはずです。
+  このフェーズはお化けの<b>移動だけ</b>なので、当たり判定には触れません。
+</div>
+
+<h2>5. コードの解説</h2>
+
+<h3><code>else</code> ではなく <code>elif</code> にする理由</h3>
+
+<p>
+2 つめを <code>else</code> にすると、こう書けそうに見えます。
+</p>
+
+<pre><code># これはうまくいかない
+if self.ghost_x &lt; self.boy_x:
+    self.ghost_x += GHOST_SPEED
+else:                              # ← 「小さくないなら」＝ 大きい＋等しい
+    self.ghost_x -= GHOST_SPEED</code></pre>
+
+<p>
+問題は<b>「等しいとき」も <code>else</code> に入ってしまう</b>ことです。
+真上に重なった瞬間から、お化けは左右にふるえ続けます。
+</p>
+
+<table>
+  <thead><tr><th>フレーム</th><th><code>ghost_x</code></th><th><code>boy_x</code></th><th>判定</th><th>次の <code>ghost_x</code></th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>76</td><td>76</td><td>小さくない → <code>else</code></td><td>75</td></tr>
+    <tr><td>2</td><td>75</td><td>76</td><td>小さい → <code>if</code></td><td>76</td></tr>
+    <tr><td>3</td><td>76</td><td>76</td><td>小さくない → <code>else</code></td><td>75</td></tr>
+    <tr><td>4</td><td>75</td><td>76</td><td>小さい → <code>if</code></td><td>76</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>elif self.ghost_x &gt; self.boy_x:</code> と書けば、
+<b>等しいときはどちらにも入らない</b>ので、その場にとどまります。
+</p>
+
+<div class="term">
+  <b>「3 つめの選択肢は、何も書かない」</b>
+  <code>if</code> / <code>elif</code> だけで <code>else</code> を書かないと、
+  「どちらの条件にも当てはまらないときは何もしない」という意味になります。
+  <b>何もしないことを明示するために <code>else: pass</code> と書く必要はありません。</b>
+  今回のように「動かない」が正解の場合、書かないのがいちばん素直です。
+</div>
+
+<h3>横と縦を別々に決めると、斜めに動く</h3>
+
+<p>
+<code>move_ghost()</code> は横のブロックと縦のブロックが独立しているので、
+両方が同時に成り立てば<b>斜めに 1 ドットずつ</b>進みます。
+そのため、お化けの軌跡は<b>「まず斜めに進み、縦か横がそろったら直線」</b>になります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 380" role="img" aria-label="左上から出たお化けが、まず斜めに進み、縦の位置がそろったあとは真横に進んで男の子に到達する軌跡の図">
+  <rect x="100" y="40" width="400" height="300" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <text x="300" y="30" fill="#9aa4c4" font-size="12" text-anchor="middle">画面 160 × 120（図は 2.5 倍で表示／男の子は止まっているものとする）</text>
+
+  <path d="M120 60 L325 265 L400 265" fill="none" stroke="#ffcc44" stroke-width="2.5" stroke-dasharray="7 5"/>
+
+  <rect x="120" y="60" width="20" height="20" fill="#e8f0ff"/>
+  <text x="130" y="98" fill="#e8f0ff" font-size="11" text-anchor="middle">お化け</text>
+  <text x="130" y="114" fill="#9aa4c4" font-family="Consolas, monospace" font-size="10" text-anchor="middle">(8, 8)</text>
+
+  <rect x="400" y="265" width="20" height="20" fill="#45b0e8"/>
+  <text x="410" y="303" fill="#45b0e8" font-size="11" text-anchor="middle">男の子</text>
+  <text x="410" y="319" fill="#9aa4c4" font-family="Consolas, monospace" font-size="10" text-anchor="middle">(120, 90)</text>
+
+  <circle cx="325" cy="265" r="4" fill="#ff6b97"/>
+  <text x="300" y="248" fill="#ff6b97" font-size="11" text-anchor="end">ここで縦がそろう</text>
+
+  <text x="180" y="180" fill="#ffcc44" font-size="11" transform="rotate(45 180 180)">斜めに 82 歩</text>
+  <text x="362" y="258" fill="#ffcc44" font-size="11" text-anchor="middle">真横に 30 歩</text>
+
+  <text x="100" y="362" fill="#9aa4c4" font-size="11">横に 112・縦に 82 離れているので、少ないほうの 82 歩ぶんが斜めになる</text>
+</svg>
+</div>
+<figcaption>横と縦を独立に詰めるので、まっすぐ一直線ではなく「斜め → 直線」の軌跡になる</figcaption>
+</figure>
+
+<p>
+本当にまっすぐ向かわせたければ角度の計算が必要になりますが、
+<b>この形のほうが「じわじわ迫ってくる」感じが出ます</b>。
+昔のゲームのお化けも、たいていこの単純な追い方をしています。
+</p>
+
+<h3>描く順番は お菓子 → お化け → 男の子</h3>
+
+<p>
+フェーズ 3 で見たとおり、<b>あとに描いたものが上</b>になります。
+男の子をいちばん最後に描くことで、お化けに重なられても
+<b>自分の位置を見失わずに済みます</b>。
+</p>
+
+<h3>お化けの初期位置を <code>(0, 0)</code> にした理由</h3>
+
+<p>
+男の子が画面の中央にいるので、<b>いちばん遠い場所のひとつ</b>だからです。
+起動した瞬間に隣にいると、避ける間もありません。
+</p>
+
+<div class="note">
+  <b><code>self.ghost_x = 0</code> は <code>place_candy()</code> と違って単純でよい</b>
+  お菓子は「取られるたびに置きなおす」ので関数にしましたが、
+  お化けの初期位置は<b>いまのところ 1 回しか使いません</b>。
+  フェーズ 7 で「もう一度あそぶ」を作るときに、
+  お菓子と同じく<b>やり直し用の関数へまとめることになります</b>。
+  そのときにまとめれば十分です。
+</div>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<h3>出てくる角を毎回変える</h3>
+
+<p>
+いつも左上から来るので、慣れると先読みできてしまいます。
+4 つの角からランダムに選ぶと、毎回ちがう展開になります。
+</p>
+
+<pre><code>        corner_x, corner_y = random.choice([
+            (0, 0),                                             # 左上
+            (SCREEN_WIDTH - GHOST_SIZE, 0),                     # 右上
+            (0, SCREEN_HEIGHT - GHOST_SIZE),                    # 左下
+            (SCREEN_WIDTH - GHOST_SIZE, SCREEN_HEIGHT - GHOST_SIZE),   # 右下
+        ])
+        self.ghost_x = corner_x
+        self.ghost_y = corner_y</code></pre>
+
+<p>
+<code>random.choice(リスト)</code> は、<b>リストの中から 1 つをでたらめに選んで返す</b>関数です。
+ここではリストの中身が「2 つの数の組」になっていて、
+<code>corner_x, corner_y = ...</code> で<b>2 つの変数へ一度に受け取って</b>います。
+</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>お化けが動かない</td>
+      <td><code>update()</code> に <code>self.move_ghost()</code> を足したか確認します</td>
+    </tr>
+    <tr>
+      <td>お化けが表示されない</td>
+      <td><code>blt()</code> の切り出し位置が <code>8, 0</code> になっているか確認します。
+      お化けはイメージバンク 0 の <code>u = 8</code> です</td>
+    </tr>
+    <tr>
+      <td>お化けが小刻みにふるえる</td>
+      <td>2 つめが <code>else</code> になっています。<code>elif</code> にします</td>
+    </tr>
+    <tr>
+      <td>お化けが遠ざかっていく</td>
+      <td><code>+=</code> と <code>-=</code> が逆です。
+      <b>自分が小さい（左にいる）なら増やす（右へ進む）</b>です</td>
+    </tr>
+    <tr>
+      <td>お化けが真横・真下にしか動かない</td>
+      <td>横と縦を <code>elif</code> でつないでしまっています。
+      <b>横のブロックと縦のブロックは別々の <code>if</code></b> です。
+      あいだを 1 行空けておくと間違えにくくなります</td>
+    </tr>
+    <tr>
+      <td>すぐ捕まって逃げられない</td>
+      <td><code>GHOST_SPEED</code> が <code>BOY_SPEED</code> 以上になっていませんか。
+      お化けは <code>1</code>、男の子は <code>2</code> です</td>
+    </tr>
+    <tr>
+      <td>お化けが男の子の下に隠れて見えない</td>
+      <td>仕様どおりです。男の子をいちばん最後に描いているためです。
+      気になる場合は <code>blt()</code> の順番を入れかえてください</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: ... 'ghost_x'</code></td>
+      <td><code>__init__</code> の <code>self.ghost_x = 0</code> を書き忘れているか、
+      <code>pyxel.run()</code> より<b>あと</b>に書いています</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+追いかけられるようになりました。次は<b>お化けに捕まったらゲームオーバー画面へ切りかえます</b>。
+<a href="./#basics">step1 概要の「土台 2：今どの画面かを変数で覚える」</a>で説明した
+<b>画面の切りかえ</b>が、いよいよ登場します。
+捕まった判定には、フェーズ 3 で書いた <code>is_hit()</code> をそのまま使います。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>

@@ -1567,6 +1567,389 @@ pyo3_runtime.PanicException: Pyxel not initialized</code></pre>
   「<code>load</code> のし忘れに気づいて run の下に足す」といった直し方はできません。
 </div>
 
+<h3 id="hitbox-size">Q. お菓子を「取った」感じが薄い。かすっただけで次のお菓子が出てしまう</h3>
+<p>
+<b>A.</b> <b>当たり判定の四角が、絵の見た目より大きいから</b>です。
+判定は 8×8 の四角どうしで行っていますが、
+（1）絵は 8×8 のマス全部に色が付いているわけではなく、
+（2）四角が<b>1 ドットでも重なれば当たり</b>という条件なので、
+<b>角がかすっただけで成立してしまいます</b>。
+</p>
+
+<p>
+step1 で描いた絵を実際に数えると、こうなっていました。
+</p>
+
+<table>
+  <thead><tr><th>絵</th><th>8×8 の中で色が付いているドット数</th><th>色が付く範囲</th></tr></thead>
+  <tbody>
+    <tr><td>男の子</td><td>34 / 64 ドット</td><td>横 1〜6（幅 6）、縦 0〜7（高さ 8）</td></tr>
+    <tr><td>お菓子</td><td>32 / 64 ドット</td><td>横 0〜7（幅 8）、縦 1〜6（高さ 6）</td></tr>
+  </tbody>
+</table>
+
+<p>
+男の子は左右に 1 ドットずつ、お菓子は上下に 1 ドットずつ余白があります。
+つまり<b>四角が触れていても、絵にはまだすき間がある</b>状態が起こります。
+</p>
+
+<h4>どれくらい「かすっている」のか</h4>
+
+<p>
+男の子を中央に固定して、お菓子を 1 ドットずつずらしながら
+「当たりと判定されるか」「絵が実際に重なっているか」を全通り調べました。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 400" role="img" aria-label="男の子を中心に、お菓子の位置をずらしたときの当たり判定ゾーンを示す 15 かける 15 のマス目。外周のマスは当たりと判定されるのに絵が 1 ドットも重なっていない領域">
+  <text x="90" y="30" fill="#e8f0ff" font-size="13">お菓子の位置をずらしたとき、いまの判定で「当たり」になる範囲</text>
+  <text x="90" y="48" fill="#9aa4c4" font-size="11">中央が「ぴったり重なった位置」。1 マス = 1 ドットのずれ</text>
+
+  <rect x="90" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="150" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="170" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="190" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="210" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="230" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="250" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="270" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="290" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="310" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="330" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="350" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="56" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="150" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="170" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="190" y="76" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="210" y="76" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="230" y="76" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="250" y="76" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="270" y="76" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="290" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="310" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="330" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="350" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="76" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="96" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="96" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="150" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="170" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="190" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="210" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="230" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="250" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="270" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="290" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="310" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="330" y="96" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="350" y="96" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="96" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="116" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="130" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="150" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="170" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="190" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.52"/>
+  <rect x="210" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.59"/>
+  <rect x="230" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="250" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.59"/>
+  <rect x="270" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.52"/>
+  <rect x="290" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="310" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="330" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="350" y="116" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="370" y="116" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="136" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="130" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="150" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="170" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="190" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.66"/>
+  <rect x="210" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.70"/>
+  <rect x="230" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.78"/>
+  <rect x="250" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.70"/>
+  <rect x="270" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.66"/>
+  <rect x="290" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="310" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="330" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="350" y="136" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="370" y="136" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="156" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="130" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="150" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="170" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.63"/>
+  <rect x="190" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.78"/>
+  <rect x="210" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.89"/>
+  <rect x="230" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.85"/>
+  <rect x="250" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.89"/>
+  <rect x="270" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.78"/>
+  <rect x="290" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.63"/>
+  <rect x="310" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="330" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="350" y="156" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="370" y="156" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="176" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="130" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="150" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="170" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.66"/>
+  <rect x="190" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.85"/>
+  <rect x="210" y="176" width="19" height="19" fill="#2ee6a8" opacity="1.00"/>
+  <rect x="230" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.93"/>
+  <rect x="250" y="176" width="19" height="19" fill="#2ee6a8" opacity="1.00"/>
+  <rect x="270" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.85"/>
+  <rect x="290" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.66"/>
+  <rect x="310" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="330" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="350" y="176" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="370" y="176" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="196" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="130" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="150" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="170" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.66"/>
+  <rect x="190" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.85"/>
+  <rect x="210" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.96"/>
+  <rect x="230" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.93"/>
+  <rect x="250" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.96"/>
+  <rect x="270" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.85"/>
+  <rect x="290" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.66"/>
+  <rect x="310" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="330" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="350" y="196" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="370" y="196" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="216" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="130" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="150" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="170" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.59"/>
+  <rect x="190" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.78"/>
+  <rect x="210" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.93"/>
+  <rect x="230" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.85"/>
+  <rect x="250" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.93"/>
+  <rect x="270" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.78"/>
+  <rect x="290" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.59"/>
+  <rect x="310" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.48"/>
+  <rect x="330" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="350" y="216" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="370" y="216" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="236" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="130" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="150" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="170" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="190" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.70"/>
+  <rect x="210" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.74"/>
+  <rect x="230" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.78"/>
+  <rect x="250" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.74"/>
+  <rect x="270" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.70"/>
+  <rect x="290" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="310" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="330" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="350" y="236" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="370" y="236" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="256" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="130" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="150" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="170" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="190" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="210" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.59"/>
+  <rect x="230" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="250" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.59"/>
+  <rect x="270" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.55"/>
+  <rect x="290" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="310" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.33"/>
+  <rect x="330" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="350" y="256" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="370" y="256" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="276" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="276" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="150" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="170" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="190" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="210" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="230" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="250" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.37"/>
+  <rect x="270" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.40"/>
+  <rect x="290" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="310" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="330" y="276" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="350" y="276" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="276" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="296" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="296" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="150" y="296" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="170" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="190" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="210" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="230" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="250" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.25"/>
+  <rect x="270" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.29"/>
+  <rect x="290" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="310" y="296" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="330" y="296" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="350" y="296" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="296" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="150" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="170" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="190" y="316" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="210" y="316" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="230" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="250" y="316" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="270" y="316" width="19" height="19" fill="#2ee6a8" opacity="0.22"/>
+  <rect x="290" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="310" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="330" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="350" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="316" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="90" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="110" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="130" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="150" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="170" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="190" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="210" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="230" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="250" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="270" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="290" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="310" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="330" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="350" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+  <rect x="370" y="336" width="19" height="19" fill="#ff6b97" opacity="0.75"/>
+
+  <rect x="168" y="134" width="140" height="140" fill="none" stroke="#ffcc44" stroke-width="2"/>
+  <text x="238" y="128" fill="#ffcc44" font-size="11" text-anchor="middle">判定を 4×4 に縮めたときの範囲</text>
+
+  <rect x="410" y="70" width="18" height="18" fill="#ff6b97" opacity="0.75"/>
+  <text x="438" y="84" fill="#e8f0ff" font-size="12">絵が 1 ドットも重なっていない</text>
+  <text x="438" y="102" fill="#ff6b97" font-size="12">225 通り中 81 通り（36%）</text>
+
+  <rect x="410" y="126" width="18" height="18" fill="#2ee6a8" opacity="0.30"/>
+  <text x="438" y="140" fill="#e8f0ff" font-size="12">少しだけ重なっている</text>
+  <rect x="410" y="156" width="18" height="18" fill="#2ee6a8" opacity="1"/>
+  <text x="438" y="170" fill="#e8f0ff" font-size="12">しっかり重なっている</text>
+
+  <text x="410" y="212" fill="#9aa4c4" font-size="11">色が濃いほど、絵として重なっている</text>
+  <text x="410" y="228" fill="#9aa4c4" font-size="11">ドット数が多い（最大 22 ドット）</text>
+
+  <text x="410" y="268" fill="#ffcc44" font-size="12">黄色の枠まで縮めると</text>
+  <text x="410" y="286" fill="#e8f0ff" font-size="12">当たる範囲は 49 通りになり、</text>
+  <text x="410" y="304" fill="#e8f0ff" font-size="12">ピンクのマスは 0 になる</text>
+
+  <text x="240" y="374" fill="#9aa4c4" font-size="11" text-anchor="middle">外周のピンク＝「当たったのに、絵は離れている」位置</text>
+</svg>
+</div>
+<figcaption>いまの判定では、外側の 1〜2 周ぶんが「触れていないのに取れる」範囲になっている</figcaption>
+</figure>
+
+<p>
+外周のピンクのマスが、まさに「追いかけているだけで取れてしまう」感覚の正体です。
+</p>
+
+<h4>対策：判定の四角を、絵より小さくする</h4>
+
+<p>
+ゲームでは<b>「絵の大きさ」と「当たり判定の大きさ」を別々に決める</b>のが普通です。
+絵の中央だけを判定に使うようにすると、「ちゃんと重なったときだけ当たる」ようになります。
+</p>
+
+<p>
+定数を 2 つ足します。
+</p>
+
+<pre><code>BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+HIT_SIZE = 4                                # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）</code></pre>
+
+<p>
+そして <code>check_candy()</code> の呼び出しを差しかえます。
+</p>
+
+<pre><code>    def check_candy(self):
+        """お菓子にしっかり重なったら、スコアを増やして次の場所へ置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
+            self.score += 1
+            self.place_candy()</code></pre>
+
+<div class="note">
+  <b><code>place_candy()</code> のほうは 8×8 のままにしておきます</b>
+  こちらは「置きなおした先が男の子と重ならないように」という別の目的なので、
+  <b>広めに見ておくほうが安全</b>です。判定を縮めてしまうと、
+  男の子のすぐ横にお菓子が出てしまいます。
+  <b>同じ <code>is_hit()</code> でも、目的によって渡す四角の大きさを変えてよい</b>
+  ——これがこの書き方の便利なところです。
+</div>
+
+<h4>どのサイズにするか</h4>
+
+<p>
+全通り調べた結果です。<code>HIT_SIZE</code> を変えたときの手ごたえの目安にしてください。
+</p>
+
+<table>
+  <thead><tr><th><code>HIT_SIZE</code></th><th><code>HIT_OFFSET</code></th><th>当たる位置</th><th>絵が重ならないのに当たる</th><th>重なりドット数（最小／平均）</th></tr></thead>
+  <tbody>
+    <tr><td>8（現状）</td><td>0</td><td>225 通り</td><td><b>81 通り（36%）</b></td><td>0 ／ 4.8</td></tr>
+    <tr><td>6</td><td>1</td><td>121 通り</td><td>2 通り（2%）</td><td>0 ／ 8.6</td></tr>
+    <tr><td><b>4（おすすめ）</b></td><td>2</td><td>49 通り</td><td><b>0 通り</b></td><td>6 ／ 14.7</td></tr>
+    <tr><td>2</td><td>3</td><td>9 通り</td><td>0 通り</td><td>18 ／ 20.4</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>4</code> にすると、当たった瞬間には<b>必ず 6 ドット以上が重なっている</b>ので、
+見た目に「乗った」と分かります。<code>2</code> はほぼ完全に重ねる必要があり、
+お化けから逃げながら取るには厳しすぎるでしょう。
+</p>
+
+<div class="warn">
+  <b>小さくしすぎると「絶対に取れない位置」が生まれます</b>
+  <code>BOY_SPEED = 2</code> なので、男の子の座標は<b>ずっと偶数のまま</b>です
+  （初期値 76 も、端で止める 0 と 152 も偶数）。
+  一方お菓子は <code>randint</code> なので奇数の位置にも出ます。
+  つまり<b>ずれが 0 になることは決してありません</b>。<br>
+  <code>HIT_SIZE = 1</code> にすると「ずれ 0 のときだけ当たり」になるため、
+  お菓子が奇数の位置に出た瞬間に<b>絶対に取れなくなります</b>。
+  判定を縮めるときは、<b>移動の刻み幅より広く残す</b>のが鉄則です。
+</div>
+
+<h4>「取った実感」はもう一つの方向からも作れる</h4>
+
+<p>
+当たり判定を直すのは<b>「取れるタイミングを正しくする」</b>対策です。
+これとは別に、<b>「取れたことを分かりやすく伝える」</b>という対策もあります。
+</p>
+
+<ul>
+  <li><b>効果音を鳴らす</b> — いちばん効果が大きい（step1 フェーズ 9）</li>
+  <li><b>スコアの数字を数フレームだけ色を変える</b></li>
+  <li><b>取った場所に小さな光を数フレーム描く</b></li>
+</ul>
+
+<p>
+どれも「判定が正しいこと」の上に乗せるものなので、まず判定を直すのが先です。
+</p>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>

@@ -1,5 +1,5 @@
 # candy_hunt.py
-# step1 フェーズ3：お菓子を置いて、重なったら次の場所へ移す
+# step1 フェーズ4：集めたお菓子をスコアとして表示する
 
 import random
 
@@ -26,6 +26,7 @@ class App:
 
         self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
         self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.score = 0
         self.place_candy()
 
         pyxel.run(self.update, self.draw)
@@ -63,6 +64,7 @@ class App:
         """お菓子に重なったら、次の場所へ置きなおす"""
         if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
                   self.candy_x, self.candy_y, CANDY_SIZE):
+            self.score += 1
             self.place_candy()
 
     def draw(self):
@@ -73,5 +75,6 @@ class App:
                   CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
         pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
                   BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)               # スコア
 
 App()
