@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ3：お菓子を置いて、当たり判定をする ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 3 </span>お菓子を置いて、当たり判定をする</h1>
+  <p>ランダムな場所にお菓子を出し、重なったら次の場所へ移す</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 3</p>
+
+<h2>ゴール</h2>
+
+<p>
+お菓子を画面のどこかに 1 個置き、<b>男の子が重なったら消して、また別の場所に出す</b>
+ところまでを作ります。これができれば、ゲームの中心になる部分は完成です。
+</p>
+
+<p>
+この step の山場です。新しく出てくるものは 3 つあります。
+</p>
+
+<ul>
+  <li><b>当たり判定</b> — 2 つの四角が重なっているかを式で判定する</li>
+  <li><b><code>random</code></b> — 置き場所を毎回でたらめに決める</li>
+  <li><b>関数の戻り値</b> — <code>True</code> か <code>False</code> を「返す」関数を書く</li>
+</ul>
+
+<div class="note">
+  <b>先に読んでおくとラクです</b>
+  当たり判定の考え方そのものは
+  <a href="./#basics">step1 概要の「土台 1：当たり判定は横と縦に分けて考える」</a>
+  に図で説明してあります。このページでは、<b>それをコードの式に翻訳する</b>ところをやります。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. お菓子も「位置を覚える変数」を持つ</h3>
+
+<p>
+フェーズ 2 で男の子に <code>self.boy_x</code> / <code>self.boy_y</code> を持たせたのと同じで、
+お菓子にも <code>self.candy_x</code> / <code>self.candy_y</code> を持たせます。
+</p>
+
+<p>
+違うのは<b>決め方</b>です。男の子は「画面の中央」と決め打ちでしたが、
+お菓子は毎回ちがう場所に出したいので、<b>乱数（ランダムな数）</b>で決めます。
+</p>
+
+<h3>1-2. 置ける範囲は 0 〜 152（フェーズ 2 と同じ理由）</h3>
+
+<p>
+お菓子も 8×8 なので、置ける座標の範囲は男の子とまったく同じです。
+</p>
+
+<ul>
+  <li>横：<code>0</code> 〜 <code>SCREEN_WIDTH - CANDY_SIZE</code>（＝ 152）</li>
+  <li>縦：<code>0</code> 〜 <code>SCREEN_HEIGHT - CANDY_SIZE</code>（＝ 112）</li>
+</ul>
+
+<p>
+この範囲からでたらめに 1 つ選ぶのが <code>random.randint(0, 152)</code> です。
+</p>
+
+<h3>1-3. 当たり判定を式にする</h3>
+
+<p>
+ここが本題です。<b>横と縦を分けて考える</b>ので、まず<b>横だけ</b>を見ます。
+男の子の横の範囲は <code>boy_x</code> から <code>boy_x + 8</code> まで、
+お菓子の横の範囲は <code>candy_x</code> から <code>candy_x + 8</code> までです。
+</p>
+
+<p>
+この 2 つの範囲が重なっている条件は、次の <b>2 つが同時に成り立つこと</b>です。
+</p>
+
+<pre><code>boy_x &lt; candy_x + 8        # 男の子の左端が、お菓子の右端より左
+candy_x &lt; boy_x + 8        # お菓子の左端が、男の子の右端より左</code></pre>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 400" role="img" aria-label="横方向だけを見たときの当たり判定。重なっている場合は 2 つの条件が両方成り立ち、離れている場合は片方が成り立たないことを数直線で示す図">
+  <text x="20" y="26" fill="#e8f0ff" font-size="13">① 重なっている場合（<tspan font-family="Consolas, monospace">boy_x = 40</tspan>、<tspan font-family="Consolas, monospace">candy_x = 44</tspan>）</text>
+
+  <rect x="196" y="44" width="96" height="20" rx="3" fill="#45b0e8" opacity=".55"/>
+  <text x="244" y="58" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">男の子 40〜48</text>
+  <rect x="244" y="70" width="96" height="20" rx="3" fill="#ff6b97" opacity=".55"/>
+  <text x="292" y="84" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">お菓子 44〜52</text>
+  <rect x="244" y="44" width="48" height="46" fill="#ffcc44" opacity=".22" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="268" y="106" fill="#ffcc44" font-size="11" text-anchor="middle">重なり</text>
+
+  <text x="100" y="140" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12">boy_x &lt; candy_x + 8　→　40 &lt; 52</text>
+  <text x="440" y="140" fill="#2ee6a8" font-size="14">✓</text>
+  <text x="100" y="162" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12">candy_x &lt; boy_x + 8　→　44 &lt; 48</text>
+  <text x="440" y="162" fill="#2ee6a8" font-size="14">✓</text>
+  <text x="100" y="190" fill="#2ee6a8" font-size="13">両方そろったので、横は重なっている</text>
+
+  <line x1="20" y1="212" x2="620" y2="212" stroke="#3b4166" stroke-width="1" stroke-dasharray="5 4"/>
+
+  <text x="20" y="248" fill="#e8f0ff" font-size="13">② 離れている場合（<tspan font-family="Consolas, monospace">boy_x = 40</tspan>、<tspan font-family="Consolas, monospace">candy_x = 52</tspan>）</text>
+
+  <rect x="196" y="266" width="96" height="20" rx="3" fill="#45b0e8" opacity=".55"/>
+  <text x="244" y="280" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">男の子 40〜48</text>
+  <rect x="340" y="292" width="96" height="20" rx="3" fill="#ff6b97" opacity=".55"/>
+  <text x="388" y="306" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">お菓子 52〜60</text>
+  <line x1="292" y1="302" x2="340" y2="302" stroke="#9aa4c4" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="316" y="330" fill="#9aa4c4" font-size="11" text-anchor="middle">すきま</text>
+
+  <text x="100" y="362" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12">boy_x &lt; candy_x + 8　→　40 &lt; 60</text>
+  <text x="440" y="362" fill="#2ee6a8" font-size="14">✓</text>
+  <text x="100" y="384" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12">candy_x &lt; boy_x + 8　→　52 &lt; 48</text>
+  <text x="440" y="384" fill="#ff6b97" font-size="14">✕</text>
+  <text x="470" y="384" fill="#ff6b97" font-size="13">片方でも ✕ なら当たりではない</text>
+</svg>
+</div>
+<figcaption>横だけを見れば、ただの数直線の問題になる。縦もまったく同じ形で考える</figcaption>
+</figure>
+
+<p>
+縦もまったく同じ形です。<code>x</code> を <code>y</code> に置きかえるだけで、
+</p>
+
+<pre><code>boy_y &lt; candy_y + 8
+candy_y &lt; boy_y + 8</code></pre>
+
+<p>
+となります。<b>この 4 つがすべて成り立ったときだけ「当たった」</b>——これが当たり判定です。
+</p>
+
+<div class="term">
+  <b>なぜ <code>&lt;=</code> ではなく <code>&lt;</code> なのか</b>
+  <code>boy_x = 40</code>、<code>candy_x = 48</code> のとき、男の子は 40〜47 のドット、
+  お菓子は 48〜55 のドットを使います。<b>共有しているドットは 1 つもありません</b>ので、
+  これは「当たっていない」が正解です。<code>candy_x &lt; boy_x + 8</code> は
+  <code>48 &lt; 48</code> となって <code>False</code>。ぴったり隣り合ったときに
+  当たらない、という正しい結果になります。<code>&lt;=</code> にすると、
+  隣に並んだだけで当たってしまいます。
+</div>
+
+<h3>1-4. 「消す」のではなく「移す」</h3>
+
+<p>
+「お菓子を消して、次のお菓子を出す」と考えると難しく感じますが、
+実際にやることは<b>座標を新しい値に書きかえるだけ</b>です。
+お菓子は最初から最後までずっと 1 個で、場所を移動しているだけと考えます。
+</p>
+
+<pre><code>if 重なった:
+    self.place_candy()      # 座標を決めなおす = 別の場所に現れる</code></pre>
+
+<p>
+消す処理も、作る処理もいりません。<code>draw()</code> は毎フレーム
+「いまの <code>candy_x</code> / <code>candy_y</code> に 1 個描く」だけなので、
+座標が変わればそのまま新しい場所に現れます。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>import random</code></td><td>乱数を使うための標準ライブラリを読み込む</td></tr>
+    <tr><td><code>random.randint(a, b)</code></td><td><code>a</code> 以上 <code>b</code> <b>以下</b>の整数をでたらめに 1 つ返す（両端を含む）</td></tr>
+    <tr><td><code>return</code></td><td>関数の結果を呼び出し元へ返す</td></tr>
+    <tr><td><code>and</code></td><td>左右の条件が<b>両方</b> <code>True</code> のときだけ <code>True</code></td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<h3>3-1. <code>random</code> を読み込み、定数を足す</h3>
+
+<p>
+ファイルのいちばん上に <code>import random</code> を足します。
+</p>
+
+<pre><code>import random
+
+import pyxel</code></pre>
+
+<div class="note">
+  <b><code>random</code> を上、<code>pyxel</code> を下に書くのはなぜ？</b>
+  Python には「<b>標準ライブラリ → その他のライブラリ</b>の順に、あいだを 1 行空けて書く」という
+  慣習（PEP 8）があります。<code>random</code> は Python にはじめから入っている標準ライブラリ、
+  <code>pyxel</code> は <code>pip</code> で入れたものなので、この順になります。
+  逆に書いても動きますが、そろえておくと読む人が迷いません。
+</div>
+
+<p>
+定数にお菓子の大きさを足します。
+</p>
+
+<pre><code>BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ</code></pre>
+
+<div class="term">
+  <b>どちらも 8 なのに、なぜ定数を 2 つに分けるのか</b>
+  「たまたま今は同じ値」だからです。あとで<b>お菓子だけ小さくしたい</b>と思ったとき、
+  <code>CANDY_SIZE</code> を 1 か所変えるだけで済みます。
+  1 つの定数を使い回していると、どの <code>8</code> がお菓子のものか分からなくなります。
+</div>
+
+<h3>3-2. 当たり判定の関数を作る</h3>
+
+<p>
+<code>class App:</code> の<b>上</b>、定数の下に、次の関数を書きます。
+<b>クラスの中ではありません。</b>インデントなしの、いちばん左から始まる関数です。
+</p>
+
+<pre><code>def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)</code></pre>
+
+<h3>3-3. お菓子を置いて、描く</h3>
+
+<p>
+<code>__init__</code> に 1 行足します。<b><code>pyxel.run()</code> より前</b>です。
+</p>
+
+<pre><code>        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.place_candy()                                  # ← 足す
+
+        pyxel.run(self.update, self.draw)</code></pre>
+
+<p>
+その <code>place_candy()</code> を、<code>move_boy()</code> の下に書きます。
+</p>
+
+<pre><code>    def place_candy(self):
+        """お菓子を画面のどこかへ置きなおす"""
+        self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+        self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)</code></pre>
+
+<p>
+<code>draw()</code> にお菓子を描く行を足します。<b>男の子より前に書く</b>のがポイントです。
+</p>
+
+<pre><code>    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子</code></pre>
+
+<p>
+ここで一度実行してください。<b>毎回ちがう場所にお菓子が 1 個出れば成功</b>です。
+重なってもまだ何も起きません。
+</p>
+
+<h3>3-4. 重なったら次の場所へ移す</h3>
+
+<p>
+<code>update()</code> に 1 行足します。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+        self.check_candy()      # ← 足す</code></pre>
+
+<p>
+<code>check_candy()</code> を <code>place_candy()</code> の下に書きます。
+</p>
+
+<pre><code>    def check_candy(self):
+        """お菓子に重なったら、次の場所へ置きなおす"""
+        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                  self.candy_x, self.candy_y, CANDY_SIZE):
+            self.place_candy()</code></pre>
+
+<p>
+実行して、お菓子に触れると別の場所へ移れば完成です。
+</p>
+
+<div class="note">
+  <b>1 行目のコメントも直しておきましょう</b>
+  ファイルの先頭がまだ <code># step1 フェーズ1：描いた 3 つの絵を並べて表示する</code> の
+  ままになっているはずです。いまの中身に合わせて書きかえておくと、
+  あとで開いたときに迷いません。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ3：お菓子を置いて、重なったら次の場所へ移す
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.place_candy()
+
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+        self.check_candy()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def place_candy(self):
+        """お菓子を画面のどこかへ置きなおす"""
+        self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+        self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+
+    def check_candy(self):
+        """お菓子に重なったら、次の場所へ置きなおす"""
+        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                  self.candy_x, self.candy_y, CANDY_SIZE):
+            self.place_candy()
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+
+App()</code></pre>
+
+<h2>5. コードの解説</h2>
+
+<h3><code>return</code> ——「結果を返す」関数</h3>
+
+<p>
+これまで書いてきた <code>move_boy()</code> や <code>place_candy()</code> は、
+<b>やって終わり</b>の関数でした。<code>is_hit()</code> は違います。
+<b>判定した答えを呼び出し元に返します</b>。
+</p>
+
+<pre><code>def is_hit(...):
+    return 条件式          # ← この式の結果（True か False）が返る</code></pre>
+
+<p>
+そのため、呼び出す側では <code>if</code> の条件としてそのまま使えます。
+</p>
+
+<pre><code>if is_hit(...):            # is_hit(...) が True のときだけ中に入る
+    self.place_candy()</code></pre>
+
+<div class="term">
+  <b><code>return True</code> と書かなくていいの？</b>
+  よくある書き方はこちらですが、
+  <pre><code>if x1 &lt; x2 + size2 and ...:
+    return True
+else:
+    return False</code></pre>
+  これは「<b>条件式そのものがすでに <code>True</code> か <code>False</code></b>」なので、
+  <code>return 条件式</code> と書けば同じことです。短いほうが読みやすく、
+  Python ではこちらが普通です。
+</div>
+
+<h3>なぜ <code>class</code> の外に書いたのか</h3>
+
+<p>
+<code>is_hit()</code> は <b><code>self</code> をまったく使いません</b>。
+渡された 6 個の数字だけを見て答えを出す、独立した計算です。
+こういう関数はクラスの中に入れる必要がなく、外に出しておくと
+「これは <code>App</code> の状態とは無関係だ」と一目で分かります。
+</p>
+
+<p>
+実用面でも得があります。フェーズ 5 でお化けが登場したとき、
+<b>同じ関数をそのまま使いまわせます</b>。
+</p>
+
+<pre><code># フェーズ 6 ではこう使う予定
+if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+          ghost_x, ghost_y, GHOST_SIZE):
+    # 捕まった</code></pre>
+
+<h3><code>and</code> でつないだ 4 つの条件</h3>
+
+<pre><code>return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+        y1 &lt; y2 + size2 and y2 &lt; y1 + size1)</code></pre>
+
+<p>
+<code>and</code> は「<b>両方とも成り立つ</b>」という意味なので、
+4 つを <code>and</code> でつなぐと「4 つすべてが成り立つ」になります。
+1 つでも成り立たなければ、全体は <code>False</code> です。
+</p>
+
+<p>
+全体を <code>(</code> <code>)</code> で囲んでいるのは、<b>途中で改行するため</b>です。
+フェーズ 2 の <code>blt()</code> と同じで、カッコの中は自由に改行できます。
+カッコがないと、Python は 1 行目で式が終わったと判断してエラーになります。
+</p>
+
+<h3><code>randint</code> は<b>両端を含む</b></h3>
+
+<pre><code>random.randint(0, 152)     # 0, 1, 2, ... 151, 152 のどれか</code></pre>
+
+<p>
+<code>range(0, 152)</code> が 151 までなのと違って、<code>randint</code> は
+<b>152 も出ます</b>。ここでは 152 に出てほしい（右端にぴったり着く位置）ので、
+これで正解です。
+</p>
+
+<div class="warn">
+  <b>まぎらわしい仲間たち</b>
+  <ul>
+    <li><code>random.randint(0, 152)</code> … 0 〜 152（<b>152 を含む</b>）</li>
+    <li><code>random.randrange(0, 152)</code> … 0 〜 151（152 を含まない。<code>range</code> と同じ）</li>
+    <li><code>random.random()</code> … 0.0 以上 1.0 未満の<b>小数</b></li>
+  </ul>
+  座標に使うなら <code>randint</code> がいちばん素直です。
+</div>
+
+<h3>描く順番＝重なる順番</h3>
+
+<p>
+<code>draw()</code> でお菓子を先に、男の子をあとに描いています。
+<b>あとに描いたものが上に重なる</b>ので、こうすると男の子がお菓子の上を歩いているように見えます。
+逆にすると、重なったときに男の子がお菓子の下に隠れてしまいます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 210" role="img" aria-label="お菓子を先に描くと男の子が上に重なり、男の子を先に描くとお菓子が上に重なることを示す比較図">
+  <text x="20" y="24" fill="#9aa4c4" font-size="12">① お菓子 → 男の子 の順（このページのコード）</text>
+  <rect x="20" y="36" width="280" height="110" rx="6" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <rect x="116" y="58" width="56" height="56" rx="3" fill="#ff6b97"/>
+  <rect x="150" y="84" width="56" height="56" rx="3" fill="#45b0e8"/>
+  <text x="133" y="78" fill="#10121c" font-size="11" text-anchor="middle">お菓子</text>
+  <text x="189" y="128" fill="#10121c" font-size="11" text-anchor="middle">男の子</text>
+  <text x="160" y="176" fill="#2ee6a8" font-size="12" text-anchor="middle">重なった角が男の子の色 → 男の子が上</text>
+
+  <text x="340" y="24" fill="#9aa4c4" font-size="12">② 男の子 → お菓子 の順</text>
+  <rect x="340" y="36" width="280" height="110" rx="6" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <rect x="470" y="84" width="56" height="56" rx="3" fill="#45b0e8"/>
+  <rect x="436" y="58" width="56" height="56" rx="3" fill="#ff6b97"/>
+  <text x="453" y="78" fill="#10121c" font-size="11" text-anchor="middle">お菓子</text>
+  <text x="509" y="128" fill="#10121c" font-size="11" text-anchor="middle">男の子</text>
+  <text x="480" y="176" fill="#ff6b97" font-size="12" text-anchor="middle">重なった角がお菓子の色 → 男の子が下</text>
+</svg>
+</div>
+<figcaption>あとから描いたものが上になる。背景 → 遠くのもの → 近くのもの の順に描くのが基本</figcaption>
+</figure>
+
+<h3><code>self.candy_x</code> を <code>__init__</code> に直接書いていない</h3>
+
+<p>
+男の子は <code>__init__</code> の中で <code>self.boy_x = ...</code> と直接書きましたが、
+お菓子は <code>self.place_candy()</code> を呼ぶ形にしています。
+<b><code>self.</code> の変数は、<code>__init__</code> から呼ばれた関数の中で作っても大丈夫</b>です。
+</p>
+
+<p>
+こうしている理由は、<b>同じ処理をあとでもう一度使うから</b>です。
+「最初に置く」も「食べられたので置きなおす」も、やることはまったく同じなので、
+1 つの関数にまとめておけば、両方から呼べます。
+</p>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<p>
+いまのコードには、小さな穴が 1 つあります。置きなおした先が<b>たまたま男の子の真下</b>だと、
+出た瞬間にまた食べられてしまいます。100 回に 1 回程度なので気にしなくても遊べますが、
+気になる場合は <code>place_candy()</code> をこう書きかえます。
+</p>
+
+<pre><code>    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break</code></pre>
+
+<p>
+<code>while True:</code> は「ずっとくり返す」、<code>break</code> は「くり返しから抜ける」です。
+つまり<b>「男の子と重ならない場所が出るまで、くじを引きなおす」</b>という意味になります。
+たいてい 1 回目で抜けます。
+</p>
+
+<div class="warn">
+  <b>この書き方にするときの注意</b>
+  <code>place_candy()</code> が <code>self.boy_x</code> を読むようになるので、
+  <code>__init__</code> では<b>男の子の座標を決めたあと</b>に呼ばなければいけません。
+  手順どおりに書いていれば、すでにその順番になっています。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>NameError: name 'random' is not defined</code></td>
+      <td><code>import random</code> を書き忘れています</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'candy_x'</code></td>
+      <td><code>__init__</code> の <code>self.place_candy()</code> を書き忘れているか、
+      <code>pyxel.run()</code> より<b>あと</b>に書いています</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'is_hit' is not defined</code></td>
+      <td><code>is_hit()</code> がクラスの<b>中</b>にインデントして入っています。
+      クラスの外（いちばん左）に出します。
+      中に置いたままにするなら <code>self.is_hit(...)</code> と呼ぶ必要があります</td>
+    </tr>
+    <tr>
+      <td>お菓子が表示されない</td>
+      <td><code>blt()</code> の切り出し位置が <code>16, 0</code> になっているか確認します。
+      お菓子はイメージバンク 0 の <code>u = 16</code> です</td>
+    </tr>
+    <tr>
+      <td>お菓子が画面の右下だけに出ない／端で切れる</td>
+      <td><code>randint</code> の上限が <code>SCREEN_WIDTH</code> のままです。
+      <code>- CANDY_SIZE</code> を引きます</td>
+    </tr>
+    <tr>
+      <td>触っていないのにお菓子が移動し続ける</td>
+      <td><code>is_hit()</code> の不等号の向きが逆になっている可能性があります。
+      4 つとも <code>&lt;</code> で、左辺が<b>左上の座標</b>、右辺が<b>反対側の右下</b>です</td>
+    </tr>
+    <tr>
+      <td>重なっても何も起きない</td>
+      <td><code>update()</code> に <code>self.check_candy()</code> を足したか確認します</td>
+    </tr>
+    <tr>
+      <td>男の子がお菓子の下に隠れる</td>
+      <td><code>draw()</code> の <code>blt()</code> の順番が逆です。お菓子を先に描きます</td>
+    </tr>
+    <tr>
+      <td><code>SyntaxError</code>（<code>is_hit</code> の行で）</td>
+      <td><code>return</code> のうしろの <code>(</code> <code>)</code> が抜けています。
+      カッコがないと 2 行に分けられません</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+ゲームの中心ができました。ただ、いまは何個集めたのか分かりません。
+次は<b>集めた数をスコアとして画面に表示します</b>。
+数える変数を 1 つ増やして、<code>pyxel.text()</code> で描くだけなので、
+このフェーズよりずっと短くなります。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
