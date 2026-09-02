@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ4：スコアを表示する ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 4 </span>スコアを表示する</h1>
+  <p>集めた数を数える変数を用意し、画面に文字で描く</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 4</p>
+
+<h2>ゴール</h2>
+
+<p>
+お菓子を集めた数を数えて、画面の左上に <code>SCORE 0</code> のように表示します。
+書き足すのは<b>全部で 4 行</b>だけの、短いフェーズです。
+</p>
+
+<p>
+新しく出てくるのは <code>pyxel.text()</code> と <b>f 文字列</b>の 2 つです。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 数えるための変数を 1 つ増やす</h3>
+
+<p>
+「いくつ集めたか」も、男の子の位置と同じで<b>フレームをまたいで覚えておきたい情報</b>です。
+なので <code>__init__</code> で <code>self.score = 0</code> と用意します。
+</p>
+
+<h3>1-2. 増やす場所は「取った瞬間」の 1 か所だけ</h3>
+
+<p>
+フェーズ 3 で書いた <code>check_candy()</code> の <code>if</code> の中が、
+<b>ちょうど「いま取った」瞬間</b>です。ここに 1 行足すだけで数えられます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 250" role="img" aria-label="update から move_boy と check_candy が呼ばれ、check_candy の中で重なっているときだけスコアを 1 増やしてお菓子を置きなおす流れ図">
+  <rect x="20" y="30" width="150" height="40" rx="5" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="95" y="55" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="middle">update()</text>
+
+  <path d="M95 70 V100 H190" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M198 100 l-10 -5 v10 z" fill="#3b4166"/>
+  <path d="M95 100 V150 H190" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M198 150 l-10 -5 v10 z" fill="#3b4166"/>
+
+  <rect x="200" y="82" width="150" height="36" rx="5" fill="#232840" stroke="#3b4166"/>
+  <text x="275" y="105" fill="#9aa4c4" font-family="Consolas, monospace" font-size="12" text-anchor="middle">move_boy()</text>
+
+  <rect x="200" y="132" width="150" height="36" rx="5" fill="#232840" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="275" y="155" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="middle">check_candy()</text>
+
+  <line x1="350" y1="150" x2="382" y2="150" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M390 150 l-10 -5 v10 z" fill="#3b4166"/>
+
+  <rect x="390" y="112" width="230" height="76" rx="5" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="404" y="134" fill="#ffcc44" font-family="Consolas, monospace" font-size="11">if 重なっている:</text>
+  <text x="420" y="154" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11">self.score += 1</text>
+  <text x="420" y="174" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11">self.place_candy()</text>
+  <text x="505" y="206" fill="#2ee6a8" font-size="11" text-anchor="middle">ここに 1 行足すだけ</text>
+
+  <text x="20" y="228" fill="#9aa4c4" font-size="12">「取った瞬間」は 1 フレームしかないので、ここで数えれば二重に数えることはない</text>
+</svg>
+</div>
+<figcaption>お菓子を置きなおすのと同じ場所で、スコアも 1 増やす</figcaption>
+</figure>
+
+<h3>1-3. 文字を描くのは <code>pyxel.text()</code></h3>
+
+<pre><code>pyxel.text(x, y, 文字列, 色番号)</code></pre>
+
+<p>
+<code>blt()</code> と同じで、<code>x</code> と <code>y</code> は<b>文字の左上</b>の位置です。
+色は <code>pyxel.COLOR_WHITE</code>（＝ 7）のような色番号を渡します。
+</p>
+
+<h3>1-4. 数値はそのままでは描けない</h3>
+
+<p>
+<code>self.score</code> は<b>数値</b>ですが、<code>pyxel.text()</code> に渡せるのは<b>文字列</b>です。
+そこで、数値を文字列の中に埋め込みます。それが <b>f 文字列</b>です。
+</p>
+
+<pre><code>self.score = 3
+
+f"SCORE {self.score}"      # → "SCORE 3" という文字列になる</code></pre>
+
+<p>
+文字列の前に <code>f</code> をつけると、<code>{ }</code> の中身が<b>その場で計算されて
+文字に置きかわります</b>。<code>f</code> を書き忘れると、
+<code>{self.score}</code> がそのまま文字として表示されてしまいます。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.text(x, y, s, col)</code></td><td>文字列 <code>s</code> を <code>(x, y)</code> に色 <code>col</code> で描く</td></tr>
+    <tr><td><code>pyxel.COLOR_WHITE</code></td><td>白（色番号 7）。<code>7</code> と書いても同じ</td></tr>
+    <tr><td><code>f"... {変数} ..."</code></td><td>文字列の中に変数の中身を埋め込む（f 文字列）</td></tr>
+    <tr><td><code>+= 1</code></td><td>いまの値に 1 を足して入れなおす</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<h3>3-1. スコアの変数を用意する</h3>
+
+<p>
+<code>__init__</code> に 1 行足します。
+</p>
+
+<pre><code>        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.score = 0                                      # ← 足す
+        self.place_candy()
+
+        pyxel.run(self.update, self.draw)</code></pre>
+
+<h3>3-2. 取ったときに 1 増やす</h3>
+
+<p>
+<code>check_candy()</code> に 1 行足します。
+</p>
+
+<pre><code>    def check_candy(self):
+        """お菓子に重なったら、スコアを増やして次の場所へ置きなおす"""
+        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                  self.candy_x, self.candy_y, CANDY_SIZE):
+            self.score += 1                                 # ← 足す
+            self.place_candy()</code></pre>
+
+<h3>3-3. 画面に描く</h3>
+
+<p>
+<code>draw()</code> の<b>いちばん最後</b>に 1 行足します。
+</p>
+
+<pre><code>    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)   # ← 足す</code></pre>
+
+<p>
+実行して、左上に <code>SCORE 0</code> が出て、お菓子を取るたびに数字が増えれば完成です。
+</p>
+
+<div class="note">
+  <b>1 行目のコメントも書きかえておきましょう</b>
+  <code># step1 フェーズ3：…</code> のままになっているはずです。
+  毎フェーズの最後にここを直す習慣にしておくと、あとで見返したときに助かります。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+変わったのは 4 行だけですが、全体を載せておきます。
+</p>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ4：集めた数をスコアとして表示する
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.score = 0
+        self.place_candy()
+
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+        self.check_candy()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break
+
+    def check_candy(self):
+        """お菓子に重なったら、スコアを増やして次の場所へ置きなおす"""
+        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                  self.candy_x, self.candy_y, CANDY_SIZE):
+            self.score += 1
+            self.place_candy()
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)
+
+App()</code></pre>
+
+<h2>5. コードの解説</h2>
+
+<h3>f 文字列（f-string）</h3>
+
+<p>
+数値を文字列にまぜる方法はいくつかありますが、いまの Python では f 文字列がいちばん素直です。
+</p>
+
+<table>
+  <thead><tr><th>書き方</th><th>結果</th><th>ひとこと</th></tr></thead>
+  <tbody>
+    <tr><td><code>f"SCORE {self.score}"</code></td><td><code>SCORE 3</code></td><td><b>これを使う</b></td></tr>
+    <tr><td><code>"SCORE " + str(self.score)</code></td><td><code>SCORE 3</code></td><td>同じ結果。長くなる</td></tr>
+    <tr><td><code>"SCORE " + self.score</code></td><td colspan="2"><code>TypeError</code>。文字列と数値は <code>+</code> でつなげない</td></tr>
+    <tr><td><code>"SCORE {self.score}"</code></td><td><code>SCORE {self.score}</code></td><td><code>f</code> を忘れた形。そのまま表示される</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b><code>{ }</code> の中には式が書けます</b>
+  変数だけでなく、計算もそのまま書けます。
+  <pre><code>f"SCORE {self.score}"          # → SCORE 3
+f"NEXT {5 - self.score % 5}"   # → 計算結果が入る
+f"{self.score:3}"              # → 幅 3 で右ぞろえ（"  3"）</code></pre>
+  最後の <code>:3</code> のような書き方は<b>書式指定</b>といって、
+  桁をそろえたいときに便利です。いまは使いませんが、頭の隅に置いておいてください。
+</div>
+
+<h3><code>self.score += 1</code> の意味</h3>
+
+<pre><code>self.score += 1        # これは次と同じ意味
+self.score = self.score + 1</code></pre>
+
+<p>
+「いまの値を読んで、1 足して、また入れなおす」という 3 段階を短く書いたものです。
+<code>-=</code>（フェーズ 2 の <code>self.boy_x -= BOY_SPEED</code>）も同じ仲間です。
+</p>
+
+<h3>なぜ <code>draw()</code> ではなく <code>check_candy()</code> で増やすのか</h3>
+
+<p>
+<code>draw()</code> の中で <code>self.score += 1</code> と書くと、
+<b>毎フレーム（1 秒に 30 ずつ）</b>増えてしまいます。
+フェーズ 2 で決めた「<code>update()</code> で決めて、<code>draw()</code> で描く」という
+役割分担が、ここでも効いています。
+</p>
+
+<div class="note">
+  <b>「取った瞬間」は 1 フレームしかない</b>
+  重なった次のフレームには <code>place_candy()</code> でお菓子が別の場所へ移っているので、
+  同じお菓子で 2 回数えることはありません。備忘録の
+  <a href="../memo/#once-on-change">「1 回だけ処理する書き方」</a>で扱った
+  「状態が変わった瞬間だけ処理する」のと似た形になっています。
+</div>
+
+<h3>文字はいちばん最後に描く</h3>
+
+<p>
+フェーズ 3 の「あとに描いたものが上に重なる」がここでも効きます。
+<code>pyxel.text()</code> を <code>blt()</code> より<b>前</b>に書くと、
+お菓子や男の子がスコアの上を通ったときに文字が隠れてしまいます。
+</p>
+
+<p>
+描く順番は <b>背景 → ゲームの中身 → 画面表示（スコアなど）</b>が基本です。
+</p>
+
+<h3>ここで定数を作らなかった理由</h3>
+
+<p>
+これまで <code>BOY_SPEED</code> や <code>CANDY_SIZE</code> は定数にしてきましたが、
+<code>pyxel.text(4, 4, ...)</code> の <code>4</code> はそのまま書いています。
+基準は<b>「同じ数字が 2 か所以上に出てくるか」</b>です。
+</p>
+
+<ul>
+  <li><b>定数にする</b> … 複数箇所に出てくる／意味が名前を見ないと分からない／あとで調整したくなる</li>
+  <li><b>そのまま書く</b> … 1 か所だけ／その場で意味が明らか</li>
+</ul>
+
+<p>
+なんでも定数にすると、かえって「この名前は何だったか」と探す手間が増えます。
+迷ったら、<b>2 回目に同じ数字を書くときに定数へ格上げする</b>と決めておけば十分です。
+</p>
+
+<h3>フォントの大きさ（実測）</h3>
+
+<p>
+Pyxel の標準フォントは<b>1 文字 4 ドットの送り</b>で、
+実際に色が付くのは横 3 ドット、高さは大文字で 5 ドット、
+<code>g</code> や <code>y</code> のように下に伸びる文字を含めると 6 ドットです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 250" role="img" aria-label="Pyxel の標準フォントは 1 文字が 4 ドット送りで、文字自体は横 3 ドット、高さ 5 から 6 ドットであることを示す拡大図">
+  <text x="20" y="24" fill="#9aa4c4" font-size="12">1 ドットを 14 倍に拡大したところ（<tspan font-family="Consolas, monospace">pyxel.text(0, 0, "AB", 7)</tspan>）</text>
+
+  <g stroke="#232840" stroke-width="1">
+    <line x1="60" y1="46" x2="228" y2="46"/><line x1="60" y1="60" x2="228" y2="60"/>
+    <line x1="60" y1="74" x2="228" y2="74"/><line x1="60" y1="88" x2="228" y2="88"/>
+    <line x1="60" y1="102" x2="228" y2="102"/><line x1="60" y1="116" x2="228" y2="116"/>
+    <line x1="60" y1="130" x2="228" y2="130"/>
+    <line x1="60" y1="46" x2="60" y2="130"/><line x1="74" y1="46" x2="74" y2="130"/>
+    <line x1="88" y1="46" x2="88" y2="130"/><line x1="102" y1="46" x2="102" y2="130"/>
+    <line x1="116" y1="46" x2="116" y2="130"/><line x1="130" y1="46" x2="130" y2="130"/>
+    <line x1="144" y1="46" x2="144" y2="130"/><line x1="158" y1="46" x2="158" y2="130"/>
+    <line x1="172" y1="46" x2="172" y2="130"/><line x1="186" y1="46" x2="186" y2="130"/>
+    <line x1="200" y1="46" x2="200" y2="130"/><line x1="214" y1="46" x2="214" y2="130"/>
+    <line x1="228" y1="46" x2="228" y2="130"/>
+  </g>
+
+  <g fill="#e8f0ff">
+    <rect x="74" y="46" width="14" height="14"/>
+    <rect x="60" y="60" width="14" height="14"/><rect x="88" y="60" width="14" height="14"/>
+    <rect x="60" y="74" width="14" height="14"/><rect x="74" y="74" width="14" height="14"/><rect x="88" y="74" width="14" height="14"/>
+    <rect x="60" y="88" width="14" height="14"/><rect x="88" y="88" width="14" height="14"/>
+    <rect x="60" y="102" width="14" height="14"/><rect x="88" y="102" width="14" height="14"/>
+  </g>
+  <g fill="#e8f0ff">
+    <rect x="116" y="46" width="14" height="14"/><rect x="130" y="46" width="14" height="14"/>
+    <rect x="116" y="60" width="14" height="14"/><rect x="144" y="60" width="14" height="14"/>
+    <rect x="116" y="74" width="14" height="14"/><rect x="130" y="74" width="14" height="14"/>
+    <rect x="116" y="88" width="14" height="14"/><rect x="144" y="88" width="14" height="14"/>
+    <rect x="116" y="102" width="14" height="14"/><rect x="130" y="102" width="14" height="14"/>
+  </g>
+
+  <line x1="60" y1="152" x2="102" y2="152" stroke="#2ee6a8" stroke-width="2"/>
+  <text x="81" y="170" fill="#2ee6a8" font-size="11" text-anchor="middle">文字 3</text>
+  <line x1="60" y1="188" x2="116" y2="188" stroke="#ffcc44" stroke-width="2"/>
+  <path d="M60 188 l10 -4 v8 z" fill="#ffcc44"/><path d="M116 188 l-10 -4 v8 z" fill="#ffcc44"/>
+  <text x="88" y="206" fill="#ffcc44" font-size="11" text-anchor="middle">送り 4</text>
+
+  <line x1="246" y1="46" x2="246" y2="116" stroke="#45b0e8" stroke-width="2"/>
+  <path d="M246 46 l-4 10 h8 z" fill="#45b0e8"/><path d="M246 116 l-4 -10 h8 z" fill="#45b0e8"/>
+  <text x="258" y="86" fill="#45b0e8" font-size="11">高さ 5（下に伸びる文字を含めると 6）</text>
+
+  <text x="330" y="152" fill="#e8f0ff" font-size="13">文字列の幅（ドット）</text>
+  <text x="330" y="178" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12">len(s) * 4 - 1</text>
+  <text x="330" y="204" fill="#9aa4c4" font-size="11">例：<tspan font-family="Consolas, monospace">"SCORE 0"</tspan> は 7 文字 → 27 ドット</text>
+  <text x="330" y="226" fill="#9aa4c4" font-size="11">中央にそろえるなら <tspan font-family="Consolas, monospace" fill="#e8f0ff">(160 - len(s) * 4) // 2</tspan></text>
+</svg>
+</div>
+<figcaption>フォントの寸法。文字数から幅が計算できるので、中央ぞろえもできる（フェーズ 7 で使います）</figcaption>
+</figure>
+
+<div class="warn">
+  <b>標準フォントで日本語は出せません</b>
+  <code>pyxel.text(4, 4, "スコア", 7)</code> と書いても、<b>何も描かれません</b>
+  （エラーにもなりません）。標準フォントは英数字と記号だけです。<br>
+  日本語を出したい場合は、Pyxel に同梱されている日本語フォント
+  （<code>pyxel/examples/assets/umplus_j12r.bdf</code>）を読み込む方法があります。
+  <pre><code>font = pyxel.Font("umplus_j12r.bdf")
+pyxel.text(4, 4, "スコア 5", 7, font)</code></pre>
+  ただしフォントファイルを配布物に同梱する必要が出てくるので、
+  <b>この step では英数字だけで作ります</b>。
+</div>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<p>
+お菓子や男の子がスコアの真下を通ると、白い文字が読みにくくなることがあります。
+<b>黒で 1 ドットずらして描いてから、白で本体を描く</b>と、縁取りができて読みやすくなります。
+</p>
+
+<pre><code>        text = f"SCORE {self.score}"
+        pyxel.text(5, 5, text, pyxel.COLOR_BLACK)      # 影
+        pyxel.text(4, 4, text, pyxel.COLOR_WHITE)      # 本体</code></pre>
+
+<p>
+同じ文字列を 2 回書かずに済むよう、いったん <code>text</code> という変数に入れています。
+</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>SCORE {self.score}</code> とそのまま表示される</td>
+      <td>文字列の前の <code>f</code> が抜けています</td>
+    </tr>
+    <tr>
+      <td><code>TypeError: can only concatenate str (not "int") to str</code></td>
+      <td><code>"SCORE " + self.score</code> と書いています。
+      f 文字列にするか、<code>str(self.score)</code> で文字列に変換します</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'score'</code></td>
+      <td><code>__init__</code> の <code>self.score = 0</code> を書き忘れているか、
+      <code>pyxel.run()</code> より<b>あと</b>に書いています</td>
+    </tr>
+    <tr>
+      <td>スコアが猛烈な勢いで増える</td>
+      <td><code>self.score += 1</code> が <code>if</code> の外、または <code>draw()</code> の中にあります。
+      <code>check_candy()</code> の <code>if</code> の<b>中</b>（<code>place_candy()</code> と同じ深さ）に置きます</td>
+    </tr>
+    <tr>
+      <td>スコアが増えない</td>
+      <td><code>self.score += 1</code> ではなく <code>self.score + 1</code> になっていませんか。
+      これは計算するだけで、結果をどこにも入れていません</td>
+    </tr>
+    <tr>
+      <td>文字が表示されない</td>
+      <td>色が背景と同じ黒（<code>0</code>）になっていないか確認します。
+      また、日本語を渡していると何も出ません</td>
+    </tr>
+    <tr>
+      <td>男の子がスコアの上に重なって文字が消える</td>
+      <td><code>pyxel.text()</code> が <code>blt()</code> より前にあります。いちばん最後に描きます</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+遊びの手ごたえが出てきました。次はいよいよ<b>お化けを 1 体出して、男の子を追いかけさせます</b>。
+「相手の座標と自分の座標を見くらべて、近づく向きへ動く」という、
+追跡の基本の考え方が登場します。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
