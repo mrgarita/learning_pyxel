@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ2：男の子を矢印キーで動かす ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 2 </span>男の子を矢印キーで動かす</h1>
+  <p>位置を変数で覚えさせ、キー入力に合わせて毎フレーム動かす</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 2</p>
+
+<h2>ゴール</h2>
+
+<p>
+フェーズ 1 で並べた 3 つの絵のうち、<b>男の子だけ</b>を画面に残し、
+矢印キーで上下左右に動かせるようにします。
+画面の端まで行ったら、そこで止まって外へは出ないところまでを作ります。
+</p>
+
+<p>
+フェーズ 1 の <code>candy_hunt.py</code> に書き足していく形です。新しいファイルは作りません。
+<code>update()</code> の <code>pass</code> が、いよいよ中身に変わります。
+</p>
+
+<div class="note">
+  <b>お化けとお菓子はいったん画面から外します</b>
+  フェーズ 1 では 3 つ並べて表示を確かめましたが、ここからは 1 つずつ役割を持たせていきます。
+  お菓子は<b>フェーズ 3</b>、お化けは<b>フェーズ 5</b> で戻ってきます。
+  絵そのものは <code>.pyxres</code> に残っているので、消す必要はありません。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 「動く」とは、毎フレーム少しずつ座標を変えること</h3>
+
+<p>
+Pyxel は <code>pyxel.run(self.update, self.draw)</code> を呼んだあと、
+<b>1 秒間に 30 回</b>のペースで <code>update()</code> と <code>draw()</code> をくり返し呼び続けます。
+絵が動いて見えるのは、この 1 回ごとに<b>描く座標をほんの少しずらしている</b>からです。
+パラパラ漫画と同じ仕組みです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 290" role="img" aria-label="起動時に init・load・変数の用意・run が 1 回ずつ実行され、そのあと update と draw が 1 秒間に 30 回くり返されることを示す流れ図">
+  <text x="20" y="20" fill="#9aa4c4" font-size="12">起動時（1 回だけ）</text>
+
+  <rect x="20" y="30" width="118" height="34" rx="5" fill="#232840" stroke="#3b4166"/>
+  <text x="79" y="52" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">pyxel.init()</text>
+  <line x1="138" y1="47" x2="152" y2="47" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M160 47 l-10 -5 v10 z" fill="#3b4166"/>
+
+  <rect x="160" y="30" width="118" height="34" rx="5" fill="#232840" stroke="#3b4166"/>
+  <text x="219" y="52" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">pyxel.load()</text>
+  <line x1="278" y1="47" x2="292" y2="47" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M300 47 l-10 -5 v10 z" fill="#3b4166"/>
+
+  <rect x="300" y="30" width="140" height="34" rx="5" fill="#232840" stroke="#3b4166"/>
+  <text x="370" y="52" fill="#e8f0ff" font-size="11" text-anchor="middle">位置の変数を用意</text>
+  <line x1="440" y1="47" x2="454" y2="47" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M462 47 l-10 -5 v10 z" fill="#3b4166"/>
+
+  <rect x="462" y="30" width="118" height="34" rx="5" fill="#232840" stroke="#45b0e8"/>
+  <text x="521" y="52" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">pyxel.run()</text>
+
+  <line x1="521" y1="64" x2="521" y2="92" stroke="#45b0e8" stroke-width="1.5"/>
+  <path d="M521 100 l-5 -10 h10 z" fill="#45b0e8"/>
+
+  <text x="20" y="120" fill="#9aa4c4" font-size="12">ここから先はくり返し</text>
+  <rect x="20" y="130" width="600" height="140" rx="8" fill="#1b1f33" stroke="#3b4166" stroke-width="1.5"/>
+
+  <rect x="90" y="152" width="150" height="54" rx="5" fill="#232840" stroke="#45b0e8" stroke-width="1.5"/>
+  <text x="165" y="176" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="middle">update()</text>
+  <text x="165" y="195" fill="#9aa4c4" font-size="11" text-anchor="middle">位置を計算する</text>
+
+  <line x1="240" y1="179" x2="372" y2="179" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M380 179 l-10 -5 v10 z" fill="#3b4166"/>
+
+  <rect x="380" y="152" width="150" height="54" rx="5" fill="#232840" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="455" y="176" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="middle">draw()</text>
+  <text x="455" y="195" fill="#9aa4c4" font-size="11" text-anchor="middle">その位置に絵を描く</text>
+
+  <path d="M455 206 V236 H165 V214" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M165 206 l-5 10 h10 z" fill="#3b4166"/>
+  <text x="310" y="258" fill="#ffcc44" font-size="12" text-anchor="middle">これを 1 秒間に 30 回</text>
+</svg>
+</div>
+<figcaption><code>init</code> と <code>load</code> は起動時に 1 回だけ。<code>update</code> と <code>draw</code> だけが毎フレーム呼ばれる</figcaption>
+</figure>
+
+<div class="note">
+  <b><code>init()</code> の役割でつまずいたら</b>
+  <code>pyxel.init()</code> が「入れ物を用意する関数」であることと、
+  <code>load()</code> を先に書くと <code>Pyxel not initialized</code> で落ちる理由は、
+  備忘録の<a href="../memo/#init-first">「<code>init()</code> は何をしている？」</a>にまとめてあります。
+</div>
+
+<h3>1-2. 位置は <code>self</code> に覚えさせる</h3>
+
+<p>
+男の子の位置は「いま画面のどこにいるか」という<b>ずっと持ち続ける情報</b>です。
+一方 <code>update()</code> は毎フレーム呼び出され、そのたびに中の処理が最初から実行されます。
+つまり <code>update()</code> の中で
+</p>
+
+<pre><code>def update(self):
+    boy_x = 76          # ← 毎フレーム 76 に戻ってしまう
+    if pyxel.btn(pyxel.KEY_RIGHT):
+        boy_x += 2</code></pre>
+
+<p>
+と書くと、右キーを押しても <code>boy_x</code> は 78 になった直後に捨てられ、
+次のフレームでまた 76 から始まります。<b>1 ドットも進みません。</b>
+</p>
+
+<p>
+そこで <code>self.boy_x</code> という形で<b>インスタンス（<code>App</code> 自身）にくっつけて</b>持たせます。
+<code>self.</code> がついた変数は <code>__init__</code> で一度作れば、
+<code>update()</code> が何回呼ばれても値が残り続けます。
+</p>
+
+<table>
+  <thead><tr><th>書き方</th><th>作る場所</th><th>寿命</th></tr></thead>
+  <tbody>
+    <tr><td><code>boy_x = 76</code></td><td><code>update()</code> の中</td><td>その 1 回の <code>update()</code> が終わるまで</td></tr>
+    <tr><td><code>self.boy_x = 76</code></td><td><code>__init__</code> の中</td><td>プログラムが終わるまで</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>step0 でも同じことをしていました</b>
+  宇宙船の <code>self.ship_x</code>、ひよこの <code>self.hiyoko_scale</code>、
+  魚の <code>self.fish_x</code> ——「フレームをまたいで覚えておきたいもの」は、
+  どれも <code>__init__</code> で <code>self.</code> をつけて用意していました。同じ考え方です。
+</div>
+
+<h3>1-3. <code>update()</code> で決めて、<code>draw()</code> で描く</h3>
+
+<p>
+キーを見て座標を変えるのは <code>update()</code>、その座標に絵を貼るのは <code>draw()</code> です。
+<b>この 2 つは役割を混ぜません。</b>
+</p>
+
+<table>
+  <thead><tr><th></th><th>やること</th><th>やらないこと</th></tr></thead>
+  <tbody>
+    <tr><td><code>update()</code></td><td>キーを調べる、座標を計算する、当たり判定をする</td><td>画面に描く</td></tr>
+    <tr><td><code>draw()</code></td><td>画面を消す、絵や文字を描く</td><td>座標を変える</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>draw()</code> の中に <code>self.boy_x += 2</code> と書いても、実は動いてしまいます。
+それでも分けるのは、あとで<b>「ゲームオーバー中は動かないが、絵は描き続ける」</b>のような
+場面が必ず出てくるからです。分けておけば <code>update()</code> の中身を呼ばないだけで実現できます。
+フェーズ 6 と 7 で、この分け方が効いてきます。
+</p>
+
+<h3>1-4. 画面の外へ出さない</h3>
+
+<p>
+何もしないと、男の子は画面の外までどこまでも歩いて行って見えなくなります。
+座標に<b>上限と下限を設けて、はみ出したら端の値に押し戻します</b>。
+</p>
+
+<p>
+ここで大事なのは、<b>上限が <code>160</code> ではなく <code>152</code> になる</b>ことです。
+<code>blt()</code> に渡す座標は絵の<b>左上</b>の位置なので、
+左上が 152 のとき絵の右端がちょうど 159（画面のいちばん右のドット）に来ます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 330" role="img" aria-label="160かける120 の画面上で、男の子の x 座標が取れる範囲は 0 から 152 までであり、152 のとき絵の右端が画面の右端にぴったり合うことを示す図">
+  <rect x="120" y="46" width="320" height="240" fill="#10121c" stroke="#3b4166" stroke-width="1.5"/>
+  <text x="280" y="36" fill="#9aa4c4" font-size="12" text-anchor="middle">画面 160 × 120（図は 2 倍で表示）</text>
+
+  <rect x="120" y="158" width="16" height="16" fill="#45b0e8"/>
+  <text x="128" y="196" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">0</text>
+
+  <rect x="424" y="158" width="16" height="16" fill="#45b0e8"/>
+  <text x="432" y="196" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">152</text>
+
+  <rect x="440" y="158" width="16" height="16" fill="none" stroke="#ff6b97" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="466" y="152" fill="#ff6b97" font-size="11">160 だと</text>
+  <text x="466" y="168" fill="#ff6b97" font-size="11">画面の外</text>
+
+  <line x1="120" y1="120" x2="424" y2="120" stroke="#ffcc44" stroke-width="1.5"/>
+  <path d="M120 120 l10 -5 v10 z" fill="#ffcc44"/>
+  <path d="M424 120 l-10 -5 v10 z" fill="#ffcc44"/>
+  <text x="272" y="112" fill="#ffcc44" font-size="12" text-anchor="middle">self.boy_x が取れる範囲</text>
+
+  <text x="280" y="314" fill="#e8f0ff" font-family="Consolas, monospace" font-size="12" text-anchor="middle">152 = SCREEN_WIDTH - BOY_SIZE = 160 - 8</text>
+</svg>
+</div>
+<figcaption>座標は絵の左上を指すので、右端の上限は画面幅から絵の幅を引いた値になる</figcaption>
+</figure>
+
+<p>
+縦も同じで、<code>self.boy_y</code> の範囲は <code>0</code> から
+<code>SCREEN_HEIGHT - BOY_SIZE</code>（＝ 120 − 8 ＝ 112）までです。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.btn(キー)</code></td><td>そのキーが<b>押されているあいだ</b> <code>True</code> を返す</td></tr>
+    <tr><td><code>pyxel.KEY_LEFT</code> / <code>KEY_RIGHT</code> / <code>KEY_UP</code> / <code>KEY_DOWN</code></td><td>矢印キーを表す番号</td></tr>
+    <tr><td><code>max(a, b)</code></td><td>2 つのうち<b>大きいほう</b>を返す（下限を作るのに使う）</td></tr>
+    <tr><td><code>min(a, b)</code></td><td>2 つのうち<b>小さいほう</b>を返す（上限を作るのに使う）</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+一度に全部書かず、<b>3 段階に分けて</b>書き足します。
+途中で実行して、そのつど動きを確かめてください。
+</p>
+
+<h3>3-1. 定数と、位置の変数を用意する</h3>
+
+<p>
+まず、ファイルの上のほうにある定数に 2 行足します。
+</p>
+
+<pre><code>SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8        # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2       # 1 フレームで進むドット数</code></pre>
+
+<p>
+次に <code>__init__</code> の <code>pyxel.load()</code> と <code>pyxel.run()</code> のあいだに、
+男の子の初期位置を 2 行足します。画面の中央に置きます。
+</p>
+
+<pre><code>    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2      # ← 足す
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2     # ← 足す
+
+        pyxel.run(self.update, self.draw)</code></pre>
+
+<div class="note">
+  <b>なぜ <code>- BOY_SIZE // 2</code> を引くのか</b>
+  <code>SCREEN_WIDTH // 2</code>（＝ 80）だけだと、絵の<b>左上</b>が中央に来るため、
+  見た目は右下に 4 ドットずれます。絵の大きさの半分を引くと、絵の<b>真ん中</b>が画面の中央に来ます。
+  <code>//</code> を使うのは、座標を整数のままにしておきたいからです
+  （<a href="../memo/#floor-div"><code>/</code> と <code>//</code> の使い分け</a>）。
+</div>
+
+<h3>3-2. 矢印キーで動かす</h3>
+
+<p>
+<code>update()</code> の <code>pass</code> を消して、移動処理を書きます。
+移動そのものは <code>move_boy()</code> という別のメソッドに分けます。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED</code></pre>
+
+<p>
+最後に <code>draw()</code> を書き換えます。3 行あった <code>blt()</code> を 1 つにして、
+座標を <code>self.boy_x</code> / <code>self.boy_y</code> に差し替えます。
+</p>
+
+<pre><code>    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)</code></pre>
+
+<p>
+ここで一度実行してください。<b>矢印キーで男の子が動けば成功</b>です。
+ただし端まで行くとそのまま画面の外へ出て、見えなくなってしまうはずです。
+それを次で直します。
+</p>
+
+<h3>3-3. 画面の外へ出ないようにする</h3>
+
+<p>
+<code>move_boy()</code> の末尾に 2 行足します。
+4 つの <code>if</code> がすべて終わったあと、<b>最後にまとめて範囲内へ押し戻す</b>のがコツです。
+</p>
+
+<pre><code>        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))</code></pre>
+
+<h2>4. できあがりのコード</h2>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ2：男の子を矢印キーで動かす
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8        # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2       # 1 フレームで進むドット数
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.move_boy()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)
+
+App()</code></pre>
+
+<h2>5. コードの解説</h2>
+
+<h3><code>btn()</code> と <code>btnp()</code> の違い</h3>
+
+<p>
+名前が似ていますが、<code>True</code> を返すタイミングがまったく違います。
+</p>
+
+<table>
+  <thead><tr><th>関数</th><th><code>True</code> になるとき</th><th>向いている用途</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.btn(キー)</code></td><td>押している<b>あいだ ずっと</b>（毎フレーム）</td><td>移動</td></tr>
+    <tr><td><code>pyxel.btnp(キー)</code></td><td>押した<b>瞬間の 1 フレームだけ</b></td><td>決定、ジャンプ、画面の切り替え</td></tr>
+  </tbody>
+</table>
+
+<p>
+移動に <code>btnp()</code> を使うと、キーを押しっぱなしにしても<b>2 ドット進んで止まる</b>だけになります。
+逆にフェーズ 7 の「タイトル画面でキーを押してゲーム開始」には <code>btnp()</code> を使います。
+<code>btn()</code> だと、押した勢いのままゲームオーバー画面まで一瞬で飛んでしまうからです。
+</p>
+
+<h3><code>if</code> を 4 つ並べる。<code>elif</code> にはしない</h3>
+
+<p>
+4 つの <code>if</code> は、それぞれ独立して判定されます。
+これを <code>elif</code> でつなぐと、<b>どれか 1 つが成立した時点で残りは調べられません</b>。
+斜めに動けなくなります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 210" role="img" aria-label="if を 4 つ並べると左と上の同時押しで斜めに動くが、elif でつなぐと先に判定した左だけが効いて真横にしか動かないことを示す比較図">
+  <text x="20" y="22" fill="#9aa4c4" font-size="12">① <tspan font-family="Consolas, monospace">if</tspan> を 4 つ並べる</text>
+  <rect x="20" y="34" width="280" height="112" rx="6" fill="#1b1f33" stroke="#2ee6a8" stroke-width="1.5"/>
+  <rect x="176" y="94" width="16" height="16" fill="#45b0e8"/>
+  <line x1="176" y1="94" x2="120" y2="66" stroke="#2ee6a8" stroke-width="2"/>
+  <path d="M112 62 l16 0 l-8 13 z" fill="#2ee6a8"/>
+  <text x="160" y="134" fill="#2ee6a8" font-size="12" text-anchor="middle">斜めに進む</text>
+  <text x="160" y="172" fill="#9aa4c4" font-size="12" text-anchor="middle">左の <tspan fill="#e8f0ff" font-family="Consolas, monospace">boy_x -= 2</tspan> と</text>
+  <text x="160" y="192" fill="#9aa4c4" font-size="12" text-anchor="middle">上の <tspan fill="#e8f0ff" font-family="Consolas, monospace">boy_y -= 2</tspan> が両方効く</text>
+
+  <text x="340" y="22" fill="#9aa4c4" font-size="12">② <tspan font-family="Consolas, monospace">elif</tspan> でつなぐ</text>
+  <rect x="340" y="34" width="280" height="112" rx="6" fill="#1b1f33" stroke="#ff6b97" stroke-width="1.5"/>
+  <rect x="496" y="94" width="16" height="16" fill="#45b0e8"/>
+  <line x1="496" y1="102" x2="440" y2="102" stroke="#ff6b97" stroke-width="2"/>
+  <path d="M432 102 l14 -7 v14 z" fill="#ff6b97"/>
+  <text x="480" y="134" fill="#ff6b97" font-size="12" text-anchor="middle">真横にしか進まない</text>
+  <text x="480" y="172" fill="#9aa4c4" font-size="12" text-anchor="middle">左が成立した時点で、</text>
+  <text x="480" y="192" fill="#9aa4c4" font-size="12" text-anchor="middle">上の判定は飛ばされる</text>
+</svg>
+</div>
+<figcaption>どちらも「← と ↑ を同時に押した」ときの動き。同時に効かせたいので <code>if</code> を並べる</figcaption>
+</figure>
+
+<div class="term">
+  <b>斜めは少しだけ速くなります</b>
+  ← と ↑ を同時に押すと横に 2・縦に 2 進むので、実際の移動距離は 2 ではなく
+  約 2.83 ドット（2 の 1.41 倍）になります。
+  今回のゲームでは気にならない差なので、このままにします。
+  遊んでみて「斜めだけ速いのが気になる」と感じたら、そのときに直せば十分です。
+</div>
+
+<h3><code>max</code> と <code>min</code> で挟んで範囲に収める</h3>
+
+<pre><code>self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))</code></pre>
+
+<p>
+内側から順に読みます。
+</p>
+
+<ol>
+  <li><code>min(self.boy_x, 152)</code> … 152 を超えていたら 152 にする（<b>右端で止める</b>）</li>
+  <li><code>max(0, ...)</code> … 0 を下回っていたら 0 にする（<b>左端で止める</b>）</li>
+</ol>
+
+<table>
+  <thead><tr><th>そのときの <code>self.boy_x</code></th><th><code>min(x, 152)</code> の結果</th><th><code>max(0, ...)</code> の結果</th></tr></thead>
+  <tbody>
+    <tr><td>−2（左へ出た）</td><td>−2</td><td><b>0</b></td></tr>
+    <tr><td>76（画面内）</td><td>76</td><td><b>76</b></td></tr>
+    <tr><td>154（右へ出た）</td><td>152</td><td><b>152</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>if</code> で書くこともできますが 4 行かかります。
+<code>max</code> / <code>min</code> なら 1 行で、しかも<b>「この変数は 0 〜 152 に収まる」</b>と
+一目で読み取れます。step0 で魚を画面の端で折り返させたときと同じ書き方です。
+</p>
+
+<pre><code># if で書くとこうなる（動きは同じ）
+if self.boy_x &lt; 0:
+    self.boy_x = 0
+if self.boy_x &gt; SCREEN_WIDTH - BOY_SIZE:
+    self.boy_x = SCREEN_WIDTH - BOY_SIZE</code></pre>
+
+<div class="warn">
+  <b>押し戻しは <code>if</code> 4 つの「あと」に書きます</b>
+  先に押し戻してから移動すると、そのフレームで<b>また画面の外へ出た状態</b>で <code>draw()</code> に進みます。
+  「動かしきってから、最後に範囲へ収める」という順番が大事です。
+</div>
+
+<h3>なぜ <code>move_boy()</code> に分けたのか</h3>
+
+<p>
+いまは <code>update()</code> の中身が 1 行だけなので、分けた意味が薄く見えるかもしれません。
+これは<b>先を見越した準備</b>です。フェーズが進むと <code>update()</code> はこうなります。
+</p>
+
+<pre><code>    def update(self):
+        self.move_boy()          # フェーズ 2
+        self.check_candy()       # フェーズ 3
+        self.move_ghosts()       # フェーズ 5
+        self.check_caught()      # フェーズ 6</code></pre>
+
+<p>
+こうしておくと <code>update()</code> を読むだけで<b>「毎フレーム何が起きるか」の一覧</b>になり、
+中身を知りたいときだけ下の定義を見に行けばよくなります。
+関数を分ける基準は<a href="../memo/#split-functions">備忘録のこちら</a>にまとめてあります。
+</p>
+
+<h3><code>blt()</code> の引数を 2 行に折り返している</h3>
+
+<pre><code>pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+          BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)</code></pre>
+
+<p>
+<b><code>(</code> と <code>)</code> の中は、途中で改行してかまいません。</b>
+Python は閉じカッコが来るまで 1 つの式として読み続けるからです。
+行が長くなって読みにくいときに使える書き方で、2 行目のインデントは自由ですが、
+<b>1 行目のカッコの中身に頭を揃える</b>のが一般的です。1 行のまま書いても問題ありません。
+</p>
+
+<h2>6. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>キーを押しても動かない</td>
+      <td><code>update()</code> に <code>self.move_boy()</code> を書いたか確認します。
+      <code>pass</code> だけが残っていると、<code>move_boy()</code> は定義されていても呼ばれません</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'boy_x'</code></td>
+      <td><code>__init__</code> の <code>self.boy_x = ...</code> を書き忘れているか、
+      <code>pyxel.run()</code> より<b>あと</b>に書いています。<code>run()</code> はいちばん最後です</td>
+    </tr>
+    <tr>
+      <td>男の子が画面の中央にいない</td>
+      <td><code>- BOY_SIZE // 2</code> を引いているか確認します。
+      引いていないと右下に 4 ドットずれます</td>
+    </tr>
+    <tr>
+      <td>斜めに動かない（← と ↑ の同時押しで横にしか進まない）</td>
+      <td><code>elif</code> になっています。4 つとも <code>if</code> にします</td>
+    </tr>
+    <tr>
+      <td>押しっぱなしでも 1 回しか進まない</td>
+      <td><code>btnp()</code> になっています。移動は <code>btn()</code> です</td>
+    </tr>
+    <tr>
+      <td>端で止まらず画面の外へ出る</td>
+      <td><code>max</code> / <code>min</code> の 2 行が <code>move_boy()</code> の中にあるか、
+      また 4 つの <code>if</code> <b>より下</b>にあるかを確認します</td>
+    </tr>
+    <tr>
+      <td>右端や下端で絵が少しはみ出す</td>
+      <td>上限が <code>SCREEN_WIDTH</code> / <code>SCREEN_HEIGHT</code> のままになっています。
+      <code>- BOY_SIZE</code> を引きます</td>
+    </tr>
+    <tr>
+      <td>動きが速すぎる／遅すぎる</td>
+      <td><code>BOY_SPEED</code> の数字を変えます。1・2・3 のうち好みのものを選んでください</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>7. 次のフェーズ</h2>
+
+<p>
+操作できるキャラクターができました。次は<b>お菓子を 1 個置き、重なったら消して次の場所に出します</b>。
+この step の山場である<b>当たり判定</b>と、置き場所を決めるための <code>random</code> が登場します。
+<a href="./#basics">step1 概要の「土台 1：当たり判定は横と縦に分けて考える」</a>を
+先に読み返しておくと、すんなり入れるはずです。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>

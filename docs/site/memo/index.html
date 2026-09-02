@@ -1457,6 +1457,116 @@ document.addEventListener("fullscreenchange", () =&gt; {
   Web 版で頼りにするものではありません。Web では上のボタン方式が確実です。
 </div>
 
+<h3 id="init-first">Q. <code>pyxel.init()</code> より先に <code>pyxel.load()</code> を書いたらエラーになった。<code>init()</code> は何をしている？</h3>
+<p>
+<b>A.</b> <code>pyxel.init()</code> は「ウィンドウを開く関数」だと思われがちですが、
+それ以上に大事な仕事をしています。<b>画像・音・色をしまっておくための「空の入れ物」を用意する</b>ことです。
+<code>pyxel.load()</code> はその入れ物に <code>.pyxres</code> の中身を流し込む関数なので、
+入れ物が無いうちに呼ぶと、中身の行き場がなくてエラーになります。
+</p>
+
+<pre><code>import pyxel
+
+pyxel.load("candy_hunt.pyxres")   # ← init より前だと、ここで落ちる
+pyxel.init(160, 120)</code></pre>
+
+<pre><code>thread '&lt;unnamed&gt;' panicked at pyxel-core\src\pyxel.rs:48:31:
+Pyxel not initialized
+pyo3_runtime.PanicException: Pyxel not initialized</code></pre>
+
+<p>
+<code>Pyxel not initialized</code> は「Pyxel はまだ初期化されていない」という意味です。
+<code>load</code> だけの話ではなく、<code>cls</code>・<code>blt</code>・<code>text</code>・<code>btn</code>・<code>play</code> など
+<b>エンジンの中身に触る関数はすべて同じエラー</b>になります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" role="img" aria-label="init の前は入れ物が存在せず load がエラーになり、init のあとは画面・パレット・イメージバンク・サウンド・ミュージックの枠が用意されて load が成功することを示す比較図">
+  <text x="20" y="22" fill="#9aa4c4" font-size="12">① <tspan font-family="Consolas, monospace">import pyxel</tspan> しただけの状態</text>
+  <rect x="20" y="34" width="280" height="140" rx="6" fill="#1b1f33" stroke="#3b4166" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="160" y="96" fill="#3b4166" font-size="13" text-anchor="middle">画面もイメージバンクも</text>
+  <text x="160" y="118" fill="#3b4166" font-size="13" text-anchor="middle">まだ存在しない</text>
+  <line x1="160" y1="228" x2="160" y2="188" stroke="#ff6b97" stroke-width="2"/>
+  <path d="M160 178 l-6 12 h12 z" fill="#ff6b97"/>
+  <text x="176" y="212" fill="#ff6b97" font-size="16">✕</text>
+  <text x="160" y="250" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">pyxel.load("candy_hunt.pyxres")</text>
+  <text x="160" y="278" fill="#ff6b97" font-size="12" text-anchor="middle">Pyxel not initialized</text>
+
+  <text x="340" y="22" fill="#9aa4c4" font-size="12">② <tspan font-family="Consolas, monospace">pyxel.init(160, 120)</tspan> を実行したあと</text>
+  <rect x="340" y="34" width="280" height="140" rx="6" fill="#1b1f33" stroke="#45b0e8" stroke-width="1.5"/>
+  <rect x="352" y="44" width="256" height="22" rx="3" fill="#232840"/>
+  <text x="362" y="59" fill="#e8f0ff" font-size="11">画面　　　　　　　160 × 120</text>
+  <rect x="352" y="70" width="256" height="22" rx="3" fill="#232840"/>
+  <text x="362" y="85" fill="#e8f0ff" font-size="11">パレット　　　　　16 色</text>
+  <rect x="352" y="96" width="256" height="22" rx="3" fill="#232840"/>
+  <text x="362" y="111" fill="#e8f0ff" font-size="11">イメージバンク　　3 枚（各 256 × 256）</text>
+  <rect x="352" y="122" width="256" height="22" rx="3" fill="#232840"/>
+  <text x="362" y="137" fill="#e8f0ff" font-size="11">サウンド　　　　　64 枠</text>
+  <rect x="352" y="148" width="256" height="22" rx="3" fill="#232840"/>
+  <text x="362" y="163" fill="#e8f0ff" font-size="11">ミュージック　　　8 枠</text>
+  <line x1="480" y1="228" x2="480" y2="188" stroke="#2ee6a8" stroke-width="2"/>
+  <path d="M480 178 l-6 12 h12 z" fill="#2ee6a8"/>
+  <text x="496" y="212" fill="#2ee6a8" font-size="16">✓</text>
+  <text x="480" y="250" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">pyxel.load("candy_hunt.pyxres")</text>
+  <text x="480" y="278" fill="#2ee6a8" font-size="12" text-anchor="middle">空き枠に絵と音が入る</text>
+</svg>
+</div>
+<figcaption><code>init()</code> は入れ物を作る係、<code>load()</code> は中身を入れる係。順番は逆にできない</figcaption>
+</figure>
+
+<p>
+<code>init()</code> が用意する枠は、実際に数えると次のとおりでした（pyxel 2.9.9 で実測）。
+</p>
+
+<table>
+  <thead><tr><th>用意されるもの</th><th>数・大きさ</th></tr></thead>
+  <tbody>
+    <tr><td>画面</td><td><code>init()</code> に渡した幅 × 高さ</td></tr>
+    <tr><td>パレット（<code>pyxel.colors</code>）</td><td>16 色</td></tr>
+    <tr><td>イメージバンク（<code>pyxel.images</code>）</td><td>3 枚、各 256 × 256 ドット</td></tr>
+    <tr><td>サウンド（<code>pyxel.sounds</code>）</td><td>64 枠</td></tr>
+    <tr><td>ミュージック（<code>pyxel.musics</code>）</td><td>8 枠</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>load()</code> がしているのは、この<b>空っぽの枠に <code>.pyxres</code> の中身を上書きすること</b>です。
+リソースエディタで描いた絵が「イメージバンク 0」に入るのも、
+<code>init()</code> が先に 0 番の枠を作っているからです。
+</p>
+
+<div class="note">
+  <b><code>init()</code> の前でも読めるものがある</b>
+  <code>pyxel.COLOR_BLACK</code>（＝ 0）や <code>pyxel.KEY_LEFT</code>（＝ 1073741904）、
+  <code>pyxel.VERSION</code> のような<b>定数</b>は、<code>init()</code> の前でも読めます。
+  ただの数字なので、エンジンに聞きに行く必要がないからです。<br>
+  むしろ注意したいのは <code>pyxel.width</code> で、<code>init()</code> の前に読むと
+  <b>エラーにならず <code>0</code> が返ってきます</b>。
+  「画面幅の半分に置く」つもりの計算が黙って 0 になるので、こちらのほうが気づきにくい失敗です。
+</div>
+
+<h4>順番の覚え方：init → load → 自分の変数 → run</h4>
+
+<pre><code>class App:
+    def __init__(self):
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")   # 1. 入れ物を作る
+        pyxel.load("candy_hunt.pyxres")                               # 2. 絵と音を入れる
+        self.boy_x = 76                                               # 3. 自分の変数を決める
+        pyxel.run(self.update, self.draw)                             # 4. ループを始める</code></pre>
+
+<p>
+3 番と 2 番は入れ替えても動きますが、<b>1 番がいちばん先、4 番がいちばん最後</b>という点は動かせません。
+</p>
+
+<div class="warn">
+  <b><code>pyxel.run()</code> は必ず最後に書く</b>
+  <code>run()</code> は「ここから毎フレームのループに入る」という関数で、
+  <b>ゲームが終わるまで戻ってきません</b>。
+  <code>run()</code> の下に書いた行は <code>Esc</code> でウィンドウを閉じるまで実行されないので、
+  「<code>load</code> のし忘れに気づいて run の下に足す」といった直し方はできません。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>
