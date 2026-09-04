@@ -416,7 +416,7 @@ BLINK_ON = 20           # そのうち文字が見えているフレーム数</c
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)</code></pre>
+        draw_center("PRESS ENTER TO RETRY", 80, pyxel.COLOR_GRAY)</code></pre>
 
 <div class="term">
   <b>点滅させるのは 1 つだけにします</b>
@@ -617,7 +617,7 @@ class App:
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)
+        draw_center("PRESS ENTER TO RETRY", 80, pyxel.COLOR_GRAY)
 
 
 App()</code></pre>
@@ -756,16 +756,36 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
         if elapsed &lt; GAMEOVER_WAIT:
             return
 
-        if elapsed % BLINK_CYCLE &lt; BLINK_ON:                    # 経過を基準に点滅
+        if (elapsed - GAMEOVER_WAIT) % BLINK_CYCLE &lt; BLINK_ON:  # 待ち明けを起点に点滅
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+            draw_center("PRESS ENTER TO RETRY", 80, pyxel.COLOR_GRAY)
 
-        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)</code></pre>
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)</code></pre>
 
 <p>
 <code>elapsed</code> という変数に入れておくと、<b>同じ引き算を 2 回書かずに済み</b>、
 式の意味も読み取りやすくなります。
 </p>
+
+<div class="warn">
+  <b><code>- GAMEOVER_WAIT</code> を引くところが肝心です</b>
+  ただ <code>elapsed % BLINK_CYCLE</code> と書くと、<b>間の長さは毎回 0.50 秒でそろいますが、
+  最初のひと光りが 5 フレーム（0.17 秒）しか続きません</b>。
+  待ちが明けた瞬間、点滅の周期はすでに 15 フレームぶん進んでいて、
+  「見えている 20 フレーム」の残り 5 フレームに飛びこむからです。<br>
+  <b>待ちが明けた時点を 0 と数え直す</b>と、最初から 20 フレーム（0.67 秒）
+  しっかり光ります。実際に並べるとこうなります（<code>●</code> が見えているフレーム）。
+  <pre><code>elapsed % BLINK_CYCLE             ・・・・・・・・・・・・・・・●●●●●・・・・・・・・・・●●●●●●●●●●
+(elapsed - GAMEOVER_WAIT) % ...    ・・・・・・・・・・・・・・・●●●●●●●●●●●●●●●●●●●●・・・・・</code></pre>
+</div>
+
+<div class="term">
+  <b>案内の文字も一緒に点滅させるかどうか</b>
+  <code>PRESS ENTER TO RETRY</code> を <code>if</code> の中に入れると、
+  <b>GAME OVER と息を合わせて光ります</b>。2 つが同時に動くぶんには
+  「どちらを見ればいいか分からない」にはならず、ひとかたまりの合図として読めます。
+  外に出して出しっぱなしにすれば、案内はいつでも読めます。<b>好みで選んでください。</b>
+</div>
 
 <div class="term">
   <b>どちらが良いというものではありません</b>
@@ -802,7 +822,7 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
         draw_center(f"HI-SCORE {self.high_score}", 76, pyxel.COLOR_YELLOW)
-        draw_center("PRESS ENTER TO CONTINUE", 90, pyxel.COLOR_GRAY)</code></pre>
+        draw_center("PRESS ENTER TO RETRY", 90, pyxel.COLOR_GRAY)</code></pre>
 
 <div class="note">
   <b>タイトルではなく、ゲームオーバー画面に出します</b>

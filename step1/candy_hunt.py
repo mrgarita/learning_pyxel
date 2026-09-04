@@ -23,8 +23,8 @@ SCENE_PLAY = 0          # あそんでいる画面
 SCENE_GAMEOVER = 1      # ゲームオーバーの画面
 SCENE_TITLE = 2         # タイトル画面
 
-GAMEOVER_WAIT = 15      # 捕まってkら文字を出すまでのフレーム数（0.5秒）
-BLINK_CYCLE =30         # 点滅 1 周期のフレーム数（1秒）
+GAMEOVER_WAIT = 15      # 捕まってから文字を出すまでのフレーム数（0.5秒）
+BLINK_CYCLE = 30         # 点滅 1 周期のフレーム数（1秒）
 BLINK_ON = 20           # そのうち文字が見えているフレーム数
 
 def is_hit(x1, y1, size1, x2, y2, size2):
@@ -34,7 +34,7 @@ def is_hit(x1, y1, size1, x2, y2, size2):
 
 def draw_center(s, y, col):
     """文字列を画面の横中央に描く"""
-    x = (SCREEN_WIDTH - len(s) *4) // 2     # 4 は1文字分のフォント幅
+    x = (SCREEN_WIDTH - len(s) * 4) // 2     # 4 は1文字分のフォント幅
     pyxel.text(x, y, s, col)
 
 def is_blink_on():
@@ -174,13 +174,14 @@ class App:
 
     def draw_gameover(self):
         """ゲームオーバーの文字を重ねて描く"""
-        if pyxel.frame_count - self.gameover_frame < GAMEOVER_WAIT:
+        elapsed = pyxel.frame_count - self.gameover_frame       # 捕まってからの経過
+        if elapsed < GAMEOVER_WAIT:
             return
         
-        if is_blink_on():
+        if elapsed % BLINK_CYCLE < BLINK_ON:
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+            draw_center("PRESS ENTER TO RETRY", 80, pyxel.COLOR_GRAY)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)
 
 App()
