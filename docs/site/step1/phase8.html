@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ8：お化けを増やす ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 8 </span>お化けを増やす</h1>
+  <p>「同じものがいくつもある」をリストとクラスで扱う</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 8</p>
+
+<h2>ゴール</h2>
+
+<p>
+お菓子を <b>5 個取るごとにお化けが 1 体増え、最大 4 体</b>になるようにします。
+step1 <b>最後の山場</b>です。
+</p>
+
+<p>
+むずかしいのは処理そのものではありません。
+<b>「同じものがいくつもある」状態をどう持つか</b>——ここが今回のテーマです。
+そしてこれは、step2 の倉庫番でも step3 のシューティングでも、
+<b>そのまま使い回せる考え方</b>になります。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 変数を増やして持つのは、すぐ行き詰まる</h3>
+
+<p>
+いま、お化けは 2 つの変数で持っています。
+</p>
+
+<pre><code>        self.ghost_x = 0
+        self.ghost_y = 0</code></pre>
+
+<p>
+素直に考えると「4 体なら 8 個の変数」です。書けなくはありません。
+</p>
+
+<pre><code># こうはしたくない
+        self.ghost_x1 = 0
+        self.ghost_y1 = 0
+        self.ghost_x2 = 0
+        self.ghost_y2 = 0
+        ...</code></pre>
+
+<p>
+しかし、これでは<b>「すべてのお化けを動かす」が書けません</b>。
+1 体ずつ、同じ処理を 4 回コピーすることになります。
+</p>
+
+<pre><code># 動かす処理が 4 つ、当たり判定も 4 つ、描画も 4 つ…
+        if self.ghost_x1 &lt; self.boy_x:
+            self.ghost_x1 += 1
+        ...
+        if self.ghost_x2 &lt; self.boy_x:
+            self.ghost_x2 += 1
+        ...</code></pre>
+
+<div class="warn">
+  <b>数が変わると、コードを書き足さないといけない</b>
+  これがいちばんの問題です。<b>お化けは 1 体から始まって、途中で増えます。</b>
+  「いま何体いるか」で処理の数が変わる書き方は、<b>そもそも成り立ちません</b>。
+</div>
+
+<h3>1-2. リストなら「何個あっても同じ書き方」になる</h3>
+
+<p>
+リストの本当のありがたみは、<b>「数を気にしなくてよくなる」</b>ことです。
+</p>
+
+<pre><code>        for ghost in self.ghosts:
+            ghost.move(self.boy_x, self.boy_y)</code></pre>
+
+<p>
+これは<b>1 体でも 4 体でも、そのまま動きます</b>。
+「4 体になったら書き足す」必要がありません。
+<b>数が変わっても書き方が変わらない</b>——これがリストを使う理由です。
+</p>
+
+<h3>1-3. 1 体ぶんの情報は、1 つにまとめて持つ</h3>
+
+<p>
+では、リストの中身は何にすればよいでしょうか。
+「x のリスト」と「y のリスト」の 2 本にする手もありますが、これは<b>おすすめしません</b>。
+</p>
+
+<pre><code># 2 本のリストで持つ（おすすめしない）
+        self.ghost_xs = [0, 152, 0]
+        self.ghost_ys = [0, 0, 112]</code></pre>
+
+<p>
+<b>2 本の対応がずれたら壊れる</b>からです。1 体増やすときは必ず両方に足す、
+消すときは必ず両方から消す——という約束を、人間が守り続けることになります。
+</p>
+
+<p>
+そこで<b>「お化け 1 体」を 1 つのものとして持ちます</b>。
+そのための道具が <code>class</code> です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="変数を並べる持ち方、リストを 2 本並べる持ち方、Ghost をリストに入れる持ち方の 3 つを比べた図">
+  <style>
+    .ttl { font-size:13px; font-weight:bold; }
+    .cd  { fill:#e8f0ff; font-size:11.5px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+  </style>
+
+  <!-- 1: 変数を並べる -->
+  <rect x="14" y="14" width="215" height="300" rx="6" fill="#232840" stroke="#ff6b97"/>
+  <text class="ttl" x="30" y="38" fill="#ff6b97">① 変数を並べる</text>
+  <g class="cd">
+    <text x="30" y="64">ghost_x1  ghost_y1</text>
+    <text x="30" y="84">ghost_x2  ghost_y2</text>
+    <text x="30" y="104">ghost_x3  ghost_y3</text>
+    <text x="30" y="124">ghost_x4  ghost_y4</text>
+  </g>
+  <text class="dim" x="30" y="158">体数が変わると</text>
+  <text class="dim" x="30" y="176">コードを書き足す</text>
+  <text class="dim" x="30" y="200">動かす処理 ×4</text>
+  <text class="dim" x="30" y="218">当たり判定 ×4</text>
+  <text class="dim" x="30" y="236">描画 ×4</text>
+  <text x="30" y="272" fill="#ff6b97" font-size="12">途中で増やせない</text>
+
+  <!-- 2: リスト 2 本 -->
+  <rect x="243" y="14" width="215" height="300" rx="6" fill="#232840" stroke="#ffcc44"/>
+  <text class="ttl" x="259" y="38" fill="#ffcc44">② リストを 2 本</text>
+  <g class="cd">
+    <text x="259" y="64">ghost_xs = [0, 152, 0]</text>
+    <text x="259" y="84">ghost_ys = [0, 0, 112]</text>
+  </g>
+  <g stroke="#3b4166" stroke-dasharray="3 3">
+    <line x1="272" y1="70" x2="272" y2="78"/>
+    <line x1="310" y1="70" x2="310" y2="78"/>
+    <line x1="350" y1="70" x2="350" y2="78"/>
+  </g>
+  <text class="dim" x="259" y="118">番号でしか結びついていない</text>
+  <text class="dim" x="259" y="152">増やすときは両方に足す</text>
+  <text class="dim" x="259" y="170">消すときは両方から消す</text>
+  <text class="dim" x="259" y="194">1 か所忘れると</text>
+  <text class="dim" x="259" y="212">静かにずれて壊れる</text>
+  <text x="259" y="272" fill="#ffcc44" font-size="12">人間が約束を守る係</text>
+
+  <!-- 3: Ghost をリストに -->
+  <rect x="472" y="14" width="215" height="300" rx="6" fill="#232840" stroke="#2ee6a8"/>
+  <text class="ttl" x="488" y="38" fill="#2ee6a8">③ Ghost をリストに</text>
+  <text class="cd" x="488" y="64">ghosts = [</text>
+  <g>
+    <rect x="500" y="74" width="170" height="34" rx="3" fill="#10121c" stroke="#2ee6a8"/>
+    <text class="cd" x="510" y="96">Ghost(x=0, y=0, …)</text>
+    <rect x="500" y="114" width="170" height="34" rx="3" fill="#10121c" stroke="#2ee6a8"/>
+    <text class="cd" x="510" y="136">Ghost(x=152, y=0, …)</text>
+    <rect x="500" y="154" width="170" height="34" rx="3" fill="#10121c" stroke="#2ee6a8"/>
+    <text class="cd" x="510" y="176">Ghost(x=0, y=112, …)</text>
+  </g>
+  <text class="cd" x="488" y="208">]</text>
+  <text class="dim" x="488" y="234">1 体ぶんが 1 つの箱</text>
+  <text class="dim" x="488" y="252">ずれようがない</text>
+  <text x="488" y="286" fill="#2ee6a8" font-size="12">for で全部まわせる</text>
+</svg>
+</div>
+<figcaption>「同じものがいくつもある」ときは、1 個ぶんをまとめた箱をリストに入れる</figcaption>
+</figure>
+
+<h3>1-4. <code>class</code> は「同じ形のものを、いくつも作る」ための型</h3>
+
+<p>
+<code>class App</code> はすでに書いています。ただ <b><code>App</code> は 1 つしか作らなかった</b>ので、
+<code>class</code> の本当のありがたみが見えていませんでした。
+</p>
+
+<pre><code>class Ghost:
+    """お化け 1 体ぶんの居場所と動き"""
+
+    def __init__(self, x, y, move_every):
+        """1 体作るときに、置く場所と動く間隔を決める"""
+        self.x = x
+        self.y = y
+        self.move_every = move_every</code></pre>
+
+<p>
+これは<b>設計図</b>です。この設計図から <code>Ghost(0, 0, 1)</code> と書けば、
+<b>実物が 1 体でき上がります</b>。何体でも作れて、<b>それぞれが自分の
+<code>x</code>・<code>y</code>・<code>move_every</code> を持ちます</b>。
+</p>
+
+<div class="term">
+  <b><code>self</code> の意味が、ここではっきりします</b>
+  <code>self.x</code> は<b>「この 1 体の x」</b>という意味です。
+  4 体いれば <code>self.x</code> は 4 つあり、それぞれ別の値です。
+  <code>App</code> が 1 つしかなかったときは
+  「<code>self</code> ＝ このアプリ」でぼんやりしていましたが、
+  <b>同じ設計図から複数の実物ができると、<code>self</code> が
+  「いま扱っている 1 個」を指していることがはっきり分かります</b>。
+</div>
+
+<div class="note">
+  <b>動きもクラスの中に入れます</b>
+  「男の子に近づく」という処理は、<b>お化け自身のふるまい</b>です。
+  <code>App</code> ではなく <code>Ghost</code> に <code>move()</code> として持たせると、
+  <code>App</code> 側は <code>ghost.move(...)</code> と<b>頼むだけ</b>になります。
+  どう動くかは <code>Ghost</code> が知っていればよい、という分け方です。
+</div>
+
+<h3>1-5. 全部おなじ速さだと、4 体が 1 体に見える</h3>
+
+<p>
+お化けは全員<b>同じ相手（男の子）を、同じやり方で追いかけます</b>。
+ということは、<b>速さも同じなら、いずれ位置まで同じになります</b>。
+横のずれも縦のずれも、毎フレーム同じだけ縮まっていくからです。
+</p>
+
+<p>
+実際に 600 フレーム（20 秒）動かして数えました。
+</p>
+
+<table>
+  <thead><tr><th>速さの設定</th><th>20 秒後、4 体が何か所に分かれているか</th></tr></thead>
+  <tbody>
+    <tr><td>全部おなじ</td><td><b>1 か所</b>（完全に重なって 1 体に見える）</td></tr>
+    <tr><td>2 体だけ同じ</td><td>3 か所</td></tr>
+    <tr><td><b>4 体とも違う</b></td><td><b>4 か所</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+つまり<b>速さを散らすのは、見た目のためだけではありません</b>。
+散らさないと、<b>4 体に増やした意味がなくなります</b>。
+</p>
+
+<h3>1-6. 遅くするには「1 回に進む量」ではなく「動く回数」を減らす</h3>
+
+<p>
+速さを散らすとき、素直に思いつくのは <code>0.5</code> や <code>0.75</code> のような小数です。
+ですが<b>これには落とし穴があります</b>。
+</p>
+
+<pre><code>男の子が x = 76 で止まっているとき（実測）
+
+  速さ 0.5   → 76.0, 76.0, 76.0 …          ぴったり止まる
+  速さ 0.75  → 75.75, 76.5, 75.75, 76.5 …  ★ 永久に往復する</code></pre>
+
+<p>
+<code>0.75</code> は <code>0.5 + 0.25</code> なので<b>2 進数では正確に表せます</b>。
+それでも往復するのは、<b>お化けが立てる座標に <code>76</code> が含まれていない</b>からです
+（<code>0.75</code> の倍数で整数になるのは 3 の倍数だけ）。
+くわしくは<a href="../memo/#chase-speed">備忘録 #chase-speed</a> にまとめました。
+</p>
+
+<p>
+そこで<b>小数を使わない方法</b>を採ります。<b>進む量は 1 ドットのまま、
+動くフレームを間引く</b>のです。
+</p>
+
+<pre><code>    def move(self, target_x, target_y):
+        if pyxel.frame_count % self.move_every != 0:
+            return                          # 今回は自分の番ではない
+
+        ...ここから下は 1 ドットずつ動かすだけ...</code></pre>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="move_every が 1 から 4 のお化けが、どのフレームで動くかを並べた図">
+  <style>
+    .lb  { fill:#e8f0ff; font-size:12px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+  </style>
+
+  <text class="dim" x="20" y="24">フレーム番号 →</text>
+  <g class="dim" text-anchor="middle" font-family="Consolas,monospace">
+    <text x="150" y="44">0</text><text x="192" y="44">1</text><text x="234" y="44">2</text>
+    <text x="276" y="44">3</text><text x="318" y="44">4</text><text x="360" y="44">5</text>
+    <text x="402" y="44">6</text><text x="444" y="44">7</text><text x="486" y="44">8</text>
+    <text x="528" y="44">9</text><text x="570" y="44">10</text><text x="612" y="44">11</text>
+  </g>
+
+  <g>
+    <text class="lb" x="20" y="76">move_every=1</text>
+    <text class="dim" x="654" y="76">1.00</text>
+    <text class="lb" x="20" y="118">move_every=2</text>
+    <text class="dim" x="654" y="118">0.50</text>
+    <text class="lb" x="20" y="160">move_every=3</text>
+    <text class="dim" x="654" y="160">0.33</text>
+    <text class="lb" x="20" y="202">move_every=4</text>
+    <text class="dim" x="654" y="202">0.25</text>
+  </g>
+  <text class="dim" x="640" y="24">実質の速さ</text>
+
+  <g>
+    <circle cx="150" cy="71" r="7" fill="#2ee6a8"/><circle cx="192" cy="71" r="7" fill="#2ee6a8"/>
+    <circle cx="234" cy="71" r="7" fill="#2ee6a8"/><circle cx="276" cy="71" r="7" fill="#2ee6a8"/>
+    <circle cx="318" cy="71" r="7" fill="#2ee6a8"/><circle cx="360" cy="71" r="7" fill="#2ee6a8"/>
+    <circle cx="402" cy="71" r="7" fill="#2ee6a8"/><circle cx="444" cy="71" r="7" fill="#2ee6a8"/>
+    <circle cx="486" cy="71" r="7" fill="#2ee6a8"/><circle cx="528" cy="71" r="7" fill="#2ee6a8"/>
+    <circle cx="570" cy="71" r="7" fill="#2ee6a8"/><circle cx="612" cy="71" r="7" fill="#2ee6a8"/>
+  </g>
+  <g>
+    <circle cx="150" cy="113" r="7" fill="#45b0e8"/><circle cx="234" cy="113" r="7" fill="#45b0e8"/>
+    <circle cx="318" cy="113" r="7" fill="#45b0e8"/><circle cx="402" cy="113" r="7" fill="#45b0e8"/>
+    <circle cx="486" cy="113" r="7" fill="#45b0e8"/><circle cx="570" cy="113" r="7" fill="#45b0e8"/>
+  </g>
+  <g>
+    <circle cx="150" cy="155" r="7" fill="#ffcc44"/><circle cx="276" cy="155" r="7" fill="#ffcc44"/>
+    <circle cx="402" cy="155" r="7" fill="#ffcc44"/><circle cx="528" cy="155" r="7" fill="#ffcc44"/>
+  </g>
+  <g>
+    <circle cx="150" cy="197" r="7" fill="#ff6b97"/><circle cx="318" cy="197" r="7" fill="#ff6b97"/>
+    <circle cx="486" cy="197" r="7" fill="#ff6b97"/>
+  </g>
+
+  <text class="dim" x="20" y="234">● は「1 ドット動くフレーム」。動く量はいつも 1 ドットなので、座標はずっと整数のまま</text>
+</svg>
+</div>
+<figcaption><code>move_every</code> を変えると、動く量ではなく<b>動く回数</b>が変わる</figcaption>
+</figure>
+
+<div class="note">
+  <b>見た目は小数を使ったときと変わりません</b>
+  描画はどうせ<b>整数のドットに丸められる</b>ので、
+  「0.5 ずつ進む」も「2 フレームに 1 ドット進む」も画面上は同じです。
+  それでいて <code>1/3</code> のような、小数では危ない速さが安全に使えます。
+</div>
+
+<h3>1-7. 出てくる場所は「いちばん遠い角」</h3>
+
+<p>
+増えたお化けが<b>男の子のとなりに出てきたら理不尽</b>です。
+4 つの角のうち、<b>そのとき男の子からいちばん遠い角</b>を選びます。
+</p>
+
+<pre><code>def far_corner(x, y):
+    """(x, y) からいちばん遠い角を返す"""
+    best_x, best_y = CORNERS[0]
+    best_distance = -1
+
+    for corner_x, corner_y in CORNERS:
+        distance = abs(corner_x - x) + abs(corner_y - y)
+        if distance &gt; best_distance:
+            best_x, best_y = corner_x, corner_y
+            best_distance = distance
+
+    return best_x, best_y</code></pre>
+
+<p>
+<b>「いちばん◯◯なものを 1 つ選ぶ」の型</b>です。
+「これまでで最高の記録」を <code>best_distance</code> に持ち、
+それを超えたら更新する。<b>この形はこの先も何度も出てきます</b>。
+</p>
+
+<div class="term">
+  <b><code>abs()</code> で「距離」を測っています</b>
+  <code>abs(a - b)</code> は差の<b>絶対値</b>——マイナスを取り払った、へだたりです。
+  横のへだたりと縦のへだたりを<b>足したもの</b>を距離として使っています。
+  ほんとうの直線距離ではありませんが、<b>どの角がいちばん遠いかを比べるだけなら
+  これで十分</b>で、ルートの計算もいりません。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>class Ghost:</code></td><td>お化け 1 体ぶんの設計図。<b>2 つめのクラス</b></td></tr>
+    <tr><td>リスト <code>[]</code> と <code>.append()</code></td><td>お化けを何体でも持つ／1 体足す</td></tr>
+    <tr><td><code>for ghost in self.ghosts:</code></td><td>いる体数ぶんだけ、同じ処理をくり返す</td></tr>
+    <tr><td><code>len()</code></td><td>いま何体いるかを数える</td></tr>
+    <tr><td><code>%</code>（あまり）</td><td>「5 個ごと」「n フレームに 1 回」を作る</td></tr>
+    <tr><td><code>abs()</code></td><td>2 点のへだたりを測る</td></tr>
+    <tr><td>タプルのリスト</td><td>4 隅の座標をまとめて持つ</td></tr>
+  </tbody>
+</table>
+<h2>3. 手順</h2>
+
+<p>
+書きかえる場所が多いので、<b>上から順に</b>進めます。
+</p>
+
+<h3>3-1. 定数を入れかえる</h3>
+
+<p>
+<code>GHOST_SPEED</code> は使わなくなります。2 行に入れかえます。
+</p>
+
+<pre><code>GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_MOVE_EVERY = [1, 2, 3, 4]     # 出てくる順に「何フレームに 1 回動くか」
+GHOST_SPAWN_SCORE = 5   # お菓子を何個取るごとに 1 体増やすか</code></pre>
+
+<div class="term">
+  <b>リストの長さが、そのまま「最大の体数」になります</b>
+  <code>GHOST_MOVE_EVERY</code> には 4 つ入っているので、お化けは最大 4 体です。
+  <b><code>GHOST_MAX = 4</code> のような定数はいりません。</b>
+  <code>len(GHOST_MOVE_EVERY)</code> で数えられるからです。
+  <b>同じことを 2 か所に書くと、片方だけ直して食い違います。</b>
+</div>
+
+<h3>3-2. 4 隅の座標を定数にする</h3>
+
+<p>
+<code>BLINK_ON</code> の下に足します。
+</p>
+
+<pre><code>CORNERS = [                                     # お化けが出てくる 4 隅
+    (0, 0),
+    (SCREEN_WIDTH - GHOST_SIZE, 0),
+    (0, SCREEN_HEIGHT - GHOST_SIZE),
+    (SCREEN_WIDTH - GHOST_SIZE, SCREEN_HEIGHT - GHOST_SIZE),
+]</code></pre>
+
+<div class="note">
+  <b><code>(0, 0)</code> のような丸カッコの組を「タプル」と言います</b>
+  リストとほとんど同じですが、<b>あとから中身を変えられません</b>。
+  「セットで 1 つ」という意味あいのものに向いています。座標はまさにそれです。<br>
+  <code>x, y = (10, 20)</code> のように<b>2 つの変数へ一度に取り出せる</b>のも、
+  座標を扱うときに便利なところです（フェーズ 5 の「もう一歩」でも使いました）。
+</div>
+
+<h3>3-3. <code>far_corner()</code> を足す</h3>
+
+<p>
+<code>is_blink_on()</code> の下、<b><code>class</code> の外</b>に書きます。
+<code>self</code> を使わないので外に置けます（フェーズ 6 と同じ基準）。
+</p>
+
+<pre><code>def far_corner(x, y):
+    """(x, y) からいちばん遠い角を返す"""
+    best_x, best_y = CORNERS[0]
+    best_distance = -1
+
+    for corner_x, corner_y in CORNERS:
+        distance = abs(corner_x - x) + abs(corner_y - y)
+        if distance &gt; best_distance:
+            best_x, best_y = corner_x, corner_y
+            best_distance = distance
+
+    return best_x, best_y</code></pre>
+
+<h3>3-4. <code>Ghost</code> クラスを書く</h3>
+
+<p>
+<code>class App:</code> の<b>すぐ上</b>に書きます。
+</p>
+
+<pre><code>class Ghost:
+    """お化け 1 体ぶんの居場所と動き"""
+
+    def __init__(self, x, y, move_every):
+        """1 体作るときに、置く場所と動く間隔を決める"""
+        self.x = x
+        self.y = y
+        self.move_every = move_every
+
+    def move(self, target_x, target_y):
+        """自分の番のフレームだけ、目標へ 1 ドット近づく"""
+        if pyxel.frame_count % self.move_every != 0:
+            return
+
+        if self.x &lt; target_x:
+            self.x += 1
+        elif self.x &gt; target_x:
+            self.x -= 1
+
+        if self.y &lt; target_y:
+            self.y += 1
+        elif self.y &gt; target_y:
+            self.y -= 1</code></pre>
+
+<p>
+中身は<b>いまの <code>move_ghost()</code> とほとんど同じ</b>です。
+<code>self.ghost_x</code> が <code>self.x</code> に、
+<code>GHOST_SPEED</code> が <code>1</code> に変わり、
+先頭に「自分の番か」の判定が付いただけです。
+</p>
+
+<h3>3-5. <code>reset_game()</code> を書きかえ、<code>add_ghost()</code> を足す</h3>
+
+<pre><code>    def reset_game(self):
+        """ゲームの中身を、最初の状態に戻す"""
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.score = 0
+        self.ghosts = []            # ← 空のリストから始める
+        self.add_ghost()            # ← 1 体目を置く
+        self.place_candy()
+
+    def add_ghost(self):
+        """男の子からいちばん遠い角に、お化けを 1 体足す"""
+        move_every = GHOST_MOVE_EVERY[len(self.ghosts)]
+        x, y = far_corner(self.boy_x, self.boy_y)
+        self.ghosts.append(Ghost(x, y, move_every))</code></pre>
+
+<div class="warn">
+  <b><code>self.ghosts = []</code> を先に書きます</b>
+  <code>add_ghost()</code> は <code>self.ghosts</code> の<b>長さを数えてから</b>足すので、
+  空のリストが先にできていないと動きません。<br>
+  <b>やり直すたびに <code>[]</code> で作り直す</b>のも大事です。
+  <code>.clear()</code> でも同じですが、<code>[]</code> のほうが
+  「まっさらから始める」という意味が読み取りやすくなります。
+</div>
+
+<h3>3-6. 動かす・判定するところを、すべて <code>for</code> にする</h3>
+
+<p>
+<code>update_play()</code> の呼び出し名を、複数形に変えます。
+</p>
+
+<pre><code>    def update_play(self):
+        """あそんでいる間の更新"""
+        self.move_boy()
+        self.move_ghosts()          # ← s が付く
+        self.check_candy()
+        self.check_ghosts()         # ← s が付く</code></pre>
+
+<p>
+<code>move_ghost()</code> は<b>まるごと</b>この 4 行に置きかえます。
+中身は <code>Ghost</code> へ引っ越したので、ここは<b>頼むだけ</b>です。
+</p>
+
+<pre><code>    def move_ghosts(self):
+        """すべてのお化けを、男の子に近づける"""
+        for ghost in self.ghosts:
+            ghost.move(self.boy_x, self.boy_y)</code></pre>
+
+<p>
+<code>check_ghost()</code> も置きかえます。
+</p>
+
+<pre><code>    def check_ghosts(self):
+        """どれか 1 体にでも捕まったら、ゲームオーバーにする"""
+        for ghost in self.ghosts:
+            if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                      ghost.x + HIT_OFFSET, ghost.y + HIT_OFFSET, HIT_SIZE):
+                self.scene = SCENE_GAMEOVER
+                self.gameover_frame = pyxel.frame_count
+                return</code></pre>
+
+<h3>3-7. お菓子を 5 個取るごとに 1 体増やす</h3>
+
+<p>
+<code>check_candy()</code> の中、お菓子を置きなおしたあとに足します。
+</p>
+
+<pre><code>    def check_candy(self):
+        """お菓子にしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
+            self.score += 1
+            self.place_candy()
+
+            if (self.score % GHOST_SPAWN_SCORE == 0
+                    and len(self.ghosts) &lt; len(GHOST_MOVE_EVERY)):
+                self.add_ghost()</code></pre>
+
+<h3>3-8. 何体でも描けるようにする</h3>
+
+<pre><code>        for ghost in self.ghosts:                               # お化けは何体でも
+            pyxel.blt(ghost.x, ghost.y, 0, 8, 0,
+                      GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)</code></pre>
+
+<h2>4. できあがりのコード</h2>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ8：お菓子を集めるほどお化けを増やす
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_MOVE_EVERY = [1, 2, 3, 4]     # 出てくる順に「何フレームに 1 回動くか」
+GHOST_SPAWN_SCORE = 5   # お菓子を何個取るごとに 1 体増やすか
+
+HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
+SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+SCENE_TITLE = 2         # タイトル画面
+
+GAMEOVER_WAIT = 15      # 捕まってから文字を出すまでのフレーム数（0.5秒）
+BLINK_CYCLE = 30         # 点滅 1 周期のフレーム数（1秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+CORNERS = [                                     # お化けが出てくる 4 隅
+    (0, 0),
+    (SCREEN_WIDTH - GHOST_SIZE, 0),
+    (0, SCREEN_HEIGHT - GHOST_SIZE),
+    (SCREEN_WIDTH - GHOST_SIZE, SCREEN_HEIGHT - GHOST_SIZE),
+]
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+def draw_center(s, y, col):
+    """文字列を画面の横中央に描く"""
+    x = (SCREEN_WIDTH - len(s) * 4) // 2     # 4 は1文字分のフォント幅
+    pyxel.text(x, y, s, col)
+
+def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+def far_corner(x, y):
+    """(x, y) からいちばん遠い角を返す"""
+    best_x, best_y = CORNERS[0]
+    best_distance = -1
+
+    for corner_x, corner_y in CORNERS:
+        distance = abs(corner_x - x) + abs(corner_y - y)
+        if distance &gt; best_distance:
+            best_x, best_y = corner_x, corner_y
+            best_distance = distance
+
+    return best_x, best_y
+
+class Ghost:
+    """お化け 1 体ぶんの居場所と動き"""
+
+    def __init__(self, x, y, move_every):
+        """1 体作るときに、置く場所と動く間隔を決める"""
+        self.x = x
+        self.y = y
+        self.move_every = move_every
+
+    def move(self, target_x, target_y):
+        """自分の番のフレームだけ、目標へ 1 ドット近づく"""
+        if pyxel.frame_count % self.move_every != 0:
+            return
+
+        if self.x &lt; target_x:
+            self.x += 1
+        elif self.x &gt; target_x:
+            self.x -= 1
+
+        if self.y &lt; target_y:
+            self.y += 1
+        elif self.y &gt; target_y:
+            self.y -= 1
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.scene = SCENE_TITLE
+        self.reset_game()
+
+        pyxel.run(self.update, self.draw)
+
+    def reset_game(self):
+        """ゲームの中身を、最初の状態に戻す"""
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.score = 0
+        self.ghosts = []
+        self.add_ghost()
+        self.place_candy()
+
+    def add_ghost(self):
+        """男の子からいちばん遠い角に、お化けを 1 体足す"""
+        move_every = GHOST_MOVE_EVERY[len(self.ghosts)]
+        x, y = far_corner(self.boy_x, self.boy_y)
+        self.ghosts.append(Ghost(x, y, move_every))
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_PLAY:
+            self.update_play()
+        else:
+            self.update_gameover()
+
+    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()
+            self.scene = SCENE_PLAY
+
+    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でゲームを再び始める"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()
+            self.scene = SCENE_PLAY
+
+    def update_play(self):
+        """あそんでいる間の更新"""
+        self.move_boy()
+        self.move_ghosts()
+        self.check_candy()
+        self.check_ghosts()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def move_ghosts(self):
+        """すべてのお化けを、男の子に近づける"""
+        for ghost in self.ghosts:
+            ghost.move(self.boy_x, self.boy_y)
+
+    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break
+
+    def check_candy(self):
+        """お菓子がしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
+            self.score += 1
+            self.place_candy()
+
+            if (self.score % GHOST_SPAWN_SCORE == 0
+                    and len(self.ghosts) &lt; len(GHOST_MOVE_EVERY)):
+                self.add_ghost()
+
+    def check_ghosts(self):
+        """どれか 1 体にでも捕まったら、ゲームオーバーにする"""
+        for ghost in self.ghosts:
+            if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                      ghost.x + HIT_OFFSET, ghost.y + HIT_OFFSET, HIT_SIZE):
+                self.scene = SCENE_GAMEOVER
+                self.gameover_frame = pyxel.frame_count     # 捕まった時刻を覚えておく
+                return
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+            return
+        
+        self.draw_play()
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
+
+        if is_blink_on():
+            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)
+
+    def draw_play(self):
+        """あそんでいる画面を描く"""
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        for ghost in self.ghosts:                               # お化けは何体でも
+            pyxel.blt(ghost.x, ghost.y, 0, 8, 0,
+                      GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)               # スコア
+
+    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        elapsed = pyxel.frame_count - self.gameover_frame       # 捕まってからの経過
+        if elapsed &lt; GAMEOVER_WAIT:
+            return
+        
+        if elapsed % BLINK_CYCLE &lt; BLINK_ON:
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+            draw_center("PRESS ENTER TO RETRY", 80, pyxel.COLOR_GRAY)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+
+App()</code></pre>
+
+<div class="note">
+  <b>動かして確かめること</b>
+  <ul>
+    <li>始めたときは<b>お化けが 1 体</b>で、<b>男の子から遠い角</b>から出てくる</li>
+    <li>スコアが <b>5・10・15</b> になった瞬間に <b>1 体ずつ増える</b></li>
+    <li><b>20 を超えても 4 体のまま</b>増えない</li>
+    <li>増えたお化けは<b>だんだん遅い</b>。4 体がばらけて見える</li>
+    <li><b>どの 1 体に捕まってもゲームオーバー</b>になる</li>
+    <li>やり直すと<b>また 1 体から</b>始まる</li>
+  </ul>
+</div>
+<h2>5. コードの解説</h2>
+
+<h3><code>GHOST_MOVE_EVERY[len(self.ghosts)]</code> の読み方</h3>
+
+<p>
+<code>add_ghost()</code> の 1 行目です。<b>リストの長さが、そのまま次の番号になります。</b>
+</p>
+
+<table>
+  <thead><tr><th>いまいる体数</th><th><code>len(self.ghosts)</code></th><th>取り出す値</th></tr></thead>
+  <tbody>
+    <tr><td>0 体（これから 1 体目）</td><td>0</td><td><code>GHOST_MOVE_EVERY[0]</code> ＝ 1</td></tr>
+    <tr><td>1 体（これから 2 体目）</td><td>1</td><td><code>GHOST_MOVE_EVERY[1]</code> ＝ 2</td></tr>
+    <tr><td>2 体（これから 3 体目）</td><td>2</td><td><code>GHOST_MOVE_EVERY[2]</code> ＝ 3</td></tr>
+    <tr><td>3 体（これから 4 体目）</td><td>3</td><td><code>GHOST_MOVE_EVERY[3]</code> ＝ 4</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>リストの番号が 0 から始まる</b>ことが、ここでちょうど都合よくはまっています。
+「何体目か」を数える変数を別に持つ必要がありません。
+</p>
+
+<h3><code>check_ghosts()</code> の <code>return</code></h3>
+
+<pre><code>        for ghost in self.ghosts:
+            if is_hit(...):
+                self.scene = SCENE_GAMEOVER
+                self.gameover_frame = pyxel.frame_count
+                return                      # ← 1 体見つかれば、もう調べなくてよい</code></pre>
+
+<p>
+<b>捕まったかどうかが知りたいだけ</b>なので、1 体見つかった時点で終わりです。
+残りを調べても答えは変わりません。
+</p>
+
+<div class="warn">
+  <b><code>return</code> がないと、<code>gameover_frame</code> が上書きされます</b>
+  4 体が重なっている状態だと、<code>for</code> が 4 回とも成立します。
+  <code>return</code> がないと <code>gameover_frame</code> が<b>4 回書きかえられ</b>、
+  結果として<b>最後の 1 体の時刻</b>になります。<br>
+  このフレームでは値は同じなので害はありませんが、
+  <b>「見つかったら抜ける」と書いておくほうが、意図がはっきりします</b>。
+</div>
+
+<h3>条件が長いときの折り返し方</h3>
+
+<pre><code>            if (self.score % GHOST_SPAWN_SCORE == 0
+                    and len(self.ghosts) &lt; len(GHOST_MOVE_EVERY)):
+                self.add_ghost()</code></pre>
+
+<p>
+条件が 1 行に収まらないときは、<b>全体を丸カッコで囲むと途中で改行できます</b>。
+2 行目を深めに下げているのは、<b>中身の <code>self.add_ghost()</code> と
+見分けがつくようにする</b>ためです。同じ深さだと、どこまでが条件か分かりません。
+</p>
+
+<h3>「5 個ごと」を <code>%</code> で書く</h3>
+
+<p>
+<code>self.score % GHOST_SPAWN_SCORE == 0</code> は
+<b>「スコアを 5 で割ったあまりが 0」</b>＝ 5 の倍数、という意味です。
+点滅で使った <code>%</code> と同じ道具です。
+</p>
+
+<div class="term">
+  <b>「取った瞬間」に調べているのがポイントです</b>
+  <code>update()</code> で毎フレーム「スコアは 5 の倍数か」を調べると、
+  <b>5 個目を取ったあとの数十フレーム、ずっと成立し続けます</b>。
+  お化けが一瞬で 4 体に増えてしまいます。<br>
+  <b>「増えた瞬間だけ 1 回」</b>にするために、
+  <code>self.score += 1</code> のすぐそばに置いています。
+  これは備忘録の<a href="../memo/#once-on-change">「1 回だけ処理する書き方」</a>と同じ考え方です。
+</div>
+
+<h3>お化けは、なぜ画面の外へ出ないのか</h3>
+
+<p>
+フェーズ 5 と同じ理由です。お化けは<b>男の子の座標へ近づくだけ</b>で、
+男の子は画面内に押しとどめられています。
+だから<b>お化けにも <code>max</code>・<code>min</code> はいりません</b>。
+</p>
+
+<p>
+角から出るときも同じです。<code>CORNERS</code> は
+<code>SCREEN_WIDTH - GHOST_SIZE</code> のように<b>絵の大きさを引いてある</b>ので、
+右下の角に置いても絵が画面からはみ出しません。
+</p>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<h3>増えた瞬間を、点滅で知らせる</h3>
+
+<p>
+遊んでいると<b>いつの間にか増えている</b>ので、気づいたときには囲まれています。
+出てきた直後だけ点滅させると、<b>「増えた」が伝わります</b>。
+</p>
+
+<pre><code>class Ghost:
+    def __init__(self, x, y, move_every):
+        """1 体作るときに、置く場所と動く間隔を決める"""
+        self.x = x
+        self.y = y
+        self.move_every = move_every
+        self.born_frame = pyxel.frame_count     # 生まれた時刻を覚えておく</code></pre>
+
+<pre><code>    def draw_play(self):
+        ...
+        for ghost in self.ghosts:
+            if pyxel.frame_count - ghost.born_frame &lt; 30 and not is_blink_on():
+                continue                    # 出てきて 1 秒は、点滅の消える側で描かない
+
+            pyxel.blt(ghost.x, ghost.y, 0, 8, 0,
+                      GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)</code></pre>
+
+<div class="term">
+  <b><code>continue</code> は「このくり返しだけ飛ばす」</b>
+  <code>return</code> が<b>関数ごと</b>抜けるのに対し、
+  <code>continue</code> は<b>いま扱っている 1 個をとばして、次の 1 個へ進みます</b>。
+  <code>for</code> の中でだけ使える書き方です。
+</div>
+
+<h3>お化けの数を画面に出す</h3>
+
+<pre><code>        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)
+        pyxel.text(4, 12, f"GHOST {len(self.ghosts)}", pyxel.COLOR_GRAY)</code></pre>
+
+<p>
+<code>len()</code> で数えるだけです。<b>体数を覚えておく変数はいりません。</b>
+リストが自分で知っています。
+</p>
+
+<h3>難しさの調整つまみ</h3>
+
+<p>
+遊んでみて手ごたえが合わなければ、<b>定数を変えるだけ</b>で調整できます。
+どれも<b>コードを書きかえずに済む</b>ように作ってあります。
+</p>
+
+<table>
+  <thead><tr><th>変えるもの</th><th>効果</th></tr></thead>
+  <tbody>
+    <tr><td><code>GHOST_SPAWN_SCORE</code> を 8 に</td><td>増えるペースがゆるやかになる。<b>いちばん効きます</b></td></tr>
+    <tr><td><code>GHOST_MOVE_EVERY</code> を <code>[2, 3, 4, 5]</code> に</td>
+        <td>全体に遅くなる。1 体目でも逃げ切る時間が 5.0 秒 → 9.9 秒</td></tr>
+    <tr><td><code>GHOST_MOVE_EVERY</code> に 5 つめを足す</td><td>最大 5 体になる。<b>ほかは何も直さなくてよい</b></td></tr>
+    <tr><td><code>HIT_SIZE</code> を 3 に</td><td>すりぬけやすくなる（<a href="../memo/#hitbox-size">#hitbox-size</a>）</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>2 体目が出た時点で、逃げ切れる時間は半分以下になります</b>
+  最善手で逃げ続けた場合を数えると、
+  <b>1 体で 5.0 秒、2 体で 3.2 秒</b>でした（<code>[1, 2, 3, 4]</code> のとき）。
+  3 体・4 体になっても<b>この数字自体はあまり変わりません</b>——
+  すでに追いつめられているからです。<br>
+  ただし実際は<b>お菓子を取りに行かなければならない</b>ので、
+  体数が増えるほど<b>安全な道が減っていきます</b>。そこが難しさになります。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>AttributeError: ... 'ghost_x'</code></td>
+      <td>どこかに <code>self.ghost_x</code> が残っています。
+      <code>move_ghosts</code> / <code>check_ghosts</code> / <code>draw_play</code> の 3 か所を確認します</td>
+    </tr>
+    <tr>
+      <td><code>IndexError: list index out of range</code></td>
+      <td>5 体目を作ろうとしています。<code>check_candy()</code> の
+      <code>len(self.ghosts) &lt; len(GHOST_MOVE_EVERY)</code> が抜けています</td>
+    </tr>
+    <tr>
+      <td>お化けが 1 体も出ない</td>
+      <td><code>reset_game()</code> の <code>self.add_ghost()</code> を書き忘れています</td>
+    </tr>
+    <tr>
+      <td>お化けが増えない</td>
+      <td><code>check_candy()</code> の中、<b><code>if is_hit(...)</code> の内側</b>に
+      書けているか確認します。1 段浅いと、毎フレーム調べることになります</td>
+    </tr>
+    <tr>
+      <td>お菓子を 5 個取った瞬間に一気に 4 体出る</td>
+      <td>増やす判定を <code>update()</code> 側に書いています。
+      <b>取った瞬間の 1 回だけ</b>にするため、<code>self.score += 1</code> のそばに置きます</td>
+    </tr>
+    <tr>
+      <td>4 体いるはずが 1 体にしか見えない</td>
+      <td><code>GHOST_MOVE_EVERY</code> が全部同じ数になっていませんか。
+      同じ速さだと<b>本当に重なります</b>（1-5 を参照）</td>
+    </tr>
+    <tr>
+      <td>2 体目が男の子のすぐ近くに出る</td>
+      <td><code>add_ghost()</code> で <code>far_corner()</code> を使わず、
+      <code>(0, 0)</code> を直接書いていませんか</td>
+    </tr>
+    <tr>
+      <td>お化けがぷるぷる震える</td>
+      <td><code>move()</code> の縦・横を <code>elif</code> でつないでいます。
+      <b>横のブロックと縦のブロックは別々の <code>if</code></b> です（フェーズ 5 と同じ）</td>
+    </tr>
+    <tr>
+      <td>やり直しても 4 体のまま</td>
+      <td><code>reset_game()</code> の <code>self.ghosts = []</code> がありません</td>
+    </tr>
+    <tr>
+      <td><code>TypeError: 'Ghost' object is not subscriptable</code></td>
+      <td><code>ghost[0]</code> のように書いています。
+      <code>Ghost</code> はリストではないので <code>ghost.x</code> と書きます</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+これで<b>ゲームの中身は完成</b>です。残りは仕上げの 2 つになります。
+</p>
+
+<p>
+フェーズ 9 では<b>効果音と BGM</b> をつけます。
+お菓子を取った音、捕まった音、それに BGM。
+<a href="../memo/#hitbox-size">「取った感じが薄い」</a>で
+「効果音がいちばん効く」と書いたとおり、
+<b>手ざわりがいちばん変わるフェーズ</b>です。
+音は step0 で <a href="../bgm/">BGM の作り方</a> をやったので、その続きになります。
+</p>
+
+<p>
+フェーズ 10 は<b>パッケージ化して Web で公開</b>です。
+step0 の Star Voyager と同じ手順なので、こちらは復習になります。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
