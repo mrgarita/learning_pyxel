@@ -2155,6 +2155,160 @@ HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四�
 どれも「判定が正しいこと」の上に乗せるものなので、まず判定を直すのが先です。
 </p>
 
+<h3 id="chase-speed">Q. お化けの速さはどう決める？ <code>GHOST_SPEED = 1</code> でも速く感じる</h3>
+<p>
+<b>A.</b> その感覚は正しいです。<b>男の子の半分の速さでも、全力で逃げ続けて 5 秒で捕まります。</b>
+「半分の速さなら余裕で逃げられる」という直感が当たらないのは、
+<b>画面が狭くて、必ず壁に突き当たる</b>からです。
+</p>
+
+<p>
+実際に数えてみました（画面 160×120、<code>BOY_SPEED = 2</code>、
+お化けは左上 <code>(0, 0)</code> から出発、判定は <code>HIT_SIZE = 4</code>）。
+男の子は<b>お菓子を無視して、お化けから遠ざかる向きへ全力で逃げ続ける</b>という条件です。
+</p>
+
+<table>
+  <thead><tr><th><code>GHOST_SPEED</code></th><th>捕まるまで</th><th>体感</th></tr></thead>
+  <tbody>
+    <tr><td><b>1</b>（現在）</td><td>149 フレーム＝<b>5.0 秒</b></td><td>逃げるだけで精一杯</td></tr>
+    <tr><td>0.5</td><td>297 フレーム＝<b>9.9 秒</b></td><td>お菓子を取りに寄り道できる</td></tr>
+    <tr><td>0.25</td><td>593 フレーム＝<b>19.8 秒</b></td><td>ほぼ追われている感じがしない</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>逃げ方を工夫しても変わりません</b>
+  「斜めに逃げる」「横だけに逃げる」のどちらでも <b>149 フレームで同じ</b>でした。
+  お化けは<b>横と縦を別々に、同時に詰めてくる</b>ので、斜めに逃げても縦の差は縮まり続けます。
+  壁に着いてしまえば、あとは 1 フレームに 1 ドットずつ詰められるだけです。
+  <b>速さを変える以外に、逃げ切る方法はありません。</b>
+</div>
+
+<h4>速さに小数を使うときの落とし穴</h4>
+
+<p>
+Pyxel は座標に小数を渡せる（<a href="#float-coord">#float-coord</a>）ので
+<code>GHOST_SPEED = 0.5</code> はそのまま動きます。ただし
+<b>どんな小数でもよいわけではありません。</b>
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="速さ 0.5 なら目標にぴったり止まるが、速さ 0.3 では目標をまたいで往復し続けることを示す図">
+  <style>
+    .ax  { stroke:#3b4166; stroke-width:1.5; }
+    .tk  { fill:#9aa4c4; font-size:11px; font-family:Consolas,monospace; }
+    .ttl { fill:#e8f0ff; font-size:13px; }
+    .ok  { fill:#2ee6a8; font-size:12px; }
+    .ng  { fill:#ff6b97; font-size:12px; }
+  </style>
+
+  <!-- 上：0.5 -->
+  <text class="ttl" x="20" y="30">GHOST_SPEED = 0.5 　男の子は x = 10 で止まっている</text>
+  <line class="ax" x1="60" y1="80" x2="600" y2="80"/>
+  <g class="tk">
+    <line x1="60"  y1="74" x2="60"  y2="86" stroke="#3b4166"/><text x="52"  y="102">8.5</text>
+    <line x1="195" y1="74" x2="195" y2="86" stroke="#3b4166"/><text x="187" y="102">9.0</text>
+    <line x1="330" y1="74" x2="330" y2="86" stroke="#3b4166"/><text x="322" y="102">9.5</text>
+    <line x1="465" y1="70" x2="465" y2="90" stroke="#ffcc44" stroke-width="2"/>
+    <text x="452" y="102" fill="#ffcc44">10.0</text>
+    <line x1="600" y1="74" x2="600" y2="86" stroke="#3b4166"/><text x="590" y="102">10.5</text>
+  </g>
+  <g fill="#2ee6a8">
+    <circle cx="60" cy="80" r="5"/><circle cx="195" cy="80" r="5"/>
+    <circle cx="330" cy="80" r="5"/><circle cx="465" cy="80" r="7"/>
+  </g>
+  <path d="M60 62 Q127 34 195 62" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <path d="M195 62 Q262 34 330 62" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <path d="M330 62 Q397 34 465 62" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <text class="ok" x="480" y="60">10.0 にぴったり乗って止まる</text>
+
+  <!-- 下：0.3 -->
+  <text class="ttl" x="20" y="170">GHOST_SPEED = 0.3 　同じ条件</text>
+  <line class="ax" x1="60" y1="220" x2="600" y2="220"/>
+  <g class="tk">
+    <line x1="114" y1="214" x2="114" y2="226" stroke="#3b4166"/><text x="100" y="242">9.6</text>
+    <line x1="195" y1="214" x2="195" y2="226" stroke="#3b4166"/><text x="181" y="242">9.9</text>
+    <line x1="465" y1="210" x2="465" y2="230" stroke="#ffcc44" stroke-width="2"/>
+    <text x="452" y="242" fill="#ffcc44">10.0</text>
+    <line x1="546" y1="214" x2="546" y2="226" stroke="#3b4166"/><text x="530" y="242">10.2</text>
+  </g>
+  <g fill="#ff6b97">
+    <circle cx="195" cy="220" r="6"/><circle cx="546" cy="220" r="6"/>
+  </g>
+  <circle cx="465" cy="220" r="4" fill="none" stroke="#ff6b97" stroke-dasharray="2 2"/>
+  <path d="M195 202 Q370 168 546 202" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+  <path d="M546 238 Q370 272 195 238" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+  <path d="M546 202 l-12 -3 l3 11 z" fill="#ff6b97"/>
+  <path d="M195 238 l12 3 l-3 -11 z" fill="#ff6b97"/>
+  <text class="ng" x="230" y="182">9.9 → 10.2 → 9.9 → … 目標をまたいで往復し続ける</text>
+  <text class="ng" x="230" y="288">10.0 をふまない（点線）ので、いつまでも止まらない</text>
+</svg>
+</div>
+<figcaption>速さが目標までの距離を割り切れないと、目標の周りで永久に往復する</figcaption>
+</figure>
+
+<p>
+<code>move_ghost()</code> は「小さければ増やす／大きければ減らす」なので、
+<b><code>==</code> になったところで初めて止まります。</b>
+ぴったり <code>==</code> にならない速さだと、目標をまたいで<b>永久に往復</b>します。
+実際に 400 フレーム動かして確かめた結果です。
+</p>
+
+<table>
+  <thead><tr><th><code>GHOST_SPEED</code></th><th>結果</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr><td><code>1</code> / <code>0.5</code> / <code>0.25</code></td>
+        <td><b>ぴったり止まる</b></td>
+        <td>2 で割り切れる数なので、2 進数でも誤差が出ない</td></tr>
+    <tr><td><code>0.3</code></td>
+        <td><b>9.9 ↔ 10.2 を往復</b></td>
+        <td>目標との差 0.1 を 0.3 でまたいでしまう</td></tr>
+    <tr><td><code>0.1</code></td>
+        <td><b>10.0 ↔ 10.1 を往復</b></td>
+        <td>0.1 は 2 進数で表せず、足すたびに誤差がたまる</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b>小数を使うなら <code>0.5</code>、<code>0.25</code>、<code>0.125</code> から選ぶ</b>
+  いずれも <b>1 を 2 で割っていった数</b>なので、コンピュータの中でも誤差なく表せます。
+  <code>0.3</code> や <code>0.1</code> は、見た目はきりのよい数でも
+  2 進数では割り切れず、<b>足すたびに少しずつずれます</b>。<br>
+  <code>BOY_SPEED = 2</code> なので男の子の座標は必ず偶数、お化けの座標は
+  <code>0.5</code> 刻みになり、両者は必ずどこかで一致します。だから <code>0.5</code> は安全です。
+</div>
+
+<div class="note">
+  <b><code>0.5</code> のときの見た目</b>
+  描画は四捨五入（<code>.5</code> は切り上げ）なので、実座標
+  <code>0.5, 1.0, 1.5, 2.0 …</code> は <code>1, 1, 2, 2 …</code> と描かれます。
+  <b>2 フレームで 1 ドットずつ進む</b>ことになり、動きはなめらかに見えます。
+</div>
+
+<h4>速さ以外で難しさを調整する手</h4>
+
+<p>
+「捕まるまでの秒数」は速さだけで決まるものではありません。次の手も使えます。
+</p>
+
+<ul>
+  <li><b>出てくる場所を遠くする</b> — 男の子から見ていちばん遠い角から出す</li>
+  <li><b>しばらく動かさない</b> — 出現から数十フレームは止まっている「猶予」を作る</li>
+  <li><b>増えるペースを変える</b> — step1 は「お菓子 5 個ごとに 1 体」。ここを 8 個ごとにするだけでも、ずいぶん楽になります（フェーズ 8）</li>
+  <li><b>お化けごとに速さを変える</b> — 全部同じ速さだと重なって 1 体に見えるので、
+  <code>1</code> と <code>0.5</code> を混ぜると散らばって見た目にも分かりやすくなります</li>
+</ul>
+
+<div class="note">
+  <b>この学習プロジェクトでの扱い</b>
+  2026-09-04 時点では <code>GHOST_SPEED = 1</code> のままにしています。
+  お化けが複数になる<b>フェーズ 8 であらためて調整</b>する予定です。
+  1 体で 5 秒なら、4 体になったときは明らかに厳しくなるためです。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>

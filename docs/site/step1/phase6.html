@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ6：捕まったらゲームオーバー ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 6 </span>捕まったらゲームオーバー</h1>
+  <p>「今どの画面か」を変数 1 つで覚えて、処理を振り分ける</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 6</p>
+
+<h2>ゴール</h2>
+
+<p>
+お化けに捕まったら <b>GAME OVER の文字が出て、動きが止まる</b>ようにします。
+まだ<b>やり直しはできません</b>（それはフェーズ 7 です）。
+このフェーズは<b>「画面を切りかえるしくみ」を作ること</b>が目的です。
+</p>
+
+<p>
+書き足すのは 20 行ほどですが、<b>step1 でいちばん大事な考え方</b>が出てきます。
+<a href="./#basics">step1 概要の「土台 2」</a>で予告した
+<b><code>scene</code> という変数で画面を覚える</b>やり方です。
+これができると、フェーズ 7 のタイトル画面は<b>同じ形をもう 1 つ足すだけ</b>になります。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 「今どの画面か」は、変数 1 つで表せる</h3>
+
+<p>
+タイトル・ゲーム・ゲームオーバーの 3 画面は、<b>いつでもどれか 1 つだけ</b>が映っています。
+2 つ同時ということはありません。<b>「同時に 1 つしか成り立たないもの」は、変数 1 つで表せます。</b>
+</p>
+
+<p>
+そこで <code>self.scene</code> という変数を用意し、そこへ
+「いまはゲーム中」「いまはゲームオーバー」を入れておきます。
+そして <code>update()</code> と <code>draw()</code> の<b>入口で振り分ける</b>だけです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="scene の値によって update と draw の中身が枝分かれするようすを表した図">
+  <style>
+    .ttl { fill:#ffcc44; font-size:14px; font-weight:bold; }
+    .lbl { fill:#e8f0ff; font-size:12px; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+    .cd  { fill:#e8f0ff; font-size:12px; font-family:Consolas,monospace; }
+  </style>
+
+  <text class="ttl" x="20" y="26">1 フレームのあいだに起きること</text>
+
+  <!-- scene = SCENE_PLAY -->
+  <rect x="14" y="42" width="320" height="284" rx="6" fill="#232840" stroke="#2ee6a8"/>
+  <text class="cd" x="30" y="66" fill="#2ee6a8">scene == SCENE_PLAY</text>
+  <text class="dim" x="30" y="84">あそんでいるとき</text>
+
+  <rect x="30" y="96" width="288" height="98" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="cd" x="42" y="116">update()</text>
+  <text class="cd" x="58" y="136">└ update_play()</text>
+  <text class="dim" x="74" y="154">move_boy / move_ghost</text>
+  <text class="dim" x="74" y="170">check_candy / check_ghost</text>
+  <text class="dim" x="74" y="186">← ここで捕まると scene が変わる</text>
+
+  <rect x="30" y="206" width="288" height="102" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="cd" x="42" y="226">draw()</text>
+  <text class="cd" x="58" y="246">├ cls()</text>
+  <text class="cd" x="58" y="266">└ draw_play()</text>
+  <text class="dim" x="74" y="284">お菓子・お化け・男の子・スコア</text>
+  <text class="dim" x="58" y="302">（ゲームオーバーの文字は描かない）</text>
+
+  <!-- 矢印 -->
+  <path d="M340 184 L360 184" stroke="#ff6b97" stroke-width="2" fill="none"/>
+  <path d="M360 184 l-8 -5 l0 10 z" fill="#ff6b97"/>
+  <text class="dim" x="322" y="172" fill="#ff6b97">捕まった</text>
+
+  <!-- scene = SCENE_GAMEOVER -->
+  <rect x="370" y="42" width="296" height="284" rx="6" fill="#232840" stroke="#ff6b97"/>
+  <text class="cd" x="386" y="66" fill="#ff6b97">scene == SCENE_GAMEOVER</text>
+  <text class="dim" x="386" y="84">捕まったあと</text>
+
+  <rect x="386" y="96" width="264" height="98" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="cd" x="398" y="116">update()</text>
+  <text class="cd" x="414" y="140" fill="#9aa4c4">（何もしない）</text>
+  <text class="dim" x="398" y="164">動かす処理を呼ばないので、</text>
+  <text class="dim" x="398" y="180">男の子もお化けも止まる</text>
+
+  <rect x="386" y="206" width="264" height="102" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="cd" x="398" y="226">draw()</text>
+  <text class="cd" x="414" y="246">├ cls()</text>
+  <text class="cd" x="414" y="266">├ draw_play()</text>
+  <text class="cd" x="414" y="286" fill="#ff6b97">└ draw_gameover()</text>
+  <text class="dim" x="398" y="302">止まった画面の上に文字を重ねる</text>
+</svg>
+</div>
+<figcaption><code>scene</code> の値を書きかえるだけで、次のフレームから中身が入れかわる</figcaption>
+</figure>
+
+<h3>1-2. 数字のままにせず、名前を付ける</h3>
+
+<p>
+<code>self.scene = 1</code> と書いても動きますが、あとから読んだときに
+<b>1 が何なのか分かりません</b>。そこで名前を付けます。
+</p>
+
+<pre><code>SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面</code></pre>
+
+<p>
+こうしておくと <code>if self.scene == SCENE_GAMEOVER:</code> が
+<b>そのまま日本語のように読めます</b>。これはフェーズ 3 の <code>is_hit()</code> や
+フェーズ 4 の <code>BOY_SIZE</code> と同じ考え方で、
+<b>「読んで分かる名前を付ける」</b>というだけのことです。
+</p>
+
+<div class="term">
+  <b>値そのものに意味はありません</b>
+  <code>0</code> と <code>1</code> は<b>ただの区別のための番号</b>です。
+  <code>10</code> と <code>20</code> でも、<code>100</code> と <code>7</code> でも動きます。
+  だからフェーズ 7 でタイトル画面を足すときも、<b>順番を気にせず
+  <code>SCENE_TITLE = 2</code> と足せば済みます</b>。
+  番号を振り直す必要はありません。<b>名前で読むから</b>です。
+</div>
+
+<h3>1-3. 「何も書かない」ことが、そのまま「止まる」になる</h3>
+
+<p>
+ゲームオーバーにしたら、男の子もお化けも止めたくなります。
+ここで <b>「止める処理」を書く必要はありません</b>。
+</p>
+
+<pre><code>    def update(self):
+        if self.scene == SCENE_PLAY:
+            self.update_play()
+        # SCENE_GAMEOVER のときは、何も呼ばない → 何も動かない</code></pre>
+
+<p>
+そもそも「動く」というのは <code>update()</code> の中で座標を書きかえているからです。
+<b>呼ばなければ、座標は変わりません。</b>止めるための特別な仕掛けはいりません。
+</p>
+
+<h3>1-4. 捕まる判定は、お菓子と同じ広さにそろえる</h3>
+
+<p>
+判定そのものはフェーズ 3 で書いた <code>is_hit()</code> をそのまま使います。
+<b>相手をお菓子からお化けに変えるだけ</b>です。
+</p>
+
+<p>
+このとき<b>お菓子と同じ <code>HIT_SIZE</code> を使います</b>。理由は、
+<a href="../memo/#hitbox-size">備忘録でお菓子について調べたこと</a>が
+そのまま当てはまるからです。8×8 のままだと
+<b>当たる位置の 36% は、絵が 1 ドットも重なっていません</b>。
+お菓子なら「取れて嬉しい」で済みますが、お化けは<b>「かすっただけで死んだ」</b>になります。
+<b>理不尽に感じるのは、こちらのほうがずっと強い</b>ので、判定はそろえておきます。
+</p>
+
+<div class="note">
+  <b>同じ <code>is_hit()</code> を、3 か所目に使いまわします</b>
+  ① お菓子を置く場所を決めるとき（8×8・広め）、② お菓子を取ったか（4×4・狭め）、
+  ③ お化けに捕まったか（4×4・狭め）。
+  <b>目的によって渡す四角の大きさを変える</b>だけで、関数は 1 つのままです。
+  フェーズ 3 で <code>is_hit()</code> を <code>class</code> の外に置いておいた甲斐がありました。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<p>
+新しい API は <code>pyxel.text()</code> だけですが、それもフェーズ 4 で使ったものです。
+<b>新しいのは「考え方」のほう</b>です。
+</p>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td>定数で状態を表す</td><td><code>SCENE_PLAY</code> / <code>SCENE_GAMEOVER</code></td></tr>
+    <tr><td><code>if</code> による振り分け</td><td><code>update()</code> と <code>draw()</code> の入口で分ける</td></tr>
+    <tr><td><code>is_hit()</code>（再利用）</td><td>お化けに捕まったかを調べる</td></tr>
+    <tr><td><code>len()</code></td><td>文字数を数えて、中央ぞろえの位置を計算する</td></tr>
+    <tr><td><code>pyxel.text()</code></td><td>GAME OVER の文字を描く</td></tr>
+    <tr><td><code>pyxel.COLOR_RED</code></td><td>色の番号 8。<code>8</code> と書いてもよいが、名前のほうが読みやすい</td></tr>
+  </tbody>
+</table>
+<h2>3. 手順</h2>
+
+<h3>3-1. シーンの定数を足す</h3>
+
+<p>
+<code>HIT_OFFSET</code> の下に、空行をはさんで足します。
+</p>
+
+<pre><code>HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
+SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面</code></pre>
+
+<h3>3-2. 中央に文字を描く関数を足す</h3>
+
+<p>
+<code>is_hit()</code> の下に置きます。<b><code>class</code> の外</b>です。
+</p>
+
+<pre><code>def draw_center(s, y, col):
+    """文字列を画面の横中央に描く"""
+    x = (SCREEN_WIDTH - len(s) * 4) // 2
+    pyxel.text(x, y, s, col)</code></pre>
+
+<p>
+<code>4</code> という数字は<b>フォント 1 文字ぶんの幅</b>です。
+<a href="phase4.html">フェーズ 4 で測った値</a>で、
+Pyxel の標準フォントは 1 文字が 4 ドットずつ右へ進みます。
+</p>
+
+<h3>3-3. <code>self.scene</code> を用意する</h3>
+
+<p>
+<code>__init__()</code> の中、<b>ほかの変数より先</b>に置きます。
+</p>
+
+<pre><code>        self.scene = SCENE_PLAY
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2</code></pre>
+
+<h3>3-4. <code>update()</code> を 2 つに分ける</h3>
+
+<p>
+いまの <code>update()</code> の中身を、そっくり <code>update_play()</code> へ引っこ抜きます。
+そして <code>update()</code> は<b>振り分けるだけ</b>にします。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        if self.scene == SCENE_PLAY:
+            self.update_play()
+
+    def update_play(self):
+        """あそんでいる間の更新"""
+        self.move_boy()
+        self.move_ghost()
+        self.check_candy()
+        self.check_ghost()          # ← 1 行増える</code></pre>
+
+<h3>3-5. 捕まったかを調べる</h3>
+
+<p>
+<code>check_candy()</code> の下に足します。<b><code>check_candy()</code> とほとんど同じ形</b>です。
+</p>
+
+<pre><code>    def check_ghost(self):
+        """お化けに捕まったらゲームオーバーにする"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.ghost_x + HIT_OFFSET, self.ghost_y + HIT_OFFSET, HIT_SIZE):
+            self.scene = SCENE_GAMEOVER</code></pre>
+
+<h3>3-6. <code>draw()</code> を分けて、文字を重ねる</h3>
+
+<p>
+<code>draw()</code> も同じように分けます。ただし <code>update()</code> とは違い、
+<b>ゲームオーバーでも <code>draw_play()</code> は呼びます</b>。
+止まった盤面を見せたままにするためです。
+</p>
+
+<pre><code>    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+        self.draw_play()
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()
+
+    def draw_play(self):
+        """あそんでいる画面を描く"""
+        # ここは今までの draw() の中身をそのまま（cls は除く）
+
+    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)</code></pre>
+
+<div class="warn">
+  <b><code>cls()</code> は <code>draw()</code> に残します</b>
+  <code>draw_play()</code> へ一緒に持っていってしまうと、
+  画面を消す処理が<b>「あそんでいる画面を描く」の一部</b>になってしまいます。
+  画面を消すのは<b>どの画面でも必ずやること</b>なので、入口の <code>draw()</code> に置きます。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+ここまでを反映した全体です。<b>増えたのは 20 行</b>ほどです。
+</p>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ6：お化けに捕まったらゲームオーバー
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_SPEED = 1         # 1 フレームで進むドット数（男の子の半分）
+
+HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
+SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+
+def draw_center(s, y, col):
+    """文字列を画面の横中央に描く"""
+    x = (SCREEN_WIDTH - len(s) * 4) // 2
+    pyxel.text(x, y, s, col)
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.scene = SCENE_PLAY
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.ghost_x = 0
+        self.ghost_y = 0
+        self.score = 0
+        self.place_candy()
+
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        if self.scene == SCENE_PLAY:
+            self.update_play()
+
+    def update_play(self):
+        """あそんでいる間の更新"""
+        self.move_boy()
+        self.move_ghost()
+        self.check_candy()
+        self.check_ghost()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def move_ghost(self):
+        """お化けを男の子に近づける"""
+        if self.ghost_x &lt; self.boy_x:
+            self.ghost_x += GHOST_SPEED
+        elif self.ghost_x &gt; self.boy_x:
+            self.ghost_x -= GHOST_SPEED
+
+        if self.ghost_y &lt; self.boy_y:
+            self.ghost_y += GHOST_SPEED
+        elif self.ghost_y &gt; self.boy_y:
+            self.ghost_y -= GHOST_SPEED
+
+    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break
+
+    def check_candy(self):
+        """お菓子にしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
+            self.score += 1
+            self.place_candy()
+
+    def check_ghost(self):
+        """お化けに捕まったらゲームオーバーにする"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.ghost_x + HIT_OFFSET, self.ghost_y + HIT_OFFSET, HIT_SIZE):
+            self.scene = SCENE_GAMEOVER
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+        self.draw_play()
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()
+
+    def draw_play(self):
+        """あそんでいる画面を描く"""
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.ghost_x, self.ghost_y, 0, 8, 0,
+                  GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)    # お化け
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)
+
+    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+
+
+App()</code></pre>
+
+<div class="note">
+  <b>動かして確かめること</b>
+  <ul>
+    <li>何も操作しないでいると、お化けが来て <b>GAME OVER</b> が出る</li>
+    <li>そのあと矢印キーを押しても、<b>男の子もお化けも動かない</b></li>
+    <li>止まった盤面（お菓子・お化け・男の子）は<b>そのまま見えている</b></li>
+    <li>GAME OVER の文字が<b>画面の真ん中</b>に出ている</li>
+  </ul>
+</div>
+<h2>5. コードの解説</h2>
+
+<h3><code>draw_center()</code> が <code>class</code> の外にある理由</h3>
+
+<p>
+<code>is_hit()</code> とまったく同じ理由です。この関数は
+<b><code>self</code> をひとつも使っていません</b>。
+</p>
+
+<pre><code>def draw_center(s, y, col):
+    x = (SCREEN_WIDTH - len(s) * 4) // 2
+    pyxel.text(x, y, s, col)</code></pre>
+
+<p>
+使っているのは<b>渡された 3 つの値</b>と、<b>定数 <code>SCREEN_WIDTH</code></b> だけです。
+男の子の位置もスコアも見ていません。<b><code>self</code> がいらない処理は
+<code>class</code> の外に置ける</b>——これが判断の基準になります。
+</p>
+
+<div class="term">
+  <b>見分け方</b>
+  書いてみて <code>self.</code> が 1 つも出てこなければ、外に出せます。
+  逆に <code>check_ghost()</code> は <code>self.boy_x</code> や <code>self.scene</code> を
+  触るので、<b><code>class</code> の中</b>でなければ書けません。
+</div>
+
+<h3>中央にそろえる式</h3>
+
+<p>
+<code>(SCREEN_WIDTH - len(s) * 4) // 2</code> の意味を <code>"GAME OVER"</code> で追います。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="GAME OVER の 9 文字が幅 35 ドットになり、左右に 62 ドットずつの余白ができることを示す図">
+  <style>
+    .cd  { fill:#e8f0ff; font-size:12px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+    .acc { fill:#ffcc44; font-size:12px; }
+  </style>
+
+  <text class="dim" x="20" y="26">画面の幅 160 ドット</text>
+  <rect x="20" y="36" width="620" height="52" fill="#0b0d16" stroke="#3b4166"/>
+
+  <rect x="260" y="36" width="140" height="52" fill="#ffcc44" opacity=".18" stroke="#ffcc44"/>
+  <text class="cd" x="278" y="68" fill="#ffcc44">GAME OVER</text>
+
+  <g stroke="#45b0e8" stroke-width="1.5">
+    <line x1="20" y1="106" x2="260" y2="106"/>
+    <line x1="20" y1="100" x2="20" y2="112"/>
+    <line x1="260" y1="100" x2="260" y2="112"/>
+  </g>
+  <text class="cd" x="106" y="126" fill="#45b0e8">62 ドット</text>
+
+  <g stroke="#ffcc44" stroke-width="1.5">
+    <line x1="260" y1="106" x2="400" y2="106"/>
+    <line x1="400" y1="100" x2="400" y2="112"/>
+  </g>
+  <text class="cd" x="288" y="126" fill="#ffcc44">35 ドット</text>
+
+  <g stroke="#45b0e8" stroke-width="1.5">
+    <line x1="400" y1="106" x2="640" y2="106"/>
+    <line x1="640" y1="100" x2="640" y2="112"/>
+  </g>
+  <text class="cd" x="486" y="126" fill="#45b0e8">62 ドット</text>
+
+  <text class="dim" x="20" y="164">① 文字数を数える</text>
+  <text class="cd"  x="200" y="164">len("GAME OVER") = 9</text>
+  <text class="dim" x="20" y="188">② 幅を出す（1 文字 4 ドット送り）</text>
+  <text class="cd"  x="240" y="188">9 * 4 - 1 = 35</text>
+  <text class="dim" x="20" y="212">③ 残りを半分ずつに分ける</text>
+  <text class="cd"  x="200" y="212">(160 - 9 * 4) // 2 = 62</text>
+  <text class="acc" x="20" y="238">→ x = 62 に描くと、左右の余白が 62 ドットずつでそろう</text>
+</svg>
+</div>
+<figcaption>文字数さえ分かれば幅が出るので、中央ぞろえは引き算と割り算だけでできる</figcaption>
+</figure>
+
+<div class="note">
+  <b>式の中が <code>len(s) * 4 - 1</code> ではない理由</b>
+  文字の実際の幅は<b>最後の 1 文字ぶんの字間を含まない</b>ので 35 ドットです。
+  ただ、中央ぞろえの式に <code>-1</code> まで入れても
+  <code>(160 - 35) // 2 = 62</code> となり<b>結果は同じ</b>になります。
+  1 ドットの差は <code>// 2</code> で消えるので、短いほうで書いています。
+</div>
+
+<h3>ゲームオーバーでも盤面を描き続ける理由</h3>
+
+<p>
+<code>draw()</code> は <b><code>if</code> の外</b>で <code>draw_play()</code> を呼んでいます。
+</p>
+
+<pre><code>        pyxel.cls(pyxel.COLOR_BLACK)
+        self.draw_play()                       # ← いつも描く
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()               # ← そのうえに重ねる</code></pre>
+
+<p>
+こうしないと、捕まった瞬間に画面が真っ黒になって
+<b>「どこで捕まったのか」が分からなくなります</b>。
+止まった盤面が残っていれば、プレイヤーは<b>「あ、そこにいたのか」と納得できます</b>。
+</p>
+
+<div class="term">
+  <b>描く順番＝重なる順番</b>
+  あとから描いたものが上になります。<code>draw_gameover()</code> をあとに呼ぶので、
+  文字が絵の上に出ます。逆にすると、絵が文字を隠してしまいます。
+</div>
+
+<h3><code>check_ghost()</code> を <code>check_candy()</code> のあとに呼ぶ</h3>
+
+<p>
+<code>update_play()</code> の並びは <b>動かす → お菓子 → お化け</b> の順です。
+</p>
+
+<pre><code>        self.move_boy()
+        self.move_ghost()
+        self.check_candy()
+        self.check_ghost()</code></pre>
+
+<p>
+お菓子とお化けに<b>同時に</b>重なるフレームがあり得ます。この順番なら
+<b>スコアが 1 増えてから</b>ゲームオーバーになります。逆にすると、
+取ったはずのお菓子が数えられません。<b>プレイヤーに有利なほうを先に</b>置いています。
+</p>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<h3>GAME OVER の文字を点滅させる</h3>
+
+<p>
+<code>pyxel.frame_count</code> は<b>起動してからのフレーム数</b>が入っている変数です。
+これを使うと、変数を増やさずに点滅が作れます。
+</p>
+
+<pre><code>    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        if pyxel.frame_count % 30 &lt; 20:                  # 30 フレームのうち 20 だけ描く
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)</code></pre>
+
+<p>
+<code>%</code>（あまり）を使うと、<b>0〜29 をくり返す数</b>が作れます。
+そのうち 0〜19 のときだけ描けば、<b>1 秒の周期で 3 分の 2 だけ光る</b>ことになります。
+スコアは点滅させないほうが読みやすいので、<code>if</code> の外に出しています。
+</p>
+
+<h3>捕まった瞬間に「間」を作る</h3>
+
+<p>
+すぐ文字が出るとあっけないので、少し待ってから出す手もあります。
+捕まったフレームを覚えておいて、そこからの経過を見ます。
+</p>
+
+<pre><code>    def check_ghost(self):
+        """お化けに捕まったらゲームオーバーにする"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.ghost_x + HIT_OFFSET, self.ghost_y + HIT_OFFSET, HIT_SIZE):
+            self.scene = SCENE_GAMEOVER
+            self.gameover_frame = pyxel.frame_count      # 捕まった時刻を覚える</code></pre>
+
+<pre><code>    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        if pyxel.frame_count - self.gameover_frame &lt; 15:   # 0.5 秒は文字を出さない
+            return
+
+        draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)</code></pre>
+
+<div class="term">
+  <b><code>return</code> だけを書くと「ここで関数をやめる」</b>
+  値を書かない <code>return</code> は、<b>その先を実行せずに関数を抜ける</b>という意味になります。
+  <code>if</code> のネストを深くしないための書き方です。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>捕まっても何も起きない</td>
+      <td><code>update_play()</code> に <code>self.check_ghost()</code> を足したか確認します。
+      <code>update()</code> のほうに足しても呼ばれません</td>
+    </tr>
+    <tr>
+      <td>始めた瞬間にゲームオーバーになる</td>
+      <td><code>check_ghost()</code> で比べる相手が <code>candy_x</code> のままになっていませんか。
+      <code>check_candy()</code> をコピーして作ると<b>直し忘れやすい</b>ところです</td>
+    </tr>
+    <tr>
+      <td>GAME OVER が出ても動けてしまう</td>
+      <td><code>update()</code> の <code>if</code> の中に <code>self.update_play()</code> が
+      入っているか確認します。インデントが 1 段浅いと、いつでも呼ばれてしまいます</td>
+    </tr>
+    <tr>
+      <td>捕まると画面が真っ黒になる</td>
+      <td><code>self.draw_play()</code> を <code>if</code> の中に入れてしまっています。
+      <b><code>if</code> の外</b>で、いつも呼びます</td>
+    </tr>
+    <tr>
+      <td>文字が中央からずれる</td>
+      <td><code>// 2</code> が <code>/ 2</code> になっていませんか。
+      <code>/</code> だと小数になります（<a href="../memo/#floor-div">備忘録 #floor-div</a>）</td>
+    </tr>
+    <tr>
+      <td>文字が絵に隠れて見えない</td>
+      <td><code>draw_gameover()</code> を <code>draw_play()</code> より<b>先に</b>呼んでいます。
+      あとに呼んだものが上に描かれます</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'SCENE_PLAY' is not defined</code></td>
+      <td>定数の定義が <code>class</code> より<b>下</b>にあります。
+      定数はファイルの先頭にまとめます（<a href="../memo/#def-order">備忘録 #def-order</a>）</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: ... 'scene'</code></td>
+      <td><code>__init__()</code> の <code>self.scene = SCENE_PLAY</code> を書き忘れているか、
+      <code>pyxel.run()</code> より<b>あと</b>に書いています</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+画面を切りかえるしくみができました。次は<b>タイトル画面を足して 3 画面にし、
+もう一度あそべるようにします</b>。
+やることは<b>このフェーズと同じ形をもう 1 つ増やすだけ</b>——
+<code>SCENE_TITLE</code> を足し、<code>update()</code> と <code>draw()</code> に枝をもう 1 本生やします。
+</p>
+
+<p>
+新しく出てくるのは<b>「やり直すときに、変数を初期状態へ戻す」</b>という話です。
+スコアもお化けの位置も前回のままでは困るので、
+<code>__init__()</code> に書いた初期化を<b>呼び直せる形に整理</b>します。
+</p>
+
+<div class="note">
+  <b>お化けの速さについて</b>
+  <code>GHOST_SPEED = 1</code> は、<b>全力で逃げ続けても 5 秒で捕まる</b>速さです
+  （実際に数えました → <a href="../memo/#chase-speed">備忘録 #chase-speed</a>）。
+  いまは 1 のままで進み、<b>お化けが増えるフェーズ 8 であらためて調整</b>します。
+</div>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
