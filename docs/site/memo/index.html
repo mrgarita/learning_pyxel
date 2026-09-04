@@ -2392,6 +2392,231 @@ Pyxel は座標に小数を渡せる（<a href="#float-coord">#float-coord</a>�
   <b>同じ速さにすると、600 フレーム後には 4 体が完全に 1 か所へ重なります</b>（実測）。
 </div>
 
+<h3 id="blink-by-skipping">Q. 「描かない」と、なぜ点滅になるの？ <code>continue</code> の行の意味が分からない</h3>
+
+<p>
+<b>A.</b> ポイントは<b>「消す命令はない。描かなければ、それが消えたということ」</b>です。
+</p>
+
+<pre><code>        for ghost in self.ghosts:
+            if pyxel.frame_count - ghost.born_frame &lt; 30 and not is_blink_on():
+                continue                # 出てきて 1 秒は、点滅の消える側で描かない
+
+            pyxel.blt(ghost.x, ghost.y, 0, 8, 0,
+                      GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)</code></pre>
+
+<h4>① 画面は毎フレーム、まっさらから描き直している</h4>
+
+<p>
+<code>draw()</code> のいちばん上を思い出してください。
+</p>
+
+<pre><code>    def draw(self):
+        pyxel.cls(pyxel.COLOR_BLACK)        # ← 毎フレーム、画面を黒で塗りつぶす
+        ...</code></pre>
+
+<p>
+<b>1 フレームごとに、画面はいったん全部消えています。</b>
+そのあと <code>blt()</code> で描いたものだけが見えます。
+つまり画面は「前のフレームの続き」ではなく、<b>毎回ゼロから作り直したもの</b>です。
+</p>
+
+<div class="term">
+  <b>だから「隠す命令」は存在しません</b>
+  お化けを消したければ、<b>その回だけ <code>blt()</code> を呼ばなければよい</b>のです。
+  <code>cls()</code> がすでに消してくれているので、あとは描かないだけで消えます。<br>
+  逆に言うと、<b>毎フレーム描き続けているから、止まって見えている</b>だけです。
+</div>
+
+<h4>② <code>continue</code> は「この 1 個だけ飛ばして、次へ」</h4>
+
+<p>
+<code>for</code> の中で <code>continue</code> に来ると、<b>その下は実行せずに、次の 1 個へ進みます</b>。
+</p>
+
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>return</code></td><td><b>関数ごと</b>抜ける。残りのお化けも処理されない</td></tr>
+    <tr><td><b><code>continue</code></b></td><td><b>いま扱っている 1 個だけ</b>とばす。次のお化けへ進む</td></tr>
+    <tr><td><code>break</code></td><td>くり返しを<b>やめる</b>。残りのお化けは処理されない</td></tr>
+  </tbody>
+</table>
+
+<p>
+ここでやりたいのは<b>「この 1 体だけ、今回は描かない」</b>なので <code>continue</code> です。
+<code>return</code> にすると、<b>そのあとの男の子やスコアまで描かれなくなります</b>。
+</p>
+
+<h4>③ 条件は 2 つに分かれている</h4>
+
+<p>
+<code>and</code> でつないであるので、<b>両方そろったときだけ</b> <code>continue</code> します。
+</p>
+
+<table>
+  <thead><tr><th>部分</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.frame_count - ghost.born_frame &lt; 30</code></td>
+        <td><b>出てきてから 30 フレーム（1 秒）未満</b>か。
+        つまり<b>「出たばかり」</b>かどうか</td></tr>
+    <tr><td><code>not is_blink_on()</code></td>
+        <td>点滅の<b>「消えている側」</b>か。
+        <code>is_blink_on()</code> は「見えている側なら <code>True</code>」なので、
+        <code>not</code> を付けて裏返している</td></tr>
+  </tbody>
+</table>
+
+<p>
+表にすると、<b>描かないのは 4 通りのうち 1 つだけ</b>です。
+</p>
+
+<table>
+  <thead><tr><th>出たばかり？</th><th>点滅は見える側？</th><th>結果</th></tr></thead>
+  <tbody>
+    <tr><td>はい</td><td>見える側</td><td>描く</td></tr>
+    <tr><td>はい</td><td><b>消える側</b></td><td><b>描かない</b> ← ここだけ</td></tr>
+    <tr><td>いいえ（1 秒たった）</td><td>見える側</td><td>描く</td></tr>
+    <tr><td>いいえ（1 秒たった）</td><td>消える側</td><td>描く</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>1 秒たつと 1 つめの条件がずっと <code>False</code> になる</b>ので、
+<code>and</code> 全体も必ず <code>False</code>。以後は<b>毎フレーム必ず描かれ、点滅が止まります</b>。
+「点滅をやめる処理」を別に書く必要はありません。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="フレームごとに cls で消え、描くか飛ばすかで画面に見えるかどうかが決まるようすの図">
+  <style>
+    .lb  { fill:#e8f0ff; font-size:11.5px; }
+    .cd  { fill:#9aa4c4; font-size:10.5px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+  </style>
+
+  <text class="dim" x="14" y="22">フレーム（お化けが出てきた瞬間を 0 とする）</text>
+  <g class="cd" text-anchor="middle">
+    <text x="220" y="44">18</text><text x="272" y="44">19</text><text x="324" y="44">20</text>
+    <text x="376" y="44">21</text><text x="428" y="44">…</text><text x="480" y="44">29</text>
+    <text x="532" y="44">30</text><text x="584" y="44">31</text><text x="636" y="44">32</text>
+  </g>
+
+  <!-- 行ラベル -->
+  <g class="lb">
+    <text x="14" y="76">出たばかり？</text>
+    <text x="14" y="112">点滅は見える側？</text>
+    <text x="14" y="148">continue する？</text>
+    <text x="14" y="196">画面</text>
+  </g>
+
+  <!-- 出たばかり？ -->
+  <g class="cd" text-anchor="middle" fill="#2ee6a8">
+    <text x="220" y="76">はい</text><text x="272" y="76">はい</text><text x="324" y="76">はい</text>
+    <text x="376" y="76">はい</text><text x="428" y="76">…</text><text x="480" y="76">はい</text>
+  </g>
+  <g class="cd" text-anchor="middle" fill="#9aa4c4">
+    <text x="532" y="76">いいえ</text><text x="584" y="76">いいえ</text><text x="636" y="76">いいえ</text>
+  </g>
+
+  <!-- 点滅 -->
+  <g class="cd" text-anchor="middle">
+    <text x="220" y="112" fill="#ffcc44">見える</text>
+    <text x="272" y="112" fill="#ffcc44">見える</text>
+    <text x="324" y="112" fill="#ff6b97">消える</text>
+    <text x="376" y="112" fill="#ff6b97">消える</text>
+    <text x="428" y="112" fill="#9aa4c4">…</text>
+    <text x="480" y="112" fill="#ff6b97">消える</text>
+    <text x="532" y="112" fill="#ffcc44">見える</text>
+    <text x="584" y="112" fill="#ffcc44">見える</text>
+    <text x="636" y="112" fill="#ffcc44">見える</text>
+  </g>
+
+  <!-- continue -->
+  <g class="cd" text-anchor="middle">
+    <text x="220" y="148" fill="#9aa4c4">しない</text>
+    <text x="272" y="148" fill="#9aa4c4">しない</text>
+    <text x="324" y="148" fill="#ff6b97">する</text>
+    <text x="376" y="148" fill="#ff6b97">する</text>
+    <text x="428" y="148" fill="#9aa4c4">…</text>
+    <text x="480" y="148" fill="#ff6b97">する</text>
+    <text x="532" y="148" fill="#9aa4c4">しない</text>
+    <text x="584" y="148" fill="#9aa4c4">しない</text>
+    <text x="636" y="148" fill="#9aa4c4">しない</text>
+  </g>
+
+  <!-- 画面 -->
+  <g>
+    <rect x="198" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#3b4166"/>
+    <rect x="212" y="180" width="16" height="16" fill="#45b0e8"/>
+    <rect x="250" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#3b4166"/>
+    <rect x="264" y="180" width="16" height="16" fill="#45b0e8"/>
+    <rect x="302" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#3b4166"/>
+    <rect x="354" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#3b4166"/>
+    <text class="cd" x="428" y="192" text-anchor="middle">…</text>
+    <rect x="458" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#3b4166"/>
+    <rect x="510" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#2ee6a8"/>
+    <rect x="524" y="180" width="16" height="16" fill="#45b0e8"/>
+    <rect x="562" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#2ee6a8"/>
+    <rect x="576" y="180" width="16" height="16" fill="#45b0e8"/>
+    <rect x="614" y="166" width="44" height="44" rx="3" fill="#0b0d16" stroke="#2ee6a8"/>
+    <rect x="628" y="180" width="16" height="16" fill="#45b0e8"/>
+  </g>
+
+  <line x1="506" y1="60" x2="506" y2="220" stroke="#2ee6a8" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text class="dim" x="686" y="240" fill="#2ee6a8" text-anchor="end">ここから先は必ず描かれる（点滅が止まる）</text>
+
+  <text class="dim" x="14" y="268">cls() が毎フレーム画面を消すので、blt() を呼ばなかったフレームは「何もない」＝ 消えて見える。</text>
+  <text class="dim" x="14" y="286">これがくり返されると、点滅しているように見える。</text>
+</svg>
+</div>
+<figcaption>描くフレームと描かないフレームが交互になると、点滅して見える</figcaption>
+</figure>
+
+<h4>読みにくいと感じたら、名前を付けて分ける</h4>
+
+<p>
+<code>and not</code> が並ぶと、頭の中で 2 回ひっくり返すことになります。
+<b>途中に名前を付けると、そのまま読めるようになります</b>。
+</p>
+
+<pre><code>        for ghost in self.ghosts:
+            is_new = pyxel.frame_count - ghost.born_frame &lt; 30      # 出てきたばかり？
+
+            if is_new and not is_blink_on():
+                continue
+
+            pyxel.blt(...)</code></pre>
+
+<p>
+あるいは<b>「描く条件」のほうを書く</b>と、<code>continue</code> がいらなくなります。
+</p>
+
+<pre><code>        for ghost in self.ghosts:
+            is_new = pyxel.frame_count - ghost.born_frame &lt; 30
+
+            if not is_new or is_blink_on():      # 出て 1 秒たった、または 見える側なら描く
+                pyxel.blt(...)</code></pre>
+
+<div class="note">
+  <b>どちらでも動きます。読みやすいほうで</b>
+  <code>continue</code> を使う形は<b>「例外を先に片づけて、あとは素直に描く」</b>書き方です。
+  条件が増えたときに、<code>if</code> の入れ子が深くならないのが利点です。
+  一方、下の形は<b>「描くのはこういうとき」と正面から書いてある</b>ので、
+  条件が 1〜2 個なら読みやすくなります。
+</div>
+
+<div class="term">
+  <b>数字の <code>30</code> は定数にしてもよい場所です</b>
+  「出てきてから何フレーム点滅させるか」なので、
+  <code>GHOST_BLINK_FRAMES = 30</code> のような名前を付けておくと、
+  あとから長さを変えたくなったときに探さずに済みます。
+  いまは 1 か所しか出てこないので、そのままでも問題ありません
+  （フェーズ 4 で決めた「2 か所以上に出たら格上げ」の基準）。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>

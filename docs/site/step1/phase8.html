@@ -943,6 +943,16 @@ App()</code></pre>
   <code>for</code> の中でだけ使える書き方です。
 </div>
 
+<div class="note">
+  <b>「描かない」がなぜ点滅になるのか</b>
+  <code>draw()</code> の先頭で <code>cls()</code> が<b>毎フレーム画面を消している</b>ので、
+  <b><code>blt()</code> を呼ばなかったフレームは、そこに何もない</b>ことになります。
+  つまり<b>消す命令はいりません</b>。描くフレームと描かないフレームが交互になると、
+  点滅して見えます。<br>
+  フレームごとに分解した図と、<code>and not</code> を読みやすく書き直す案を
+  <a href="../memo/#blink-by-skipping">備忘録 #blink-by-skipping</a> にまとめました。
+</div>
+
 <h3>お化けの数を画面に出す</h3>
 
 <pre><code>        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ9：効果音と BGM ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 9 </span>効果音と BGM</h1>
+  <p>チャンネルを分けて、鳴らしたい瞬間に 1 行足す</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 9</p>
+
+<h2>ゴール</h2>
+
+<p>
+効果音 3 つ（<b>お菓子を取った・捕まった・お化けが増えた</b>）と <b>BGM</b> をつけます。
+</p>
+
+<p>
+<b>手ざわりがいちばん変わるフェーズ</b>です。
+<a href="../memo/#hitbox-size">「取った感じが薄い」</a>で
+「効果音がいちばん効く」と書いたとおり、
+当たり判定を縮めたときよりも、点滅を足したときよりも、はっきり変わります。
+</p>
+
+<p>
+<b>コードで足すのは 6 行だけ</b>です。時間がかかるのは<b>音を作るほう</b>で、
+そちらはリソースエディタでの作業になります。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 音は 2 種類ある</h3>
+
+<table>
+  <thead><tr><th></th><th>効果音</th><th>BGM</th></tr></thead>
+  <tbody>
+    <tr><td>長さ</td><td><b>0.2〜0.4 秒</b>くらい</td><td>数秒〜。<b>ずっとくり返す</b></td></tr>
+    <tr><td>鳴らし方</td><td><code>pyxel.play(ch, 番号)</code></td><td><code>pyxel.playm(番号, loop=True)</code></td></tr>
+    <tr><td>いつ呼ぶ</td><td><b>できごとが起きた瞬間に 1 回</b></td><td>ゲームを始めるときに 1 回</td></tr>
+    <tr><td>作る場所</td><td colspan="2">どちらも <code>.pyxres</code>（リソースエディタ）</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b><code>play</code> と <code>playm</code> の違い</b>
+  <code>play</code> は<b>「音」を 1 つ</b>鳴らします。<code>playm</code> の <code>m</code> は
+  <b>music</b> で、<b>複数のチャンネルぶんの音をまとめて</b>鳴らします。
+  BGM は「メロディ」と「ベース」を重ねるので <code>playm</code> です。
+</div>
+
+<h3>1-2. チャンネルは 4 本。ぶつからないように割り当てる</h3>
+
+<p>
+Pyxel は<b>同時に 4 つまで音を出せます</b>。この 4 本を<b>チャンネル</b>と呼びます。
+</p>
+
+<p>
+大事なのは、<b>同じチャンネルで新しい音を鳴らすと、前の音は止まる</b>ということです。
+BGM と効果音を同じチャンネルにすると、<b>お菓子を取るたびに BGM が途切れます</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 290" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="4 本のチャンネルのうち 0 と 1 を BGM、2 と 3 を効果音に割り当てる図">
+  <style>
+    .lb  { fill:#e8f0ff; font-size:12px; }
+    .cd  { fill:#e8f0ff; font-size:11.5px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+  </style>
+
+  <text class="lb" x="20" y="26">Pyxel のチャンネル（同時に鳴らせるのは 4 つまで）</text>
+
+  <g>
+    <rect x="20" y="44" width="660" height="42" rx="4" fill="#10121c" stroke="#2ee6a8"/>
+    <text class="cd" x="34" y="70" fill="#2ee6a8">ch 0</text>
+    <text class="lb" x="90" y="70">BGM のメロディ</text>
+    <text class="dim" x="420" y="70">playm() が自動で使う</text>
+
+    <rect x="20" y="94" width="660" height="42" rx="4" fill="#10121c" stroke="#2ee6a8"/>
+    <text class="cd" x="34" y="120" fill="#2ee6a8">ch 1</text>
+    <text class="lb" x="90" y="120">BGM のベース</text>
+    <text class="dim" x="420" y="120">playm() が自動で使う</text>
+
+    <rect x="20" y="144" width="660" height="42" rx="4" fill="#10121c" stroke="#45b0e8"/>
+    <text class="cd" x="34" y="170" fill="#45b0e8">ch 2</text>
+    <text class="lb" x="90" y="170">お菓子を取った音 ／ 捕まった音</text>
+    <text class="cd" x="420" y="170" fill="#9aa4c4">CH_SE = 2</text>
+
+    <rect x="20" y="194" width="660" height="42" rx="4" fill="#10121c" stroke="#ffcc44"/>
+    <text class="cd" x="34" y="220" fill="#ffcc44">ch 3</text>
+    <text class="lb" x="90" y="220">お化けが増えた音</text>
+    <text class="cd" x="420" y="220" fill="#9aa4c4">CH_EVENT = 3</text>
+  </g>
+
+  <text class="dim" x="20" y="264">5 個目のお菓子を取った瞬間は「取った音」と「増えた音」が同時に鳴る。</text>
+  <text class="dim" x="20" y="282">同じチャンネルに入れると、あとから鳴らしたほうが前の音を打ち消してしまう。</text>
+</svg>
+</div>
+<figcaption>BGM は ch0・ch1 を使うので、効果音は ch2・ch3 にまわす</figcaption>
+</figure>
+
+<div class="note">
+  <b>なぜ効果音を 2 本に分けるのか</b>
+  <b>5 個目のお菓子を取った瞬間</b>を考えてください。
+  「取った音」と「お化けが増えた音」が<b>同じフレームで鳴ります</b>。
+  1 本にまとめると、<b>あとに書いたほうが前の音を消してしまいます</b>。
+  いちばん伝えたい「増えた」が、いちばん消えやすい場所にあるわけです。
+</div>
+
+<h3>1-3. 鳴らす場所は、もう作ってある</h3>
+
+<p>
+「音を鳴らすタイミング」は、<b>すでにコードの中にあります</b>。
+スコアを増やしている行、お化けを足している行、
+ゲームオーバーにしている行——<b>そのすぐ隣に 1 行足すだけ</b>です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="ゲームの流れの中で、どのタイミングでどの音が鳴るかを示した図">
+  <style>
+    .cd  { fill:#e8f0ff; font-size:11.5px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+    .snd { font-size:11.5px; }
+  </style>
+
+  <line x1="150" y1="30" x2="150" y2="220" stroke="#3b4166" stroke-width="1.5"/>
+
+  <g>
+    <circle cx="150" cy="52" r="6" fill="#2ee6a8"/>
+    <text class="dim" x="34" y="50">ゲーム開始</text>
+    <text class="cd" x="34" y="68" fill="#9aa4c4" font-size="10.5">start_game()</text>
+    <text class="cd" x="176" y="56" fill="#2ee6a8">pyxel.playm(MUSIC_BGM, loop=True)</text>
+    <text class="snd" x="500" y="56" fill="#2ee6a8">BGM が流れはじめる</text>
+  </g>
+
+  <g>
+    <circle cx="150" cy="98" r="6" fill="#45b0e8"/>
+    <text class="dim" x="34" y="102">お菓子を取った</text>
+    <text class="cd" x="176" y="102" fill="#45b0e8">pyxel.play(CH_SE, SOUND_CANDY)</text>
+    <text class="snd" x="500" y="102" fill="#45b0e8">ピロン</text>
+  </g>
+
+  <g>
+    <circle cx="150" cy="144" r="6" fill="#ffcc44"/>
+    <text class="dim" x="34" y="148">5 個目 → 1 体増える</text>
+    <text class="cd" x="176" y="148" fill="#ffcc44">pyxel.play(CH_EVENT, SOUND_GHOST)</text>
+    <text class="snd" x="500" y="148" fill="#ffcc44">↑ と同時に鳴る</text>
+  </g>
+
+  <g>
+    <circle cx="150" cy="190" r="6" fill="#ff6b97"/>
+    <text class="dim" x="34" y="194">捕まった</text>
+    <text class="cd" x="176" y="194" fill="#ff6b97">pyxel.stop()</text>
+    <text class="cd" x="176" y="212" fill="#ff6b97">pyxel.play(CH_SE, SOUND_CAUGHT)</text>
+    <text class="snd" x="500" y="194" fill="#ff6b97">BGM を止めてから</text>
+    <text class="snd" x="500" y="212" fill="#ff6b97">下降音を鳴らす</text>
+  </g>
+</svg>
+</div>
+<figcaption>できごとの隣に 1 行ずつ。順番だけ気をつける（止めてから鳴らす）</figcaption>
+</figure>
+
+<div class="warn">
+  <b><code>stop()</code> を先、<code>play()</code> をあとに書きます</b>
+  <code>pyxel.stop()</code> は<b>引数なしだと 4 本すべて止めます</b>。
+  逆に書くと、<b>せっかく鳴らした「捕まった音」まで消えてしまいます</b>。
+</div>
+
+<h3>1-4. 音の長さは <code>speed</code> で決まる</h3>
+
+<p>
+リソースエディタの <code>SPEED</code> は<b>1 音の長さ</b>を決めます。実測すると
+<b>1 音の秒数 ＝ <code>SPEED</code> ÷ 120</b> でした。
+</p>
+
+<table>
+  <thead><tr><th><code>SPEED</code></th><th>1 音の長さ</th><th>4 音ならぶと</th><th>用途</th></tr></thead>
+  <tbody>
+    <tr><td>8</td><td>0.067 秒</td><td><b>0.27 秒</b></td><td>効果音（テンポよく鳴る）</td></tr>
+    <tr><td>12</td><td>0.100 秒</td><td>0.40 秒</td><td>効果音（少し重い）</td></tr>
+    <tr><td>20</td><td>0.167 秒</td><td>0.67 秒</td><td>BGM のメロディ</td></tr>
+    <tr><td>40</td><td>0.333 秒</td><td>1.33 秒</td><td>BGM のベース</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>効果音は「短く」が鉄則です</b>
+  お菓子は<b>1 秒に何度も取ることがあります</b>。
+  効果音が 1 秒もあると、次の音が前の音を打ち消して<b>ブツブツ切れて聞こえます</b>。
+  <b>0.3 秒より短く</b>作っておくと、連続して取っても気持ちよく鳴ります。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.play(ch, snd)</code></td><td>チャンネル <code>ch</code> で音 <code>snd</code> を 1 回鳴らす</td></tr>
+    <tr><td><code>pyxel.playm(msc, loop=True)</code></td><td>ミュージック <code>msc</code> をくり返し鳴らす</td></tr>
+    <tr><td><code>pyxel.stop()</code></td><td>すべてのチャンネルを止める（<code>stop(2)</code> なら 1 本だけ）</td></tr>
+    <tr><td>リソースエディタの SOUND</td><td>効果音と BGM のパートを作る</td></tr>
+    <tr><td>リソースエディタの MUSIC</td><td>SOUND を組み合わせて BGM にする</td></tr>
+  </tbody>
+</table>
+<h2>3. 手順</h2>
+
+<h3>3-1. リソースエディタを開く</h3>
+
+<pre><code>pyxel edit step1/candy_hunt.pyxres</code></pre>
+
+<p>
+<code>Alt</code>＋<code>←</code>／<code>→</code> でタブを移動して、<b>SOUND</b> の画面にします。
+操作のおさらいです。
+</p>
+
+<table>
+  <thead><tr><th>キー</th><th>できること</th></tr></thead>
+  <tbody>
+    <tr><td><code>Z S X D C V G B H N J M</code></td><td>下の段の鍵盤（ド〜シ）</td></tr>
+    <tr><td><code>Q 2 W 3 E R 5 T 6 Y 7 U</code></td><td>上の段の鍵盤（1 オクターブ上）</td></tr>
+    <tr><td><code>A</code></td><td>休符</td></tr>
+    <tr><td><code>PageUp</code> / <code>PageDown</code></td><td>オクターブを上げ下げ</td></tr>
+    <tr><td><code>SPACE</code></td><td>再生して確かめる</td></tr>
+    <tr><td><code>Ctrl</code>＋<code>S</code></td><td>保存</td></tr>
+  </tbody>
+</table>
+
+<h3>3-2. 効果音を 3 つ作る</h3>
+
+<p>
+<b>SOUND 0・1・2</b> に、それぞれ次の内容を入れます。
+</p>
+
+<table>
+  <thead>
+    <tr><th>番号</th><th>音符</th><th>TONE</th><th>VOLUME</th><th>EFFECT</th><th>SPEED</th><th>長さ</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>0</b><br>お菓子</td>
+      <td><code>C3 E3 G3 C4</code><br>ドミソド（上がる）</td>
+      <td><code>P</code></td><td><code>6</code></td><td><code>N</code></td><td><code>8</code></td>
+      <td>0.27 秒</td>
+    </tr>
+    <tr>
+      <td><b>1</b><br>捕まった</td>
+      <td><code>G2 E2 C2 A1</code><br>ソミドラ（下がる）</td>
+      <td><code>S</code></td><td><code>7</code></td><td><code>F</code></td><td><code>12</code></td>
+      <td>0.40 秒</td>
+    </tr>
+    <tr>
+      <td><b>2</b><br>お化け出現</td>
+      <td><code>C3 G3</code><br>ドソ（2 音だけ）</td>
+      <td><code>P</code></td><td><code>6</code></td><td><code>N</code></td><td><code>10</code></td>
+      <td>0.17 秒</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>TONE（音色）の 4 種類</b>
+  <code>T</code> = 三角波（やわらかい・ベース向き）／
+  <code>S</code> = 矩形波（はっきりした電子音）／
+  <code>P</code> = パルス（軽くて明るい・効果音向き）／
+  <code>N</code> = ノイズ（ザーッという音・打撃や爆発向き）。<br>
+  <b>EFFECT</b> は <code>N</code>＝なし、<code>S</code>＝スライド、
+  <code>V</code>＝ビブラート、<code>F</code>＝フェードアウト。
+  捕まった音に <code>F</code> を入れているのは、<b>音の終わりを自然に消す</b>ためです。
+</div>
+
+<div class="note">
+  <b>音の高さは「上がる／下がる」で意味が伝わります</b>
+  <b>上がる音＝よいこと</b>、<b>下がる音＝わるいこと</b>——これはほぼ世界共通の感覚です。
+  お菓子はドミソド（上がる）、捕まったのはソミドラ（下がる）にしてあるのは、
+  <b>音を聞いただけでどちらか分かる</b>ようにするためです。
+</div>
+
+<h3>3-3. BGM のパートを 3 つ作る</h3>
+
+<p>
+<b>SOUND 3・4</b> がメロディ（前半・後半）、<b>SOUND 5</b> がベースです。
+イ短調で、少しあやしい雰囲気にしています。
+</p>
+
+<table>
+  <thead><tr><th>番号</th><th>音符（16 音／8 音）</th><th>TONE</th><th>VOL</th><th>EFFECT</th><th>SPEED</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>3</b><br>メロディ前半</td>
+      <td><code>A3 C4 E4 C4 A3 C4 E4 C4</code><br><code>F3 A3 C4 A3 F3 A3 C4 A3</code></td>
+      <td><code>T</code></td><td><code>5</code></td><td><code>N</code></td><td><code>20</code></td>
+    </tr>
+    <tr>
+      <td><b>4</b><br>メロディ後半</td>
+      <td><code>G3 B3 D4 B3 G3 B3 D4 B3</code><br><code>A3 C4 E4 C4 A3 E4 C4 A3</code></td>
+      <td><code>T</code></td><td><code>5</code></td><td><code>N</code></td><td><code>20</code></td>
+    </tr>
+    <tr>
+      <td><b>5</b><br>ベース</td>
+      <td><code>A1 A1 F1 F1 G1 G1 A1 A1</code></td>
+      <td><code>S</code></td><td><code>3</code></td><td><code>N</code></td><td><code>40</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>長さがそろうように <code>SPEED</code> を選んであります</b>
+  メロディは 16 音 × <code>20</code> ÷ 120 ＝ <b>2.67 秒</b>が 2 つで <b>5.33 秒</b>。
+  ベースは 8 音 × <code>40</code> ÷ 120 ＝ <b>2.67 秒</b>です。<br>
+  <b>短いほうは自動でくり返される</b>ので、ベースは 2 周してちょうど合います。
+  ベースを 16 音ぶん打ち込む必要はありません。
+</div>
+
+<h3>3-4. MUSIC 0 に組み立てる</h3>
+
+<p>
+<b>MUSIC</b> タブに移り、<b>MUSIC 0</b> に次のように入れます。
+</p>
+
+<table>
+  <thead><tr><th>チャンネル</th><th>入れる SOUND 番号</th></tr></thead>
+  <tbody>
+    <tr><td>ch 0</td><td><code>3</code>, <code>4</code>（前半 → 後半の順）</td></tr>
+    <tr><td>ch 1</td><td><code>5</code></td></tr>
+    <tr><td>ch 2</td><td>空のまま</td></tr>
+    <tr><td>ch 3</td><td>空のまま</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>ch2・ch3 を空にしておくのが大事です。</b>
+ここを埋めると、効果音のチャンネルと取り合いになります。
+<code>L</code> キーでループ再生して、つながりを確かめてください。
+確認できたら <code>Ctrl</code>＋<code>S</code> で保存します。
+</p>
+
+<h3>3-5. 定数を足す</h3>
+
+<p>
+<code>CORNERS</code> の<b>上</b>に置きます。
+</p>
+
+<pre><code>SOUND_CANDY = 0         # お菓子を取った音
+SOUND_CAUGHT = 1        # 捕まった音
+SOUND_GHOST = 2         # お化けが増えた音
+MUSIC_BGM = 0           # BGM（チャンネル 0 と 1 を使う）
+
+CH_SE = 2               # 効果音を鳴らすチャンネル
+CH_EVENT = 3            # お化けが増えた音だけ別のチャンネルにする</code></pre>
+
+<h3>3-6. <code>start_game()</code> にまとめる</h3>
+
+<p>
+BGM を鳴らしはじめる場所は<b>「タイトルから始めるとき」と「やり直すとき」の 2 か所</b>です。
+どちらも<b>やることは同じ</b>なので、1 つのメソッドにまとめます。
+</p>
+
+<pre><code>    def start_game(self):
+        """ゲームを始める。中身を初期化して BGM を鳴らしはじめる"""
+        self.reset_game()
+        self.scene = SCENE_PLAY
+        pyxel.playm(MUSIC_BGM, loop=True)</code></pre>
+
+<p>
+そして呼び出し側を、2 か所とも <b>1 行に減らします</b>。
+</p>
+
+<pre><code>    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()</code></pre>
+
+<pre><code>    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でもう一度始める"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()</code></pre>
+
+<h3>3-7. 音を鳴らす行を足す（3 か所）</h3>
+
+<pre><code>    def check_candy(self):
+        """お菓子にしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(...):
+            self.score += 1
+            pyxel.play(CH_SE, SOUND_CANDY)              # 取った音
+            self.place_candy()
+
+            if (self.score % GHOST_SPAWN_SCORE == 0
+                and len(self.ghosts) &lt; len(GHOST_MOVE_EVERY)):
+                self.add_ghost()
+                pyxel.play(CH_EVENT, SOUND_GHOST)       # 増えた音</code></pre>
+
+<pre><code>    def check_ghosts(self):
+        """どれか 1 体にでも捕まったらゲームオーバーにする"""
+        for ghost in self.ghosts:
+            if is_hit(...):
+                self.scene = SCENE_GAMEOVER
+                self.gameover_frame = pyxel.frame_count
+                pyxel.stop()                            # BGM を止めてから
+                pyxel.play(CH_SE, SOUND_CAUGHT)         # 捕まった音
+                return</code></pre>
+
+<h2>4. できあがりのコード</h2>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ9：効果音と BGM をつける
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_MOVE_EVERY = [2, 4, 1, 3, 5]     # 出てくる順に「何フレームに 1 回動くか」
+GHOST_SPAWN_SCORE = 5   # お菓子を何個取るごとに 1 体増やすか
+
+HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
+SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+SCENE_TITLE = 2         # タイトル画面
+
+GAMEOVER_WAIT = 15      # 捕まってから文字を出すまでのフレーム数（0.5秒）
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+SOUND_CANDY = 0         # お菓子を取った音
+SOUND_CAUGHT = 1        # 捕まった音
+SOUND_GHOST = 2         # お化けが増えた音
+MUSIC_BGM = 0           # BGM（チャンネル 0 と 1 を使う）
+
+CH_SE = 2               # 効果音を鳴らすチャンネル
+CH_EVENT = 3            # お化けが増えた音だけ別のチャンネルにする
+
+CORNERS = [             # お化けが出てくる 4 隅
+    (0, 0),
+    (SCREEN_WIDTH - GHOST_SIZE, 0),
+    (0, SCREEN_HEIGHT - GHOST_SIZE),
+    (SCREEN_WIDTH - GHOST_SIZE, SCREEN_HEIGHT - GHOST_SIZE),
+]
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+def draw_center(s, y, col):
+    """文字列を画面の横中央に描く"""
+    x = (SCREEN_WIDTH - len(s) * 4) // 2     # 4 は1文字分のフォント幅
+    pyxel.text(x, y, s, col)
+
+def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+def far_corner(x, y):
+    """(x, y) からいちばん遠い隅を返す"""
+    best_x, best_y = CORNERS[0]
+    best_distance = -1
+
+    for corner_x, corner_y in CORNERS:
+        distance = abs(corner_x - x) + abs(corner_y -y)
+        if distance &gt; best_distance:
+            best_x, best_y = corner_x, corner_y
+            best_distance = distance
+
+    return best_x, best_y
+
+class Ghost:
+    """お化け 1 体ぶんの場所と動き"""
+
+    def __init__(self, x, y, move_every):
+        """1 体作るときに、置く場所と動く間隔を決める"""
+        self.x = x
+        self.y = y
+        self.move_every = move_every
+        self.born_frame = pyxel.frame_count     # 生まれた時刻を覚えておく
+
+    def move(self, target_x, target_y):
+        """自分の番のフレームだけ、目標へ 1 ドット近づく"""
+        if pyxel.frame_count % self.move_every != 0:
+            return
+
+        if self.x &lt; target_x:
+            self.x += 1
+        elif self.x &gt; target_x:
+            self.x -= 1
+
+        if self.y &lt; target_y:
+            self.y += 1
+        elif self.y &gt; target_y:
+            self.y -= 1
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.scene = SCENE_TITLE
+        self.reset_game()
+
+        pyxel.run(self.update, self.draw)
+
+    def reset_game(self):
+        """ゲームの中身を、最初の状態に戻す"""
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.score = 0
+        self.ghosts = []
+        self.add_ghost()
+        self.place_candy()
+
+    def add_ghost(self):
+        """男の子からいちばん遠い隅に、お化けを 1 体足す"""
+        move_every = GHOST_MOVE_EVERY[len(self.ghosts)]
+        x, y = far_corner(self.boy_x, self.boy_y)
+        self.ghosts.append(Ghost(x, y, move_every))
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_PLAY:
+            self.update_play()
+        else:
+            self.update_gameover()
+
+    def start_game(self):
+        """ゲームを始める。中身を初期化して BGM を鳴らしはじめる"""
+        self.reset_game()
+        self.scene = SCENE_PLAY
+        pyxel.playm(MUSIC_BGM, loop=True)
+
+    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()
+
+    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でゲームを再び始める"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()
+
+    def update_play(self):
+        """あそんでいる間の更新"""
+        self.move_boy()
+        self.move_ghosts()
+        self.check_candy()
+        self.check_ghosts()
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        # 画面の外へ出さない
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def move_ghosts(self):
+        """お化けを男の子に近づける"""
+        for ghost in self.ghosts:
+            ghost.move(self.boy_x, self.boy_y)
+
+    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break
+
+    def check_candy(self):
+        """お菓子がしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
+            self.score += 1
+            pyxel.play(CH_SE, SOUND_CANDY)              # 取った音
+            self.place_candy()
+
+            if (self.score % GHOST_SPAWN_SCORE == 0
+                and len(self.ghosts) &lt; len(GHOST_MOVE_EVERY)):
+                self.add_ghost()
+                pyxel.play(CH_EVENT, SOUND_GHOST)       # 増えた音
+
+    def check_ghosts(self):
+        """どれか 1 体にでも捕まったらゲームオーバーにする"""
+        for ghost in self.ghosts:
+            if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                    ghost.x + HIT_OFFSET, ghost.y + HIT_OFFSET, HIT_SIZE):
+                self.scene = SCENE_GAMEOVER
+                self.gameover_frame = pyxel.frame_count     # 捕まった時刻を覚えておく
+                pyxel.stop()                                # BGM を止めてから
+                pyxel.play(CH_SE, SOUND_CAUGHT)             # 捕まった音
+                return
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+            return
+        
+        self.draw_play()
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
+
+        if is_blink_on():
+            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)
+
+    def draw_play(self):
+        """あそんでいる画面を描く"""
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+
+        for ghost in self.ghosts:                               # お化けは何体でも
+            if pyxel.frame_count - ghost.born_frame &lt; 30 and not is_blink_on():
+                continue                # 出てきて 1 秒は、点滅の消える側で描かない
+
+            pyxel.blt(ghost.x, ghost.y, 0, 8, 0,
+                      GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)
+            
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)               # スコア
+
+    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        elapsed = pyxel.frame_count - self.gameover_frame       # 捕まってからの経過
+        if elapsed &lt; GAMEOVER_WAIT:
+            return
+        
+        if elapsed % BLINK_CYCLE &lt; BLINK_ON:
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+            draw_center("PRESS ENTER TO RETRY", 80, pyxel.COLOR_GRAY)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+
+App()</code></pre>
+
+<div class="note">
+  <b>動かして確かめること</b>
+  <ul>
+    <li>タイトル画面では<b>まだ BGM が鳴らない</b></li>
+    <li>Enter を押すと <b>BGM が流れはじめ、ずっとくり返す</b></li>
+    <li>お菓子を取ると<b>短い上がる音</b>。連続で取っても切れない</li>
+    <li><b>5 個目</b>のときは、取った音と<b>増えた音が同時に</b>鳴る</li>
+    <li>捕まると <b>BGM が止まって</b>、下がる音が鳴る</li>
+    <li>Enter でやり直すと、<b>BGM が最初から</b>流れる</li>
+  </ul>
+</div>
+<h2>5. コードの解説</h2>
+
+<h3><code>start_game()</code> に切り出した理由</h3>
+
+<p>
+これまでは <code>update_title()</code> と <code>update_gameover()</code> に
+<b>同じ 2 行</b>が並んでいました。そこに BGM の行が加わると<b>3 行の重複</b>になります。
+</p>
+
+<pre><code>            self.reset_game()
+            self.scene = SCENE_PLAY
+            pyxel.playm(MUSIC_BGM, loop=True)       # ← 2 か所に同じものが並ぶ</code></pre>
+
+<p>
+<b>「同じことが 2 か所に出たらまとめる」</b>——フェーズ 4 で定数について決めた基準を、
+今度は<b>処理に対して</b>使っています。
+</p>
+
+<div class="term">
+  <b>まとめると、忘れなくなります</b>
+  もし片方だけに <code>playm()</code> を書き忘れると、
+  <b>「1 回目は BGM が鳴るのに、2 回目は無音」</b>という、
+  原因の見えにくい不具合になります。
+  <b>1 か所にまとめてしまえば、書き忘れようがありません。</b>
+</div>
+
+<h3><code>loop=True</code> を忘れると 1 回で終わる</h3>
+
+<pre><code>        pyxel.playm(MUSIC_BGM, loop=True)</code></pre>
+
+<p>
+<code>loop=True</code> がないと、<b>5.33 秒で BGM が止まって、そのまま無音</b>になります。
+効果音の <code>play()</code> にも同じ引数がありますが、
+効果音は 1 回鳴れば十分なので付けません。
+</p>
+
+<h3><code>stop()</code> の引数</h3>
+
+<table>
+  <thead><tr><th>書き方</th><th>止まる範囲</th><th>使いどころ</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.stop()</code></td><td><b>4 本すべて</b></td><td>ゲームオーバー（BGM を全部止める）</td></tr>
+    <tr><td><code>pyxel.stop(2)</code></td><td>ch2 だけ</td><td>効果音だけ止めたいとき</td></tr>
+  </tbody>
+</table>
+
+<p>
+ゲームオーバーでは <code>pyxel.stop()</code> を使っています。
+BGM は ch0 と ch1 の<b>2 本</b>を使っているので、
+<code>stop(0)</code> だけではベースが鳴り続けてしまうからです。
+</p>
+
+<h3>効果音を鳴らす場所は「変化させている行」の隣</h3>
+
+<pre><code>            self.score += 1
+            pyxel.play(CH_SE, SOUND_CANDY)      # ← すぐ隣に置く</code></pre>
+
+<p>
+<code>update()</code> のどこかで「スコアが増えていたら鳴らす」と書こうとすると、
+<b>前のフレームのスコアを覚えておく</b>必要が出てきます。
+<b>変化を起こしている場所で鳴らせば、その手間がまるごといりません。</b>
+備忘録の<a href="../memo/#once-on-change">「1 回だけ処理する書き方」</a>と同じ考え方です。
+</p>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<h3>エディタを開かずに、その場で音を試す</h3>
+
+<p>
+Pyxel は <code>play()</code> に<b>音符を文字で書いた文字列（MML）</b>を渡せます。
+<b>リソースエディタを開かずに、コードだけで音を試せます</b>。
+</p>
+
+<pre><code>        # 番号のかわりに、音符を直接書ける
+        pyxel.play(CH_SE, "T120 @2 O3 L16 C E G &gt;C")</code></pre>
+
+<table>
+  <thead><tr><th>書き方</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>T120</code></td><td>テンポ</td></tr>
+    <tr><td><code>@2</code></td><td>音色（0=三角 1=矩形 2=パルス 3=ノイズ）</td></tr>
+    <tr><td><code>O3</code></td><td>オクターブ</td></tr>
+    <tr><td><code>L16</code></td><td>音の長さ（16 分音符）</td></tr>
+    <tr><td><code>C D E …</code></td><td>音符。<code>R</code> は休符</td></tr>
+    <tr><td><code>&gt;</code> / <code>&lt;</code></td><td>オクターブを 1 つ上げる／下げる</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>気に入った音が見つかったら、同じ内容をエディタに打ち込みます。</b>
+この学習プロジェクトでは<b>音は <code>.pyxres</code> に持つ</b>方針なので、
+MML は<b>試すための道具</b>として使うのがおすすめです。
+</p>
+
+<div class="warn">
+  <b><code>mml()</code> を呼んだ音は「MML モード」から戻らなくなります</b>
+  <code>pyxel.sounds[0].mml("…")</code> を一度呼ぶと、そのあと
+  <code>pyxel.sounds[0].set("…")</code> を呼んでも<b>無視されます</b>（実測で確認）。
+  もとに戻すには<b>引数なしで <code>mml()</code> を呼びます</b>。
+  <pre><code>pyxel.sounds[0].mml()       # ← MML モードを抜ける</code></pre>
+  <code>pyxel.play(ch, "…")</code> のように<b>その場で文字列を渡す</b>ぶんには、
+  この問題は起きません。
+</div>
+
+<h3>取るたびに音を少し高くする</h3>
+
+<p>
+連続して取ったときに<b>音がだんだん上がる</b>と、勢いが出ます。
+MML なら 1 行でできます。
+</p>
+
+<pre><code>            self.score += 1
+            オクターブ = 3 + min(self.score // 10, 2)          # 3 → 4 → 5
+            pyxel.play(CH_SE, f"T120 @2 O{オクターブ} L16 C E G &gt;C")</code></pre>
+
+<p>
+<code>min(…, 2)</code> で頭打ちにしているのは、<b>上がりすぎて聞こえなくなるのを防ぐ</b>ためです。
+</p>
+
+<h3>ゲームオーバーの music を別に作る</h3>
+
+<p>
+捕まったときに<b>短いジングル</b>（数秒の曲）を鳴らすと、ぐっとゲームらしくなります。
+<b>MUSIC 1</b> を作って、<code>playm</code> で鳴らします。
+</p>
+
+<pre><code>                pyxel.stop()
+                pyxel.playm(MUSIC_GAMEOVER)         # loop は付けない（1 回だけ）</code></pre>
+
+<div class="term">
+  <b>ジングルは <code>loop=True</code> を付けません</b>
+  ゲームオーバー画面でずっと同じ曲がくり返されると、うるさく感じます。
+  <b>1 回鳴って終わる</b>のがふつうです。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>まったく音が鳴らない</td>
+      <td><code>.pyxres</code> を保存しましたか（<code>Ctrl</code>＋<code>S</code>）。
+      エディタで鳴っていても、保存しないとゲームには入りません</td>
+    </tr>
+    <tr>
+      <td>BGM が 5 秒ほどで止まる</td>
+      <td><code>playm</code> の <code>loop=True</code> が抜けています</td>
+    </tr>
+    <tr>
+      <td>お菓子を取ると BGM が途切れる</td>
+      <td>効果音のチャンネルが <code>0</code> か <code>1</code> になっています。
+      <code>CH_SE = 2</code> を確認します</td>
+    </tr>
+    <tr>
+      <td>お化けが増えた音が聞こえない</td>
+      <td>お菓子の音と同じチャンネルにしていませんか。
+      <b>同じフレームで鳴る</b>ので、片方が消えます</td>
+    </tr>
+    <tr>
+      <td>捕まった音が鳴らない</td>
+      <td><code>pyxel.stop()</code> を <code>play()</code> の<b>あと</b>に書いています。
+      止めてから鳴らします</td>
+    </tr>
+    <tr>
+      <td>2 回目に BGM が鳴らない</td>
+      <td><code>update_gameover()</code> が <code>start_game()</code> を
+      呼んでいるか確認します</td>
+    </tr>
+    <tr>
+      <td>お菓子を連続で取ると音がブツブツ切れる</td>
+      <td>効果音が長すぎます。<code>SPEED</code> を下げて
+      <b>0.3 秒より短く</b>します</td>
+    </tr>
+    <tr>
+      <td>BGM のメロディとベースがずれていく</td>
+      <td>長さがそろっていません。
+      <b>音数 × SPEED</b> が整数倍の関係になるようにします</td>
+    </tr>
+    <tr>
+      <td>Web に公開したら音が鳴らない</td>
+      <td>ブラウザの仕様です。<b>画面をクリックするまで音が出ません</b>。
+      フェーズ 10 で扱います</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+これで<b>step1 のゲームは完成</b>です。
+残るフェーズ 10 は<b>パッケージ化して Web で公開</b>——
+step0 の Star Voyager でやった手順そのままなので、復習になります。
+</p>
+
+<pre><code>pyxel package step1 step1/candy_hunt.py
+pyxel app2html step1.pyxapp</code></pre>
+
+<p>
+できた HTML を <code>docs/site/step1/</code> に置けば公開されます。
+<b>Web 版は起動時に CLICK TO START が出る</b>ことと、
+<b>全画面ボタンを足し直す</b>必要があることだけ、フェーズ 10 で確認します。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
