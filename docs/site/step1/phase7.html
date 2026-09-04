@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ7：タイトル画面ともう一度あそぶ ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 7 </span>タイトル画面ともう一度あそぶ</h1>
+  <p>画面をもう 1 つ増やし、「初期状態へ戻す」を関数にまとめる</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 7</p>
+
+<h2>ゴール</h2>
+
+<p>
+タイトル画面を足して<b>3 画面</b>にし、<b>何度でもあそべる</b>ようにします。
+これで step1 の<b>ゲームとしての形が完成</b>します。
+残るフェーズ 8〜10 は、お化けを増やす・音をつける・公開する、という上積みです。
+</p>
+
+<p>
+画面の切りかえ自体は<b>フェーズ 6 と同じ形をもう 1 本増やすだけ</b>です。
+新しいのは<b>「やり直すときに、変数を最初の状態へ戻す」</b>という話のほうです。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 画面が 3 つになっても、やることは同じ</h3>
+
+<p>
+<code>scene</code> に入る値が 1 つ増え、<code>update()</code> と <code>draw()</code> の
+枝が 1 本増えるだけです。フェーズ 6 で
+<b>「値そのものに意味はない」</b>と書いたとおり、番号を振り直す必要はありません。
+</p>
+
+<pre><code>SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</code></pre>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="タイトル・ゲーム・ゲームオーバーの 3 画面が、Enter キーと捕まったことをきっかけに循環する図">
+  <style>
+    .bx  { fill:#232840; stroke:#3b4166; }
+    .nm  { fill:#e8f0ff; font-size:14px; font-weight:bold; }
+    .cd  { fill:#9aa4c4; font-size:11px; font-family:Consolas,monospace; }
+    .ev  { fill:#ffcc44; font-size:12px; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+  </style>
+
+  <!-- タイトル -->
+  <rect class="bx" x="30" y="40" width="170" height="72" rx="6" stroke="#ffcc44"/>
+  <text class="nm" x="48" y="70">タイトル</text>
+  <text class="cd" x="48" y="92">SCENE_TITLE</text>
+
+  <!-- ゲーム -->
+  <rect class="bx" x="270" y="40" width="170" height="72" rx="6" stroke="#2ee6a8"/>
+  <text class="nm" x="288" y="70">ゲーム</text>
+  <text class="cd" x="288" y="92">SCENE_PLAY</text>
+
+  <!-- ゲームオーバー -->
+  <rect class="bx" x="510" y="40" width="170" height="72" rx="6" stroke="#ff6b97"/>
+  <text class="nm" x="528" y="70">ゲームオーバー</text>
+  <text class="cd" x="528" y="92">SCENE_GAMEOVER</text>
+
+  <!-- タイトル → ゲーム -->
+  <path d="M200 76 L262 76" stroke="#ffcc44" stroke-width="2" fill="none"/>
+  <path d="M262 76 l-9 -5 l0 10 z" fill="#ffcc44"/>
+  <text class="ev" x="196" y="30">Enter</text>
+  <text class="dim" x="196" y="130">reset_game() を呼ぶ</text>
+
+  <!-- ゲーム → ゲームオーバー -->
+  <path d="M440 76 L502 76" stroke="#ff6b97" stroke-width="2" fill="none"/>
+  <path d="M502 76 l-9 -5 l0 10 z" fill="#ff6b97"/>
+  <text class="ev" x="432" y="30" fill="#ff6b97">捕まった</text>
+  <text class="dim" x="432" y="130">gameover_frame を覚える</text>
+
+  <!-- ゲームオーバー → タイトル（下をまわる） -->
+  <path d="M595 120 L595 200 L115 200 L115 120"
+        stroke="#45b0e8" stroke-width="2" fill="none"/>
+  <path d="M115 120 l-5 9 l10 0 z" fill="#45b0e8"/>
+  <text class="ev" x="300" y="222" fill="#45b0e8">Enter（0.5 秒たってから）</text>
+
+  <rect x="30" y="246" width="650" height="42" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="dim" x="46" y="264">画面が増えても、update() と draw() が scene を見て振り分ける形は変わらない。</text>
+  <text class="dim" x="46" y="280">「もう一度あそぶ」は、タイトルへ戻してから、始めるときに中身を初期化する。</text>
+</svg>
+</div>
+<figcaption>3 つの画面が、Enter と「捕まった」をきっかけにひとまわりする</figcaption>
+</figure>
+
+<h3>1-2. 「やり直す」とは、変数を最初の値に戻すこと</h3>
+
+<p>
+2 回目をあそぶとき、<b>スコアが前回の 12 のまま</b>だったり、
+<b>お化けが男の子の目の前にいる</b>ままだったりしては困ります。
+</p>
+
+<p>
+「やり直し」に特別な機能はありません。<b>変数を最初の値に代入し直すだけ</b>です。
+そしてその「最初の値」は、すでに <code>__init__()</code> に書いてあります。
+</p>
+
+<h3>1-3. <code>__init__()</code> から、初期化だけを取り出す</h3>
+
+<p>
+いまの <code>__init__()</code> は、性質の違う 2 つの仕事をしています。
+</p>
+
+<table>
+  <thead><tr><th>仕事</th><th>いつやるか</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.init()</code> / <code>pyxel.load()</code> / <code>pyxel.run()</code></td>
+        <td><b>起動のとき 1 回だけ</b>。2 回目はない</td></tr>
+    <tr><td>男の子の位置・お化けの位置・スコア・お菓子</td>
+        <td><b>あそび始めるたび毎回</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+混ざっているので、後半だけを <code>reset_game()</code> という名前で取り出します。
+<b>やることが変わるわけではありません。</b>置き場所を変えて、
+<b>あとから呼び直せるようにする</b>だけです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 700 272" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="init は起動時に一度だけ動き、reset_game はゲームを始めるたびに動くことを時間軸で表した図">
+  <style>
+    .lb  { fill:#e8f0ff; font-size:12px; }
+    .cd  { fill:#e8f0ff; font-size:12px; font-family:Consolas,monospace; }
+    .dim { fill:#9aa4c4; font-size:11px; }
+  </style>
+
+  <text class="lb" x="20" y="24">時間 →</text>
+  <line x1="20" y1="40" x2="680" y2="40" stroke="#3b4166" stroke-width="1.5"/>
+
+  <g class="dim" text-anchor="middle">
+    <line x1="70"  y1="34" x2="70"  y2="46" stroke="#3b4166"/><text x="70"  y="64">起動</text>
+    <line x1="210" y1="34" x2="210" y2="46" stroke="#3b4166"/><text x="210" y="64">1 回目を始める</text>
+    <line x1="350" y1="34" x2="350" y2="46" stroke="#3b4166"/><text x="350" y="64">捕まる</text>
+    <line x1="490" y1="34" x2="490" y2="46" stroke="#3b4166"/><text x="490" y="64">タイトルへ</text>
+    <line x1="630" y1="34" x2="630" y2="46" stroke="#3b4166"/><text x="630" y="64">2 回目を始める</text>
+  </g>
+
+  <!-- __init__ の行 -->
+  <rect x="20" y="82" width="660" height="66" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="cd"  x="34"  y="104" fill="#45b0e8">__init__()</text>
+  <text class="dim" x="130" y="104">init / load / run　＝ 画面と素材の用意</text>
+  <line x1="34" y1="130" x2="666" y2="130" stroke="#232840" stroke-width="2"/>
+  <circle cx="70" cy="130" r="7" fill="#45b0e8"/>
+  <text class="dim" x="92" y="134">← ここでしか動かない（1 回だけ）</text>
+
+  <!-- reset_game の行 -->
+  <rect x="20" y="160" width="660" height="66" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="cd"  x="34"  y="182" fill="#2ee6a8">reset_game()</text>
+  <text class="dim" x="146" y="182">男の子・お化け・スコア・お菓子　＝ 中身の初期化</text>
+  <line x1="34" y1="208" x2="666" y2="208" stroke="#232840" stroke-width="2"/>
+  <circle cx="210" cy="208" r="7" fill="#2ee6a8"/>
+  <circle cx="630" cy="208" r="7" fill="#2ee6a8"/>
+  <text class="dim" x="232" y="212">← 始めるたびに動く（何回でも）</text>
+
+  <text class="dim" x="20" y="252">※ 起動直後にも 1 回呼んでおく。タイトル画面の裏で「置き場所」を作っておくため</text>
+</svg>
+</div>
+<figcaption><code>__init__()</code> は 1 回だけ、<code>reset_game()</code> は始めるたび</figcaption>
+</figure>
+
+<h3>1-4. <code>btnp()</code> を使う（<code>btn()</code> ではない）</h3>
+
+<p>
+フェーズ 2 で出てきた区別が、ここで効いてきます。
+</p>
+
+<table>
+  <thead><tr><th></th><th>意味</th><th>ここで使うと</th></tr></thead>
+  <tbody>
+    <tr><td><code>btn()</code></td><td>押されて<b>いる</b>（毎フレーム True）</td>
+        <td>Enter を押した指を離す前に、<b>タイトル → ゲーム → …と一気に進んでしまう</b></td></tr>
+    <tr><td><b><code>btnp()</code></b></td><td><b>押された瞬間</b>だけ True</td>
+        <td>1 回押したら 1 回だけ進む。<b>こちらを使います</b></td></tr>
+  </tbody>
+</table>
+
+<h3>1-5. 捕まった直後は、キーを受け付けない</h3>
+
+<p>
+逃げているときは矢印キーを連打しています。その勢いで Enter を押していると、
+<b>GAME OVER の文字を見る前にタイトルへ飛んでしまいます</b>。
+</p>
+
+<p>
+フェーズ 6 で入れた<b>「0.5 秒待ってから文字を出す」</b>のと同じ待ち時間を、
+<b>キーの受付にも使います</b>。文字が出ていない間は、押しても何も起きないようにします。
+</p>
+
+<div class="note">
+  <b>同じ数字が 2 か所に出たら、定数へ格上げ</b>
+  待ちフレーム数の <code>15</code> が、
+  <b>「文字を出す判定」と「キーを受け付ける判定」の 2 か所</b>に必要になりました。
+  フェーズ 4 で決めた基準どおり、<code>GAMEOVER_WAIT = 15</code> という名前を付けます。
+  点滅の <code>30</code> と <code>20</code> も、タイトルとゲームオーバーの 2 か所で使うので同じように格上げします。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<p>
+新しい API は <code>pyxel.btnp()</code> だけで、これもフェーズ 2 で一度出ています。
+</p>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.btnp()</code></td><td>キーが<b>押された瞬間</b>を拾う</td></tr>
+    <tr><td><code>pyxel.KEY_RETURN</code></td><td>Enter キー</td></tr>
+    <tr><td>メソッドの切り出し</td><td><code>reset_game()</code> — 初期化を呼び直せる形にする</td></tr>
+    <tr><td><code>if</code> / <code>elif</code> / <code>else</code></td><td>3 つの画面へ振り分ける</td></tr>
+    <tr><td>値を書かない <code>return</code></td><td>その先を実行せずに関数を抜ける（フェーズ 6 で登場）</td></tr>
+    <tr><td><code>pyxel.COLOR_YELLOW</code> / <code>COLOR_GRAY</code></td><td>色の番号 10 と 13</td></tr>
+  </tbody>
+</table>
+<h2>3. 手順</h2>
+
+<h3>3-1. 定数を足す</h3>
+
+<pre><code>SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+SCENE_TITLE = 2         # タイトル画面
+
+GAMEOVER_WAIT = 15      # 捕まってから文字を出すまでのフレーム数（0.5 秒）
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数</code></pre>
+
+<h3>3-2. 点滅の判定を関数にする</h3>
+
+<p>
+<code>draw_center()</code> の下に置きます。<b><code>class</code> の外</b>です。
+<code>self</code> を使わないので外に出せる——フェーズ 6 と同じ基準です。
+</p>
+
+<pre><code>def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON</code></pre>
+
+<h3>3-3. <code>__init__()</code> から初期化を取り出す</h3>
+
+<p>
+いまの <code>__init__()</code> の<b>まん中の 6 行</b>を、そのまま
+<code>reset_game()</code> へ移します。<b>中身は 1 文字も変えません。</b>
+</p>
+
+<pre><code>    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.scene = SCENE_TITLE        # ← 起動したらタイトルから
+        self.reset_game()
+
+        pyxel.run(self.update, self.draw)
+
+    def reset_game(self):
+        """ゲームの中身を、最初の状態に戻す"""
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.ghost_x = 0
+        self.ghost_y = 0
+        self.score = 0
+        self.place_candy()</code></pre>
+
+<h3>3-4. <code>update()</code> の枝を 3 本にする</h3>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_PLAY:
+            self.update_play()
+        else:
+            self.update_gameover()</code></pre>
+
+<h3>3-5. タイトルとゲームオーバーの操作を書く</h3>
+
+<pre><code>    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()
+            self.scene = SCENE_PLAY
+
+    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でタイトルへ戻る"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.scene = SCENE_TITLE</code></pre>
+
+<h3>3-6. <code>draw()</code> の枝を 3 本にする</h3>
+
+<p>
+タイトルは<b>盤面を描きません</b>。そこだけフェーズ 6 と形が変わります。
+</p>
+
+<pre><code>    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+            return
+
+        self.draw_play()
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
+
+        if is_blink_on():
+            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)</code></pre>
+
+<h3>3-7. ゲームオーバーに「次どうすればいいか」を出す</h3>
+
+<p>
+すでに書いてある <code>draw_gameover()</code> を、
+<b>定数を使う形</b>に直して、案内の 1 行を足します。
+</p>
+
+<pre><code>    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if is_blink_on():
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+        draw_center("PRESS ENTER", 80, pyxel.COLOR_GRAY)</code></pre>
+
+<div class="term">
+  <b>点滅させるのは 1 つだけにします</b>
+  <code>GAME OVER</code> は点滅、<code>SCORE</code> と <code>PRESS ENTER</code> は出しっぱなしです。
+  <b>いくつも点滅すると、どれを見ればいいのか分からなくなります</b>。
+  目立たせたいものを 1 つ選ぶ、というのが点滅の使い方です。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+ここまでを反映した全体です。<b>行が増えるより、置き場所が変わる</b>のが中心です。
+</p>
+
+<pre><code># candy_hunt.py
+# step1 フェーズ7：タイトル画面を足して、もう一度あそべるようにする
+
+import random
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+
+BOY_SIZE = 8            # 男の子の絵の大きさ（縦横とも 8 ドット）
+BOY_SPEED = 2           # 1 フレームで進むドット数
+
+CANDY_SIZE = 8          # お菓子の絵の大きさ
+
+GHOST_SIZE = 8          # お化けの絵の大きさ
+GHOST_SPEED = 1         # 1 フレームで進むドット数（男の子の半分）
+
+HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
+SCENE_PLAY = 0          # あそんでいる画面
+SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+SCENE_TITLE = 2         # タイトル画面
+
+GAMEOVER_WAIT = 15      # 捕まってから文字を出すまでのフレーム数（0.5 秒）
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+
+def is_hit(x1, y1, size1, x2, y2, size2):
+    """2 つの四角が重なっていれば True を返す"""
+    return (x1 &lt; x2 + size2 and x2 &lt; x1 + size1 and
+            y1 &lt; y2 + size2 and y2 &lt; y1 + size1)
+
+
+def draw_center(s, y, col):
+    """文字列を画面の横中央に描く"""
+    x = (SCREEN_WIDTH - len(s) * 4) // 2     # 4 は 1 文字分のフォント幅
+    pyxel.text(x, y, s, col)
+
+
+def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.load("candy_hunt.pyxres")
+
+        self.scene = SCENE_TITLE
+        self.reset_game()
+
+        pyxel.run(self.update, self.draw)
+
+    def reset_game(self):
+        """ゲームの中身を、最初の状態に戻す"""
+        self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
+        self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
+        self.ghost_x = 0
+        self.ghost_y = 0
+        self.score = 0
+        self.place_candy()
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_PLAY:
+            self.update_play()
+        else:
+            self.update_gameover()
+
+    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()
+            self.scene = SCENE_PLAY
+
+    def update_play(self):
+        """あそんでいる間の更新"""
+        self.move_boy()
+        self.move_ghost()
+        self.check_candy()
+        self.check_ghost()
+
+    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でタイトルへ戻る"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.scene = SCENE_TITLE
+
+    def move_boy(self):
+        """矢印キーで男の子を動かす"""
+        if pyxel.btn(pyxel.KEY_LEFT):
+            self.boy_x -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_RIGHT):
+            self.boy_x += BOY_SPEED
+        if pyxel.btn(pyxel.KEY_UP):
+            self.boy_y -= BOY_SPEED
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.boy_y += BOY_SPEED
+
+        self.boy_x = max(0, min(self.boy_x, SCREEN_WIDTH - BOY_SIZE))
+        self.boy_y = max(0, min(self.boy_y, SCREEN_HEIGHT - BOY_SIZE))
+
+    def move_ghost(self):
+        """お化けを男の子に近づける"""
+        if self.ghost_x &lt; self.boy_x:
+            self.ghost_x += GHOST_SPEED
+        elif self.ghost_x &gt; self.boy_x:
+            self.ghost_x -= GHOST_SPEED
+
+        if self.ghost_y &lt; self.boy_y:
+            self.ghost_y += GHOST_SPEED
+        elif self.ghost_y &gt; self.boy_y:
+            self.ghost_y -= GHOST_SPEED
+
+    def place_candy(self):
+        """男の子と重ならない場所へ、お菓子を置きなおす"""
+        while True:
+            self.candy_x = random.randint(0, SCREEN_WIDTH - CANDY_SIZE)
+            self.candy_y = random.randint(0, SCREEN_HEIGHT - CANDY_SIZE)
+            if not is_hit(self.boy_x, self.boy_y, BOY_SIZE,
+                          self.candy_x, self.candy_y, CANDY_SIZE):
+                break
+
+    def check_candy(self):
+        """お菓子にしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
+            self.score += 1
+            self.place_candy()
+
+    def check_ghost(self):
+        """お化けに捕まったらゲームオーバーにする"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.ghost_x + HIT_OFFSET, self.ghost_y + HIT_OFFSET, HIT_SIZE):
+            self.scene = SCENE_GAMEOVER
+            self.gameover_frame = pyxel.frame_count     # 捕まった時刻を覚えておく
+
+    def draw(self):
+        """フレーム毎の描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+            return
+
+        self.draw_play()
+
+        if self.scene == SCENE_GAMEOVER:
+            self.draw_gameover()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
+
+        if is_blink_on():
+            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)
+
+    def draw_play(self):
+        """あそんでいる画面を描く"""
+        pyxel.blt(self.candy_x, self.candy_y, 0, 16, 0,
+                  CANDY_SIZE, CANDY_SIZE, pyxel.COLOR_BLACK)    # お菓子
+        pyxel.blt(self.ghost_x, self.ghost_y, 0, 8, 0,
+                  GHOST_SIZE, GHOST_SIZE, pyxel.COLOR_BLACK)    # お化け
+        pyxel.blt(self.boy_x, self.boy_y, 0, 0, 0,
+                  BOY_SIZE, BOY_SIZE, pyxel.COLOR_BLACK)        # 男の子
+        pyxel.text(4, 4, f"SCORE {self.score}", pyxel.COLOR_WHITE)               # スコア
+
+    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:    # 0.5 秒は文字を出さない
+            return
+
+        if is_blink_on():
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+        draw_center("PRESS ENTER", 80, pyxel.COLOR_GRAY)
+
+
+App()</code></pre>
+
+<div class="note">
+  <b>動かして確かめること</b>
+  <ul>
+    <li>起動すると<b>タイトル画面</b>が出て、<code>PRESS ENTER</code> が点滅する</li>
+    <li>Enter でゲームが始まる。<b>Enter を押しっぱなしにしても勝手に進まない</b></li>
+    <li>捕まって 0.5 秒たつと GAME OVER・スコア・<code>PRESS ENTER</code> が出る</li>
+    <li>その<b>前に</b> Enter を押しても、タイトルへ飛ばない</li>
+    <li>タイトルから 2 回目を始めると、<b>スコアが 0 に戻り、お化けが左上から</b>出てくる</li>
+  </ul>
+</div>
+<h2>5. コードの解説</h2>
+
+<h3>起動直後にも <code>reset_game()</code> を呼ぶ理由</h3>
+
+<p>
+最初はタイトル画面なので、男の子もお菓子もまだ描きません。
+それでも <code>__init__()</code> で 1 回呼んでおきます。
+</p>
+
+<pre><code>        self.scene = SCENE_TITLE
+        self.reset_game()           # ← タイトルなのに呼ぶ</code></pre>
+
+<p>
+呼ばないと、<code>self.boy_x</code> などの変数が<b>まだ 1 度も作られていない</b>状態になります。
+Python では <b>代入したときに初めて変数ができる</b>ので、
+うっかりどこかで読もうとすると
+<code>AttributeError</code> になります。<b>置き場所を先に作っておく</b>ための 1 行です。
+</p>
+
+<div class="term">
+  <b><code>place_candy()</code> は男の子の位置を必要とします</b>
+  <code>reset_game()</code> の中で <code>place_candy()</code> を<b>最後に</b>呼んでいるのは、
+  お菓子を「男の子と重ならない場所」に置くために、
+  <b>先に男の子の位置が決まっていないといけない</b>からです。
+  順番を入れかえると、前回の位置を基準にしてしまいます。
+</div>
+
+<h3><code>draw()</code> の途中で <code>return</code> する</h3>
+
+<pre><code>        if self.scene == SCENE_TITLE:
+            self.draw_title()
+            return                  # ← ここで終わり。この下は実行されない
+
+        self.draw_play()</code></pre>
+
+<p>
+タイトルのときだけ「盤面を描かずに終わる」ので、<code>return</code> で抜けています。
+<code>else</code> を使って下をまるごと囲んでも同じ動きになりますが、
+<b>インデントが 1 段深くなる</b>ぶん読みにくくなります。
+</p>
+
+<p>
+<b>「例外的なケースを先に片づけて、あとは本筋だけ書く」</b>——
+これは <code>return</code> のよくある使い方で、
+フェーズ 6 の <code>draw_gameover()</code> でも同じ形を使いました。
+</p>
+
+<h3><code>else</code> にしてよい場所、いけない場所</h3>
+
+<p>
+<code>update()</code> の 3 本目は <code>else</code> で受けています。
+</p>
+
+<pre><code>        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_PLAY:
+            self.update_play()
+        else:                          # ＝ SCENE_GAMEOVER のとき
+            self.update_gameover()</code></pre>
+
+<p>
+<code>scene</code> には<b>3 つの値しか入らない</b>と分かっているので、
+残りは 1 つに決まります。フェーズ 5 の <code>move_ghost()</code> で
+<code>else</code> が<b>使えなかった</b>のとは事情が違います。あちらは
+「小さい・大きい・<b>等しい</b>」の 3 通りがあり、
+<code>else</code> にすると「等しい」が紛れこんでしまうからでした。
+</p>
+
+<div class="note">
+  <b>どちらでもよいときは、読みやすいほうで</b>
+  <code>elif self.scene == SCENE_GAMEOVER:</code> と書いてもかまいません。
+  <b>3 つ並べたほうが対称に見えて分かりやすい</b>と感じるなら、そちらでも正解です。
+</div>
+
+<h3>待ち時間が、文字とキーの両方に効いている</h3>
+
+<p>
+同じ <code>GAMEOVER_WAIT</code> を、<b>描くほう</b>と<b>受け付けるほう</b>の 2 か所で見ています。
+</p>
+
+<table>
+  <thead><tr><th>場所</th><th>していること</th></tr></thead>
+  <tbody>
+    <tr><td><code>draw_gameover()</code></td><td>まだ文字を<b>出さない</b></td></tr>
+    <tr><td><code>update_gameover()</code></td><td>まだ Enter を<b>受け付けない</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+この 2 つがそろっていることが大事です。
+<b>「見えていないものは押せない」</b>——
+画面に出ていない案内を押せてしまうと、プレイヤーは
+「何が起きたのか分からないうちに画面が変わった」と感じます。
+</p>
+
+<h2>6. もう一歩（やらなくても大丈夫）</h2>
+
+<h3>点滅の「間」を毎回そろえる</h3>
+
+<p>
+いまの点滅は <code>pyxel.frame_count</code> をそのまま見ているので、
+<b>捕まったタイミングによって、文字が出るまでの間がずれます</b>。
+実際に測ると <b>0.50 秒のときも 0.83 秒のとき</b>もあります
+（待ちの 0.5 秒が明けた瞬間、たまたま点滅の「消えている側」だと、そのぶん延びるため）。
+</p>
+
+<p>
+毎回きっちりそろえたいなら、<b>捕まった時刻からの経過</b>で点滅させます。
+</p>
+
+<pre><code>    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        elapsed = pyxel.frame_count - self.gameover_frame       # 捕まってからの経過
+        if elapsed &lt; GAMEOVER_WAIT:
+            return
+
+        if elapsed % BLINK_CYCLE &lt; BLINK_ON:                    # 経過を基準に点滅
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+        draw_center("PRESS ENTER", 80, pyxel.COLOR_GRAY)</code></pre>
+
+<p>
+<code>elapsed</code> という変数に入れておくと、<b>同じ引き算を 2 回書かずに済み</b>、
+式の意味も読み取りやすくなります。
+</p>
+
+<div class="term">
+  <b>どちらが良いというものではありません</b>
+  全体で点滅がそろっているほうが気持ちよい、という考え方もあります。
+  <b>遊んでみて、しっくりくるほうを選んでください。</b>
+</div>
+
+<h3>ハイスコアを覚えておく</h3>
+
+<p>
+<code>reset_game()</code> で<b>消してはいけない</b>値、という例になります。
+</p>
+
+<pre><code>    def __init__(self):
+        ...
+        self.high_score = 0         # ← reset_game ではなく __init__ に置く
+        self.scene = SCENE_TITLE
+        self.reset_game()</code></pre>
+
+<pre><code>    def check_ghost(self):
+        """お化けに捕まったらゲームオーバーにする"""
+        if is_hit(...):
+            self.scene = SCENE_GAMEOVER
+            self.gameover_frame = pyxel.frame_count
+            self.high_score = max(self.high_score, self.score)   # 最高記録を更新</code></pre>
+
+<pre><code>    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
+        draw_center(f"HI-SCORE {self.high_score}", 56, pyxel.COLOR_GRAY)
+
+        if is_blink_on():
+            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)</code></pre>
+
+<p>
+<b>どこに変数を置くかが、そのまま「いつ消えるか」を決めます。</b>
+<code>reset_game()</code> に入れれば毎回 0 に戻り、
+<code>__init__()</code> に入れればアプリを閉じるまで残ります。
+</p>
+
+<div class="note">
+  <b>アプリを閉じても残したい場合</b>
+  ファイルに書き出す必要があります。step1 では扱いませんが、
+  Python の標準機能（<code>open()</code> で書いて読む）だけでできます。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>起動するといきなりゲームが始まる</td>
+      <td><code>__init__()</code> の <code>self.scene</code> が
+      <code>SCENE_PLAY</code> のままです。<code>SCENE_TITLE</code> にします</td>
+    </tr>
+    <tr>
+      <td>Enter を押すとタイトルとゲームを行き来してしまう</td>
+      <td><code>btn()</code> になっています。<code>btnp()</code> にします</td>
+    </tr>
+    <tr>
+      <td>2 回目のスコアが 0 から始まらない</td>
+      <td><code>update_title()</code> で <code>self.reset_game()</code> を
+      呼んでいるか確認します。<code>self.scene</code> を変えるだけでは戻りません</td>
+    </tr>
+    <tr>
+      <td>2 回目にお化けが目の前から始まる</td>
+      <td>同じく <code>reset_game()</code> の呼び忘れです。
+      <code>ghost_x</code> / <code>ghost_y</code> が前回のまま残っています</td>
+    </tr>
+    <tr>
+      <td>タイトル画面に男の子やお化けが出ている</td>
+      <td><code>draw()</code> の <code>return</code> を書き忘れています。
+      <code>draw_title()</code> のあと、そのまま <code>draw_play()</code> まで進んでいます</td>
+    </tr>
+    <tr>
+      <td>ゲームオーバーで Enter が効かない</td>
+      <td><code>update()</code> の <code>else</code> の中で
+      <code>self.update_gameover()</code> を呼んでいるか確認します。
+      あるいは 0.5 秒の待ち時間中に押しています（仕様どおりです）</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: ... 'gameover_frame'</code></td>
+      <td>フェーズ 6 の <code>check_ghost()</code> に
+      <code>self.gameover_frame = pyxel.frame_count</code> を書き忘れています</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: ... 'boy_x'</code></td>
+      <td><code>__init__()</code> の <code>self.reset_game()</code> を書き忘れています。
+      定義しただけでは呼ばれません</td>
+    </tr>
+    <tr>
+      <td>タイトルの文字が中央からずれる</td>
+      <td><code>draw_center()</code> ではなく <code>pyxel.text()</code> を
+      直接呼んでいませんか</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+これで<b>ゲームとして一周する形</b>ができました。あそんで、捕まって、また始められます。
+</p>
+
+<p>
+次のフェーズ 8 では<b>お菓子を集めるほどお化けが増えます</b>（最大 4 体）。
+ここで<b>リスト</b>が登場します。<code>ghost_x</code> / <code>ghost_y</code> という
+変数 2 つで 1 体を持つやり方は、4 体になると破綻するからです。
+<b>「同じものがいくつもある」ときはリストにする</b>——step1 最後の山場です。
+</p>
+
+<div class="note">
+  <b>お化けの速さは、ここで見直します</b>
+  <a href="../memo/#chase-speed">備忘録 #chase-speed</a> に書いたとおり、
+  <code>GHOST_SPEED = 1</code> は<b>1 体でも全力で逃げて 5 秒</b>という速さです。
+  4 体になったら明らかに厳しいので、フェーズ 8 で
+  <b>速さ・増えるペース・出てくる場所</b>をまとめて調整します。
+</div>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
