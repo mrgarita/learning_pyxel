@@ -502,6 +502,203 @@ int(-7 / 2)  # → -3   0 に近いほうへ</code></pre>
   画面の左端より外（マイナスの座標）を扱うときに、1 ドットずれる原因になります。
 </div>
 
+<h3 id="def-order">Q. 関数の定義は、呼び出す行より下にあってもいい？（C では定義が先）</h3>
+<p>
+<b>A.</b> <b>Python は関数定義の位置に制限がありません。</b>
+<code>update()</code> の中で <code>self.move_boy()</code> を呼び、<code>move_boy()</code> の定義は
+その下にある——という <code>candy_hunt.py</code> の書き方で問題ありません。
+</p>
+
+<p>
+理由は<b>「名前をいつ探すか」が C と Python で違う</b>からです。
+</p>
+
+<table>
+  <thead><tr><th></th><th>C</th><th>Python</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>名前を探すタイミング</b></td>
+      <td>コンパイルするとき（実行する前）</td>
+      <td><b>その行が実際に動くとき</b></td>
+    </tr>
+    <tr>
+      <td><b>だから必要なこと</b></td>
+      <td>呼び出しより前に、宣言か定義が書いてある</td>
+      <td><b>呼び出しが起きる時点で</b>定義が済んでいる</td>
+    </tr>
+    <tr>
+      <td><b>書く順番</b></td>
+      <td>上から順に縛られる</td>
+      <td>自由（ただし下の 3 つは例外）</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+Python の <code>def</code> は<b>「この名前で、この中身を覚えておいて」という命令文</b>です。
+関数の中身はそのとき読まれません。中の <code>move_boy</code> という名前を探しにいくのは、
+<code>update()</code> が<b>実際に呼ばれた瞬間</b>です。そのときには
+ファイルはすでに最後まで読み終わっていて、<code>move_boy</code> も登録済みなので見つかります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 720 430" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Python がファイルを読み込むときと、関数が呼ばれるときの 2 段階を表した図">
+  <style>
+    .ttl  { fill:#ffcc44; font-size:15px; font-weight:bold; }
+    .lbl  { fill:#e8f0ff; font-size:12px; }
+    .dim  { fill:#9aa4c4; font-size:11.5px; }
+    .code { fill:#e8f0ff; font-size:12.5px; font-family:Consolas,monospace; }
+    .ok   { fill:#2ee6a8; font-size:12px; }
+  </style>
+
+  <!-- 左：読み込むとき -->
+  <rect x="10" y="10" width="330" height="410" rx="6" fill="#232840" stroke="#3b4166"/>
+  <text class="ttl" x="26" y="38">① ファイルを読み込むとき</text>
+  <text class="dim" x="26" y="58">上から下へ 1 回だけ通る。中身は実行しない</text>
+
+  <rect x="26" y="74" width="298" height="60" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="code" x="38" y="96">def update(self):</text>
+  <text class="code" x="68" y="116">self.move_boy()</text>
+  <text class="ok"   x="212" y="96">→ 名前だけ登録</text>
+  <text class="dim"  x="212" y="116">中身は読まない</text>
+
+  <rect x="26" y="148" width="298" height="60" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="code" x="38" y="170">def move_boy(self):</text>
+  <text class="code" x="68" y="190">...</text>
+  <text class="ok"   x="212" y="170">→ 名前だけ登録</text>
+
+  <rect x="26" y="222" width="298" height="40" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="code" x="38" y="247">App()</text>
+  <text class="dim"  x="132" y="247">← ここで初めて中身が動く</text>
+
+  <rect x="26" y="284" width="298" height="120" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="lbl" x="38" y="306">読み終えた時点で覚えている名前</text>
+  <rect x="38" y="318" width="90" height="26" rx="3" fill="#1b1f33" stroke="#45b0e8"/>
+  <text class="code" x="48" y="336" fill="#45b0e8">update</text>
+  <rect x="140" y="318" width="106" height="26" rx="3" fill="#1b1f33" stroke="#45b0e8"/>
+  <text class="code" x="150" y="336" fill="#45b0e8">move_boy</text>
+  <rect x="38" y="352" width="60" height="26" rx="3" fill="#1b1f33" stroke="#45b0e8"/>
+  <text class="code" x="48" y="370" fill="#45b0e8">App</text>
+  <text class="dim" x="38" y="394">順番は関係なく、両方そろっている</text>
+
+  <!-- 矢印 -->
+  <path d="M348 215 L376 215" stroke="#ffcc44" stroke-width="2" fill="none"/>
+  <path d="M376 215 l-8 -5 l0 10 z" fill="#ffcc44"/>
+
+  <!-- 右：呼ばれたとき -->
+  <rect x="386" y="10" width="324" height="410" rx="6" fill="#232840" stroke="#3b4166"/>
+  <text class="ttl" x="402" y="38">② update() が呼ばれたとき</text>
+  <text class="dim" x="402" y="58">ここで初めて中身の行が実行される</text>
+
+  <rect x="402" y="74" width="292" height="40" rx="4" fill="#0b0d16" stroke="#3b4166"/>
+  <text class="code" x="414" y="99">self.move_boy()</text>
+
+  <path d="M548 122 L548 146" stroke="#9aa4c4" stroke-width="2" fill="none"/>
+  <path d="M548 146 l-5 -8 l10 0 z" fill="#9aa4c4"/>
+
+  <rect x="402" y="152" width="292" height="46" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="lbl" x="414" y="172">「move_boy」という名前を</text>
+  <text class="lbl" x="414" y="190"><tspan fill="#ffcc44">いまから</tspan>探しにいく</text>
+
+  <path d="M548 206 L548 230" stroke="#9aa4c4" stroke-width="2" fill="none"/>
+  <path d="M548 230 l-5 -8 l10 0 z" fill="#9aa4c4"/>
+
+  <rect x="402" y="236" width="292" height="46" rx="4" fill="#10121c" stroke="#2ee6a8"/>
+  <text class="ok" x="414" y="257">① で登録済みなので見つかる</text>
+  <text class="dim" x="414" y="275">定義が下にあっても関係ない</text>
+
+  <rect x="402" y="306" width="292" height="98" rx="4" fill="#1b1f33" stroke="#ff6b97"/>
+  <text class="lbl" x="414" y="328" fill="#ff6b97">C はここが違う</text>
+  <text class="dim" x="414" y="350">コンパイルする時点で名前を確定させるので、</text>
+  <text class="dim" x="414" y="368">呼び出しより前に宣言／定義が要る。</text>
+  <text class="dim" x="414" y="386">Python は「動くとき」まで探すのを先送りする</text>
+</svg>
+</div>
+<figcaption>Python は「読み込み」と「実行」が別。名前を探すのは実行するとき</figcaption>
+</figure>
+
+<h4>ただし、位置が効く場面が 3 つある</h4>
+
+<p>
+「制限がない」のは<b>関数の中身</b>の話です。次の 3 つは
+<b>ファイルを読み込んだ瞬間に実行される</b>ので、順番どおりに書く必要があります。
+</p>
+
+<div class="warn">
+  <b>1. トップレベルの「呼び出し」</b>
+  <code>candy_hunt.py</code> の最後にある <code>App()</code> がこれです。
+  これは <code>def</code> ではなく<b>呼び出し</b>なので、その場で実行されます。
+  ファイルの先頭に移すと止まります。
+  <pre><code>App()          # ← 先頭に置くと…
+
+class App:
+    ...
+
+# NameError: name 'App' is not defined</code></pre>
+  <b><code>App()</code> がいちばん下にあるのは、こういう理由</b>です。
+</div>
+
+<div class="warn">
+  <b>2. 引数の初期値</b>
+  <code>def f(size=BOY_SIZE):</code> の <code>BOY_SIZE</code> は、
+  <b><code>def</code> の行を読んだ瞬間</b>に評価されます。中身とは扱いが違います。
+  <pre><code>def f(size=BOY_SIZE):    # ← この行を読んだ時点で BOY_SIZE を探す
+    print(size)
+
+BOY_SIZE = 8             # 遅すぎる
+
+# NameError: name 'BOY_SIZE' is not defined</code></pre>
+</div>
+
+<div class="warn">
+  <b>3. <code>class</code> の本体（メソッドの外）に直接書いた行</b>
+  <code>class</code> の中でも <b><code>def</code> の外</b>に書いた行は、読み込み時に実行されます。
+  <pre><code>class App:
+    size = BOY_SIZE      # ← メソッドの外なので、すぐ実行される
+
+BOY_SIZE = 8
+
+# NameError: name 'BOY_SIZE' is not defined</code></pre>
+</div>
+
+<h4>自由なぶん、注意すること</h4>
+
+<div class="note">
+  <b>打ち間違いは「その関数が呼ばれるまで」見つからない</b>
+  C はコンパイルの時点で「そんな名前はない」と教えてくれますが、
+  Python は<b>実行して初めて</b>気づきます。
+  <pre><code>def rarely_used():
+    print(mistyped_name)     # 存在しない名前
+
+print("読み込みは通る")       # ← ここまでは何ごともなく動く
+rarely_used()                # ← 呼ばれて初めて NameError</code></pre>
+  ゲームだと「<b>ゲームオーバーになって初めて落ちる</b>」といった形で出てきます。
+  新しく書いた関数は、<b>一度は必ず通してみる</b>のが大事です。
+</div>
+
+<h4>では、どう並べるのがよいか</h4>
+
+<p>
+順番は自由なので、<b>読みやすさで決めます</b>。よくあるのは次の並べ方です。
+</p>
+
+<ul>
+  <li><b>呼ぶ側を上、呼ばれる側を下</b> — <code>update()</code> を読めば全体の流れが分かり、
+  細かい中身は下に読み進めればよい。<code>candy_hunt.py</code> はこの形です</li>
+  <li><b>関係の深いものを近くに置く</b> — <code>move_boy()</code> と <code>check_candy()</code> のように、
+  <code>update()</code> から呼ばれるものをそのすぐ下にまとめる</li>
+  <li><b>定数はいちばん上</b> — <code>BOY_SIZE</code> などは、上の「例外 2・3」に引っかからないよう
+  ファイルの先頭にまとめておくと安全です</li>
+</ul>
+
+<div class="note">
+  <b>確認した環境</b>
+  Python 3.12.10 で、上の 3 つの <code>NameError</code> と、
+  「下にある関数を上から呼べる」ことを実際に動かして確かめました。
+</div>
+
 <h2>Pyxel について</h2>
 
 <h3 id="pyxres-inside">Q. <code>.pyxres</code> ファイルの中身は読める？ 何が入っている？</h3>
