@@ -1,5 +1,5 @@
 # candy_hunt.py
-# step1 フェーズ5：お化けに追いかけさせる
+# step1 フェーズ7：タイトル画面を足して、もう一度あそべるようにする
 
 import random
 
@@ -21,6 +21,11 @@ HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四�
 
 SCENE_PLAY = 0          # あそんでいる画面
 SCENE_GAMEOVER = 1      # ゲームオーバーの画面
+SCENE_TITLE = 2         # タイトル画面
+
+GAMEOVER_WAIT = 15      # 捕まってkら文字を出すまでのフレーム数（0.5秒）
+BLINK_CYCLE =30         # 点滅 1 周期のフレーム数（1秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
 
 def is_hit(x1, y1, size1, x2, y2, size2):
     """2 つの四角が重なっていれば True を返す"""
@@ -32,13 +37,23 @@ def draw_center(s, y, col):
     x = (SCREEN_WIDTH - len(s) *4) // 2     # 4 は1文字分のフォント幅
     pyxel.text(x, y, s, col)
 
+def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE < BLINK_ON
+
 class App:
     def __init__(self):
         """起動時の設定"""
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
         pyxel.load("candy_hunt.pyxres")
 
-        self.scene = SCENE_PLAY
+        self.scene = SCENE_TITLE
+        self.reset_game()
+
+        pyxel.run(self.update, self.draw)
+
+    def reset_game(self):
+        """ゲームの中身を、最初の状態に戻す"""
         self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
         self.boy_y = SCREEN_HEIGHT // 2 - BOY_SIZE // 2
         self.ghost_x = 0
@@ -46,12 +61,29 @@ class App:
         self.score = 0
         self.place_candy()
 
-        pyxel.run(self.update, self.draw)
-
     def update(self):
         """フレーム毎の更新処理"""
-        if self.scene == SCENE_PLAY:
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_PLAY:
             self.update_play()
+        else:
+            self.update_gameover()
+
+    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()
+            self.scene = SCENE_PLAY
+
+    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でゲームを再び始める"""
+        if pyxel.frame_count - self.gameover_frame < GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()
+            self.scene = SCENE_PLAY
 
     def update_play(self):
         """あそんでいる間の更新"""
@@ -113,10 +145,22 @@ class App:
     def draw(self):
         """フレーム毎の描画処理"""
         pyxel.cls(pyxel.COLOR_BLACK)
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+            return
+        
         self.draw_play()
 
         if self.scene == SCENE_GAMEOVER:
             self.draw_gameover()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
+
+        if is_blink_on():
+            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)
 
     def draw_play(self):
         """あそんでいる画面を描く"""
@@ -130,12 +174,13 @@ class App:
 
     def draw_gameover(self):
         """ゲームオーバーの文字を重ねて描く"""
-        if pyxel.frame_count - self.gameover_frame < 15:    # 0.5 秒は文字を出さない
+        if pyxel.frame_count - self.gameover_frame < GAMEOVER_WAIT:
             return
         
-        if pyxel.frame_count % 30 < 20:     # 30 フレームのうち 20 だけ描く（点滅したようにみせる）
+        if is_blink_on():
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)
 
 App()

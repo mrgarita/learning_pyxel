@@ -47,7 +47,7 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
 <figure>
 <div class="fig-box">
 <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="タイトル・ゲーム・ゲームオーバーの 3 画面が、Enter キーと捕まったことをきっかけに循環する図">
+     aria-label="タイトルからゲームへ進み、捕まるとゲームオーバー、Enter でゲームへ直接戻る流れの図">
   <style>
     .bx  { fill:#232840; stroke:#3b4166; }
     .nm  { fill:#e8f0ff; font-size:14px; font-weight:bold; }
@@ -60,6 +60,7 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
   <rect class="bx" x="30" y="40" width="170" height="72" rx="6" stroke="#ffcc44"/>
   <text class="nm" x="48" y="70">タイトル</text>
   <text class="cd" x="48" y="92">SCENE_TITLE</text>
+  <text class="dim" x="48" y="30">起動したとき 1 回だけ</text>
 
   <!-- ゲーム -->
   <rect class="bx" x="270" y="40" width="170" height="72" rx="6" stroke="#2ee6a8"/>
@@ -74,27 +75,27 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
   <!-- タイトル → ゲーム -->
   <path d="M200 76 L262 76" stroke="#ffcc44" stroke-width="2" fill="none"/>
   <path d="M262 76 l-9 -5 l0 10 z" fill="#ffcc44"/>
-  <text class="ev" x="196" y="30">Enter</text>
-  <text class="dim" x="196" y="130">reset_game() を呼ぶ</text>
+  <text class="ev" x="198" y="30">Enter</text>
+  <text class="dim" x="176" y="132">reset_game()</text>
 
   <!-- ゲーム → ゲームオーバー -->
   <path d="M440 76 L502 76" stroke="#ff6b97" stroke-width="2" fill="none"/>
   <path d="M502 76 l-9 -5 l0 10 z" fill="#ff6b97"/>
   <text class="ev" x="432" y="30" fill="#ff6b97">捕まった</text>
-  <text class="dim" x="432" y="130">gameover_frame を覚える</text>
+  <text class="dim" x="416" y="132">gameover_frame</text>
 
-  <!-- ゲームオーバー → タイトル（下をまわる） -->
-  <path d="M595 120 L595 200 L115 200 L115 120"
+  <!-- ゲームオーバー → ゲーム（下をまわる） -->
+  <path d="M595 120 L595 196 L355 196 L355 120"
         stroke="#45b0e8" stroke-width="2" fill="none"/>
-  <path d="M115 120 l-5 9 l10 0 z" fill="#45b0e8"/>
-  <text class="ev" x="300" y="222" fill="#45b0e8">Enter（0.5 秒たってから）</text>
+  <path d="M355 120 l-5 9 l10 0 z" fill="#45b0e8"/>
+  <text class="ev" x="380" y="218" fill="#45b0e8">Enter（0.5 秒たってから）＋ reset_game()</text>
 
-  <rect x="30" y="246" width="650" height="42" rx="4" fill="#10121c" stroke="#3b4166"/>
-  <text class="dim" x="46" y="264">画面が増えても、update() と draw() が scene を見て振り分ける形は変わらない。</text>
-  <text class="dim" x="46" y="280">「もう一度あそぶ」は、タイトルへ戻してから、始めるときに中身を初期化する。</text>
+  <rect x="30" y="240" width="650" height="46" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="dim" x="46" y="260">ゲームオーバーからは<tspan fill="#e8f0ff">タイトルを経由せず、そのままゲームへ戻る</tspan>。</text>
+  <text class="dim" x="46" y="278">いまのタイトル画面はゲームへ進む以外の道がないので、通っても Enter を 1 回ぶん損するだけ。</text>
 </svg>
 </div>
-<figcaption>3 つの画面が、Enter と「捕まった」をきっかけにひとまわりする</figcaption>
+<figcaption>ゲームオーバーからは、タイトルを通らずにゲームへ戻る（→ <a href="#loop">1-6</a>）</figcaption>
 </figure>
 
 <h3>1-2. 「やり直す」とは、変数を最初の値に戻すこと</h3>
@@ -146,10 +147,9 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
 
   <g class="dim" text-anchor="middle">
     <line x1="70"  y1="34" x2="70"  y2="46" stroke="#3b4166"/><text x="70"  y="64">起動</text>
-    <line x1="210" y1="34" x2="210" y2="46" stroke="#3b4166"/><text x="210" y="64">1 回目を始める</text>
-    <line x1="350" y1="34" x2="350" y2="46" stroke="#3b4166"/><text x="350" y="64">捕まる</text>
-    <line x1="490" y1="34" x2="490" y2="46" stroke="#3b4166"/><text x="490" y="64">タイトルへ</text>
-    <line x1="630" y1="34" x2="630" y2="46" stroke="#3b4166"/><text x="630" y="64">2 回目を始める</text>
+    <line x1="240" y1="34" x2="240" y2="46" stroke="#3b4166"/><text x="240" y="64">1 回目を始める</text>
+    <line x1="420" y1="34" x2="420" y2="46" stroke="#3b4166"/><text x="420" y="64">捕まる</text>
+    <line x1="600" y1="34" x2="600" y2="46" stroke="#3b4166"/><text x="600" y="64">Enter で 2 回目へ</text>
   </g>
 
   <!-- __init__ の行 -->
@@ -165,9 +165,9 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
   <text class="cd"  x="34"  y="182" fill="#2ee6a8">reset_game()</text>
   <text class="dim" x="146" y="182">男の子・お化け・スコア・お菓子　＝ 中身の初期化</text>
   <line x1="34" y1="208" x2="666" y2="208" stroke="#232840" stroke-width="2"/>
-  <circle cx="210" cy="208" r="7" fill="#2ee6a8"/>
-  <circle cx="630" cy="208" r="7" fill="#2ee6a8"/>
-  <text class="dim" x="232" y="212">← 始めるたびに動く（何回でも）</text>
+  <circle cx="240" cy="208" r="7" fill="#2ee6a8"/>
+  <circle cx="600" cy="208" r="7" fill="#2ee6a8"/>
+  <text class="dim" x="262" y="212">← 始めるたびに動く（何回でも）</text>
 
   <text class="dim" x="20" y="252">※ 起動直後にも 1 回呼んでおく。タイトル画面の裏で「置き場所」を作っておくため</text>
 </svg>
@@ -195,7 +195,7 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
 
 <p>
 逃げているときは矢印キーを連打しています。その勢いで Enter を押していると、
-<b>GAME OVER の文字を見る前にタイトルへ飛んでしまいます</b>。
+<b>GAME OVER の文字を見る前に、次のゲームが始まってしまいます</b>。
 </p>
 
 <p>
@@ -209,6 +209,68 @@ SCENE_TITLE = 2         # タイトル画面      ← 足すのはこの 1 行</
   <b>「文字を出す判定」と「キーを受け付ける判定」の 2 か所</b>に必要になりました。
   フェーズ 4 で決めた基準どおり、<code>GAMEOVER_WAIT = 15</code> という名前を付けます。
   点滅の <code>30</code> と <code>20</code> も、タイトルとゲームオーバーの 2 か所で使うので同じように格上げします。
+</div>
+
+<h3 id="loop">1-6. ゲームオーバーから、どこへ戻すか</h3>
+
+<p>
+「もう一度あそぶ」には、行き先が 2 通り考えられます。
+</p>
+
+<table>
+  <thead><tr><th>戻り先</th><th>操作の回数</th><th>向いている場合</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>タイトルへ戻す</td>
+      <td>Enter を <b>2 回</b>（タイトルでもう 1 回押す）</td>
+      <td>タイトルに<b>ゲームを始める以外の道がある</b>とき。
+      難易度を選ぶ、あそび方を読む、ハイスコアを見る、など</td>
+    </tr>
+    <tr>
+      <td><b>そのままゲームへ戻す</b></td>
+      <td>Enter を <b>1 回</b></td>
+      <td>タイトルが<b>「始める」ボタンでしかない</b>とき。<b>いまはこちら</b></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+いまのタイトル画面には、ゲームへ進む以外の道がありません。
+そこを経由させると<b>プレイヤーは意味のない Enter を 1 回よけいに押す</b>ことになります。
+だから<b>ゲームオーバー → Enter → すぐ再挑戦</b>にします。
+アーケードゲームでよくある形です。
+</p>
+
+<div class="term">
+  <b>判断の基準は「そこに分岐があるか」</b>
+  画面を経由させる価値は、<b>その画面で選べることがあるかどうか</b>で決まります。
+  選択肢が 1 つしかない画面は、ただの通過点です。<br>
+  逆に言うと、<b>あとでタイトルに何かを足したくなったら、この判断は変わります</b>。
+  そのときは「ゲームオーバー → Enter で再挑戦 ／ Q でタイトルへ」のように
+  <b>キーを 2 つに分ける</b>のが定石です。
+</div>
+
+<pre><code>    def update_gameover(self):
+        """ゲームオーバー画面。少し待ってから、Enter でもう一度始める"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.reset_game()          # ← タイトルへ行かないので、ここで初期化する
+            self.scene = SCENE_PLAY</code></pre>
+
+<div class="warn">
+  <b><code>reset_game()</code> の呼び忘れに注意</b>
+  タイトルへ戻す形なら初期化は <code>update_title()</code> の 1 か所で済みますが、
+  直接ゲームへ戻すなら<b>こちらにも書く</b>必要があります。
+  忘れると<b>スコアが前回のまま、お化けが目の前にいる状態</b>で再開してしまいます。
+</div>
+
+<div class="note">
+  <b>タイトル画面は起動時にしか出なくなります</b>
+  これは<b>意図した結果</b>です。ゲームの名前を見せる役目は最初の 1 回で果たしています。
+  ただし後述の<b>ハイスコア</b>のように「タイトルに置きたくなるもの」が出てきたときは、
+  <b>ゲームオーバー画面のほうに置く</b>ほうが目に入ります。
 </div>
 
 <h2>2. このフェーズで使う機能</h2>
@@ -297,12 +359,20 @@ BLINK_ON = 20           # そのうち文字が見えているフレーム数</c
             self.scene = SCENE_PLAY
 
     def update_gameover(self):
-        """ゲームオーバー画面。少し待ってから、Enter でタイトルへ戻る"""
+        """ゲームオーバー画面。少し待ってから、Enter でもう一度始める"""
         if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
             return
 
         if pyxel.btnp(pyxel.KEY_RETURN):
-            self.scene = SCENE_TITLE</code></pre>
+            self.reset_game()
+            self.scene = SCENE_PLAY</code></pre>
+
+<p>
+<b>どちらも <code>reset_game()</code> を呼んでから <code>SCENE_PLAY</code> にします。</b>
+入口が 2 つ（タイトルから／ゲームオーバーから）あっても、
+<b>始めるときにやることは同じ</b>だからです。
+関数に切り出しておいた効きめが、ここで出ます。
+</p>
 
 <h3>3-6. <code>draw()</code> の枝を 3 本にする</h3>
 
@@ -346,7 +416,7 @@ BLINK_ON = 20           # そのうち文字が見えているフレーム数</c
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER", 80, pyxel.COLOR_GRAY)</code></pre>
+        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)</code></pre>
 
 <div class="term">
   <b>点滅させるのは 1 つだけにします</b>
@@ -451,12 +521,13 @@ class App:
         self.check_ghost()
 
     def update_gameover(self):
-        """ゲームオーバー画面。少し待ってから、Enter でタイトルへ戻る"""
+        """ゲームオーバー画面。少し待ってから、Enter でもう一度始める"""
         if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
             return
 
         if pyxel.btnp(pyxel.KEY_RETURN):
-            self.scene = SCENE_TITLE
+            self.reset_game()
+            self.scene = SCENE_PLAY
 
     def move_boy(self):
         """矢印キーで男の子を動かす"""
@@ -546,7 +617,7 @@ class App:
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER", 80, pyxel.COLOR_GRAY)
+        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)
 
 
 App()</code></pre>
@@ -556,9 +627,10 @@ App()</code></pre>
   <ul>
     <li>起動すると<b>タイトル画面</b>が出て、<code>PRESS ENTER</code> が点滅する</li>
     <li>Enter でゲームが始まる。<b>Enter を押しっぱなしにしても勝手に進まない</b></li>
-    <li>捕まって 0.5 秒たつと GAME OVER・スコア・<code>PRESS ENTER</code> が出る</li>
-    <li>その<b>前に</b> Enter を押しても、タイトルへ飛ばない</li>
-    <li>タイトルから 2 回目を始めると、<b>スコアが 0 に戻り、お化けが左上から</b>出てくる</li>
+    <li>捕まって 0.5 秒たつと GAME OVER・スコア・案内の文字が出る</li>
+    <li>その<b>前に</b> Enter を押しても、勝手に再開しない</li>
+    <li>Enter を <b>1 回</b>押すだけで次のゲームが始まる（タイトルを通らない）</li>
+    <li>2 回目は<b>スコアが 0 に戻り、お化けが左上から</b>出てくる</li>
   </ul>
 </div>
 <h2>5. コードの解説</h2>
@@ -656,6 +728,13 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
 「何が起きたのか分からないうちに画面が変わった」と感じます。
 </p>
 
+<div class="term">
+  <b>そのままゲームへ戻すなら、この待ちはいっそう重要です</b>
+  タイトルへ戻すだけなら、うっかり押しても実害は多くありません。
+  ですが<b>そのまま次のゲームが始まる</b>となると、逃げているときの連打が
+  そのまま<b>スコアを見る前の再スタート</b>になってしまいます。
+</div>
+
 <h2>6. もう一歩（やらなくても大丈夫）</h2>
 
 <h3>点滅の「間」を毎回そろえる</h3>
@@ -681,7 +760,7 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
             draw_center("GAME OVER", 52, pyxel.COLOR_RED)
 
         draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
-        draw_center("PRESS ENTER", 80, pyxel.COLOR_GRAY)</code></pre>
+        draw_center("PRESS ENTER TO CONTINUE", 80, pyxel.COLOR_GRAY)</code></pre>
 
 <p>
 <code>elapsed</code> という変数に入れておくと、<b>同じ引き算を 2 回書かずに済み</b>、
@@ -713,13 +792,24 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
             self.gameover_frame = pyxel.frame_count
             self.high_score = max(self.high_score, self.score)   # 最高記録を更新</code></pre>
 
-<pre><code>    def draw_title(self):
-        """タイトル画面を描く"""
-        draw_center("CANDY HUNT", 44, pyxel.COLOR_YELLOW)
-        draw_center(f"HI-SCORE {self.high_score}", 56, pyxel.COLOR_GRAY)
+<pre><code>    def draw_gameover(self):
+        """ゲームオーバーの文字を重ねて描く"""
+        if pyxel.frame_count - self.gameover_frame &lt; GAMEOVER_WAIT:
+            return
 
         if is_blink_on():
-            draw_center("PRESS ENTER", 68, pyxel.COLOR_WHITE)</code></pre>
+            draw_center("GAME OVER", 52, pyxel.COLOR_RED)
+
+        draw_center(f"SCORE {self.score}", 66, pyxel.COLOR_WHITE)
+        draw_center(f"HI-SCORE {self.high_score}", 76, pyxel.COLOR_YELLOW)
+        draw_center("PRESS ENTER TO CONTINUE", 90, pyxel.COLOR_GRAY)</code></pre>
+
+<div class="note">
+  <b>タイトルではなく、ゲームオーバー画面に出します</b>
+  <a href="#loop">1-6</a> で決めたとおり、タイトルは起動時にしか出ません。
+  <b>毎回目に入るのはゲームオーバー画面のほう</b>なので、
+  記録を見せたい場所はこちらです。
+</div>
 
 <p>
 <b>どこに変数を置くかが、そのまま「いつ消えるか」を決めます。</b>
@@ -749,8 +839,9 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
     </tr>
     <tr>
       <td>2 回目のスコアが 0 から始まらない</td>
-      <td><code>update_title()</code> で <code>self.reset_game()</code> を
-      呼んでいるか確認します。<code>self.scene</code> を変えるだけでは戻りません</td>
+      <td><code>update_gameover()</code> で <code>self.reset_game()</code> を
+      呼んでいるか確認します。<code>self.scene</code> を変えるだけでは戻りません。
+      <b><code>update_title()</code> と 2 か所あります</b></td>
     </tr>
     <tr>
       <td>2 回目にお化けが目の前から始まる</td>
@@ -789,7 +880,8 @@ Python では <b>代入したときに初めて変数ができる</b>ので、
 <h2>8. 次のフェーズ</h2>
 
 <p>
-これで<b>ゲームとして一周する形</b>ができました。あそんで、捕まって、また始められます。
+これで<b>ゲームとして一周する形</b>ができました。あそんで、捕まって、
+<b>Enter 1 回でまた始められます</b>。
 </p>
 
 <p>
