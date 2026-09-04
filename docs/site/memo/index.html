@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>備忘録 ｜ learning_pyxel</title>
 <link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -1921,6 +1922,13 @@ HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四�
 見た目に「乗った」と分かります。<code>2</code> はほぼ完全に重ねる必要があり、
 お化けから逃げながら取るには厳しすぎるでしょう。
 </p>
+
+<div class="note">
+  <b>このプロジェクトでは <code>HIT_SIZE = 4</code> に決めました</b>
+  2026-09-04、実際に遊んで比べたうえで<b>「4 がいちばん違和感がない」</b>という判断です。
+  step1 の以降のフェーズ（フェーズ 6 の「お化けに捕まる」判定を含む）は、
+  この値を前提にして進めます。
+</div>
 
 <div class="warn">
   <b>小さくしすぎると「絶対に取れない位置」が生まれます</b>

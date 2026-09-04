@@ -13,6 +13,9 @@ BOY_SPEED = 2           # 1 フレームで進むドット数
 
 CANDY_SIZE = 8          # お菓子の絵の大きさ
 
+HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
 def is_hit(x1, y1, size1, x2, y2, size2):
     """2 つの四角が重なっていれば True を返す"""
     return (x1 < x2 + size2 and x2 < x1 + size1 and
@@ -61,9 +64,9 @@ class App:
                 break
 
     def check_candy(self):
-        """お菓子に重なったら、次の場所へ置きなおす"""
-        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
-                  self.candy_x, self.candy_y, CANDY_SIZE):
+        """お菓子がしっかり重なったら、スコアを増やして次の場所に置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
             self.score += 1
             self.place_candy()
 

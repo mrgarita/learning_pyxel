@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>step1 フェーズ5：お化けに追いかけさせる ｜ learning_pyxel</title>
 <link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -256,6 +257,9 @@ CANDY_SIZE = 8          # お菓子の絵の大きさ
 GHOST_SIZE = 8          # お化けの絵の大きさ
 GHOST_SPEED = 1         # 1 フレームで進むドット数（男の子の半分）
 
+HIT_SIZE = 4            # 当たり判定に使う四角の大きさ（絵の中央だけを見る）
+HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四角までの距離（= 2）
+
 
 def is_hit(x1, y1, size1, x2, y2, size2):
     """2 つの四角が重なっていれば True を返す"""
@@ -321,9 +325,9 @@ class App:
                 break
 
     def check_candy(self):
-        """お菓子に重なったら、スコアを増やして次の場所へ置きなおす"""
-        if is_hit(self.boy_x, self.boy_y, BOY_SIZE,
-                  self.candy_x, self.candy_y, CANDY_SIZE):
+        """お菓子にしっかり重なったら、スコアを増やして次の場所へ置きなおす"""
+        if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
+                  self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
             self.score += 1
             self.place_candy()
 
@@ -343,11 +347,12 @@ class App:
 App()</code></pre>
 
 <div class="note">
-  <b>当たり判定を縮めた場合</b>
-  備忘録の<a href="../memo/#hitbox-size">「取った感じが薄い」</a>に沿って
-  <code>HIT_SIZE</code> / <code>HIT_OFFSET</code> を入れている場合は、
-  <code>check_candy()</code> がそちらの形になっているはずです。
+  <b>当たり判定は <code>HIT_SIZE = 4</code> で確定しています</b>
+  備忘録の<a href="../memo/#hitbox-size">「取った感じが薄い」</a>で検討したとおり、
+  <code>check_candy()</code> は <code>HIT_SIZE</code> / <code>HIT_OFFSET</code> を
+  使う形になっているはずです。
   このフェーズはお化けの<b>移動だけ</b>なので、当たり判定には触れません。
+  お化けに捕まる判定は次のフェーズ 6 で、<b>同じ <code>HIT_SIZE</code> を使って</b>作ります。
 </div>
 
 <h2>5. コードの解説</h2>
