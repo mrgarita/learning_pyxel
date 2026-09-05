@@ -24,7 +24,7 @@ SCENE_PLAY = 0          # あそんでいる画面
 SCENE_GAMEOVER = 1      # ゲームオーバーの画面
 SCENE_TITLE = 2         # タイトル画面
 
-GAMEOVER_WAIT = 20      # 捕まってから文字を出すまでのフレーム数（0.5秒）
+GAMEOVER_WAIT = 20      # 捕まってから文字を出すまでのフレーム数（0.67秒）
 BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1秒）
 BLINK_ON = 20           # そのうち文字が見えているフレーム数
 
