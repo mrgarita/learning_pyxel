@@ -103,6 +103,21 @@ pre {
 }
 pre code { background: none; color: var(--c-text); padding: 0; }
 
+/* --- 音符とセットで打鍵を書く（リソースエディタのキー） --- */
+.keys {
+  display: block;
+  margin-top: .3rem;
+  color: var(--c-accent);
+  font-size: .85rem;
+  line-height: 1.5;
+}
+.keys code { color: var(--c-accent); }
+
+/* --- 音名とキーの対応表（列が多いので詰めて中央ぞろえ） --- */
+table.keymap { font-size: .85rem; }
+table.keymap th, table.keymap td { padding: .4rem .25rem; text-align: center; }
+table.keymap tbody th { white-space: nowrap; text-align: left; font-weight: 600; }
+
 /* --- 補足ボックス --- */
 .note, .warn, .term {
   border-radius: 4px;

@@ -147,6 +147,44 @@
 <figcaption>ゲーム制作では、ドレミではなく <b>C D E F G A B</b> の英語音名を使うのが普通です</figcaption>
 </figure>
 
+<h3>キーボードのどのキーが、どの音か</h3>
+
+<p>
+リソースエディタの鍵盤は、<b>パソコンのキーボードに割り当てられて</b>います。
+音名が分かればキーが決まるので、この表さえ手元にあれば、
+どんな譜面でも打ち込めます。
+</p>
+
+<table class="keymap">
+  <thead>
+    <tr><th>音名</th><th>C</th><th>C#</th><th>D</th><th>D#</th><th>E</th><th>F</th>
+        <th>F#</th><th>G</th><th>G#</th><th>A</th><th>A#</th><th>B</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>下段<br>（OCTAVE の高さ）</th>
+        <td>Z</td><td>S</td><td>X</td><td>D</td><td>C</td><td>V</td>
+        <td>G</td><td>B</td><td>H</td><td>N</td><td>J</td><td>M</td></tr>
+    <tr><th>上段<br>（その 1 つ上）</th>
+        <td>Q</td><td>2</td><td>W</td><td>3</td><td>E</td><td>R</td>
+        <td>5</td><td>T</td><td>6</td><td>Y</td><td>7</td><td>U</td></tr>
+  </tbody>
+</table>
+
+<ul>
+  <li><b>1 音 ＝ 「キー → <code>Enter</code>」の 2 打</b>。<code>Enter</code> でカーソルが 1 つ進みます</li>
+  <li><b>休符は <code>A</code> キー</b>。音名の「ラ」は <code>N</code> なので、ここだけ紛らわしい</li>
+  <li><b>OCTAVE は 0・1・2・3 の 4 段だけ</b>。<code>PageUp</code> / <code>PageDown</code> で切り替えます</li>
+</ul>
+
+<div class="warn">
+  <b>OCTAVE 4 は「ない」。C4 は上段のキーで出す</b>
+  キーで届く範囲は、いつも<b>下段＋上段の 2 オクターブぶん</b>です。
+  たとえば <b>C3 E3 G3 C4</b> と打ちたいときは、OCTAVE を 3 にしたまま
+  <code>Z</code> <code>C</code> <code>B</code> <code>Q</code>。
+  最後の C4 のために OCTAVE を上げる必要はありません（そもそも 4 には上がりません）。<br>
+  逆に、上段でも届かないほど低い音・高い音を使いたいときだけ、OCTAVE を動かします。
+</div>
+
 <h2>3. 最強のルール：黒鍵を使わない</h2>
 
 <p>

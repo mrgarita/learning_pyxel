@@ -227,14 +227,164 @@ BGM と効果音を同じチャンネルにすると、<b>お菓子を取るた�
 <table>
   <thead><tr><th>キー</th><th>できること</th></tr></thead>
   <tbody>
-    <tr><td><code>Z S X D C V G B H N J M</code></td><td>下の段の鍵盤（ド〜シ）</td></tr>
-    <tr><td><code>Q 2 W 3 E R 5 T 6 Y 7 U</code></td><td>上の段の鍵盤（1 オクターブ上）</td></tr>
-    <tr><td><code>A</code></td><td>休符</td></tr>
-    <tr><td><code>PageUp</code> / <code>PageDown</code></td><td>オクターブを上げ下げ</td></tr>
-    <tr><td><code>SPACE</code></td><td>再生して確かめる</td></tr>
+    <tr><td><code>Z S X D C V G B H N J M</code></td><td>下の段の鍵盤（いまの OCTAVE の高さ）</td></tr>
+    <tr><td><code>Q 2 W 3 E R 5 T 6 Y 7 U</code></td><td>上の段の鍵盤（その 1 オクターブ上）</td></tr>
+    <tr><td><code>Enter</code></td><td><b>カーソル位置に置いて 1 つ進む</b>（音は 1 つずつこれで確定する）</td></tr>
+    <tr><td><code>A</code></td><td>休符（音名の「ラ」は <code>N</code>。混同しやすい）</td></tr>
+    <tr><td><code>PageUp</code> / <code>PageDown</code></td><td>OCTAVE を上げ下げ（<b>0 〜 3 の 4 段だけ</b>）</td></tr>
+    <tr><td><code>↓</code> / <code>↑</code></td><td>TON・VOL・EFX の行へ移る</td></tr>
+    <tr><td><code>SPACE</code> / <code>L</code></td><td>再生して確かめる ／ ループ再生</td></tr>
+    <tr><td><code>Ctrl</code>＋<code>Z</code></td><td>取り消し（打ち間違えたら戻せる）</td></tr>
     <tr><td><code>Ctrl</code>＋<code>S</code></td><td>保存</td></tr>
   </tbody>
 </table>
+
+<h3>3-1b. どのキーがどの音か</h3>
+
+<p>
+このフェーズの音は、<b>OCTAVE 3</b> と <b>OCTAVE 1</b> の 2 つで全部打てます。
+まずは OCTAVE 3 のときの割り当てを見てください。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 258" role="img"
+     aria-label="OCTAVE 3 のときのキーと音の対応。下段 Z X C V B N M が C3 から B3、上段 Q W E R T Y U が C4 から B4">
+  <text x="187" y="34" fill="#ffcc44" font-size="12" text-anchor="middle">下段 ＝ OCTAVE 3（C3 〜 B3）</text>
+  <text x="453" y="34" fill="#45b0e8" font-size="12" text-anchor="middle">上段 ＝ その 1 つ上（C4 〜 B4）</text>
+  <line x1="54" y1="44" x2="318" y2="44" stroke="#ffcc44" stroke-width="1.5"/>
+  <line x1="322" y1="44" x2="586" y2="44" stroke="#45b0e8" stroke-width="1.5"/>
+
+  <!-- 白鍵。このフェーズで使うキーは黄色く塗ってある -->
+  <g stroke="#3b4166">
+    <rect x="54"  y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="92"  y="56" width="38" height="118" fill="#e8f0ff"/>
+    <rect x="130" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="168" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="206" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="244" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="282" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="320" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="358" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="396" y="56" width="38" height="118" fill="#ffe9a8"/>
+    <rect x="434" y="56" width="38" height="118" fill="#e8f0ff"/>
+    <rect x="472" y="56" width="38" height="118" fill="#e8f0ff"/>
+    <rect x="510" y="56" width="38" height="118" fill="#e8f0ff"/>
+    <rect x="548" y="56" width="38" height="118" fill="#e8f0ff"/>
+  </g>
+
+  <g fill="#10121c">
+    <rect x="81"  y="56" width="22" height="74"/>
+    <rect x="119" y="56" width="22" height="74"/>
+    <rect x="195" y="56" width="22" height="74"/>
+    <rect x="233" y="56" width="22" height="74"/>
+    <rect x="271" y="56" width="22" height="74"/>
+    <rect x="347" y="56" width="22" height="74"/>
+    <rect x="385" y="56" width="22" height="74"/>
+    <rect x="461" y="56" width="22" height="74"/>
+    <rect x="499" y="56" width="22" height="74"/>
+    <rect x="537" y="56" width="22" height="74"/>
+  </g>
+
+  <g fill="#e8f0ff" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="92"  y="122">S</text>
+    <text x="130" y="122">D</text>
+    <text x="206" y="122">G</text>
+    <text x="244" y="122">H</text>
+    <text x="282" y="122">J</text>
+    <text x="358" y="122">2</text>
+    <text x="396" y="122">3</text>
+    <text x="472" y="122">5</text>
+    <text x="510" y="122">6</text>
+    <text x="548" y="122">7</text>
+  </g>
+
+  <g fill="#10121c" font-family="Consolas, monospace" font-size="14" text-anchor="middle" font-weight="bold">
+    <text x="73"  y="160">Z</text>
+    <text x="111" y="160">X</text>
+    <text x="149" y="160">C</text>
+    <text x="187" y="160">V</text>
+    <text x="225" y="160">B</text>
+    <text x="263" y="160">N</text>
+    <text x="301" y="160">M</text>
+    <text x="339" y="160">Q</text>
+    <text x="377" y="160">W</text>
+    <text x="415" y="160">E</text>
+    <text x="453" y="160">R</text>
+    <text x="491" y="160">T</text>
+    <text x="529" y="160">Y</text>
+    <text x="567" y="160">U</text>
+  </g>
+
+  <g font-family="Consolas, monospace" font-size="10.5" text-anchor="middle">
+    <text x="73"  y="192" fill="#ffcc44">C3</text>
+    <text x="111" y="192" fill="#9aa4c4">D3</text>
+    <text x="149" y="192" fill="#ffcc44">E3</text>
+    <text x="187" y="192" fill="#ffcc44">F3</text>
+    <text x="225" y="192" fill="#ffcc44">G3</text>
+    <text x="263" y="192" fill="#ffcc44">A3</text>
+    <text x="301" y="192" fill="#ffcc44">B3</text>
+    <text x="339" y="192" fill="#ffcc44">C4</text>
+    <text x="377" y="192" fill="#ffcc44">D4</text>
+    <text x="415" y="192" fill="#ffcc44">E4</text>
+    <text x="453" y="192" fill="#9aa4c4">F4</text>
+    <text x="491" y="192" fill="#9aa4c4">G4</text>
+    <text x="529" y="192" fill="#9aa4c4">A4</text>
+    <text x="567" y="192" fill="#9aa4c4">B4</text>
+  </g>
+  <text x="30" y="160" fill="#9aa4c4" font-size="11" text-anchor="end">キー</text>
+  <text x="30" y="192" fill="#9aa4c4" font-size="11" text-anchor="end">音名</text>
+
+  <rect x="54" y="212" width="266" height="26" rx="4" fill="#1b1f33" stroke="#ffcc44"/>
+  <text x="187" y="229" fill="#ffcc44" font-size="11" text-anchor="middle">黄色い鍵 ＝ このフェーズで使う音</text>
+  <rect x="332" y="212" width="254" height="26" rx="4" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="459" y="229" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">キー → Enter で 1 音置く</text>
+</svg>
+</div>
+<figcaption>OCTAVE を 1 に下げると、同じキーの並びがそのまま 2 オクターブ低い音（C1 〜 B2）になります</figcaption>
+</figure>
+
+<p>黒鍵も含めた早見表です。<b>OCTAVE がいくつでも、この並びは変わりません。</b></p>
+
+<table class="keymap">
+  <thead>
+    <tr><th>音名</th><th>C</th><th>C#</th><th>D</th><th>D#</th><th>E</th><th>F</th>
+        <th>F#</th><th>G</th><th>G#</th><th>A</th><th>A#</th><th>B</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>下段<br>（OCTAVE の高さ）</th>
+        <td>Z</td><td>S</td><td>X</td><td>D</td><td>C</td><td>V</td>
+        <td>G</td><td>B</td><td>H</td><td>N</td><td>J</td><td>M</td></tr>
+    <tr><th>上段<br>（その 1 つ上）</th>
+        <td>Q</td><td>2</td><td>W</td><td>3</td><td>E</td><td>R</td>
+        <td>5</td><td>T</td><td>6</td><td>Y</td><td>7</td><td>U</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b>OCTAVE に 4 はありません</b>
+  OCTAVE は <b>0・1・2・3 の 4 段だけ</b>です。
+  「C4 を入れたいから OCTAVE を 4 にする」——これはできません。
+  <b>C4 より上は、上段のキーで出します。</b>
+  OCTAVE 3 のとき、上段の <code>Q</code> がちょうど C4 です。<br>
+  キーで届く範囲はいつも <b>2 オクターブぶん</b>で、その 2 オクターブを
+  音域のどこに当てるかを決めているのが OCTAVE の数字、と考えてください。
+</div>
+
+<div class="note">
+  <b>今の OCTAVE は画面に数字で出ません</b>
+  画面の左右にある<b>細いバーの、明るい帯の位置</b>で読み取ります
+  （図は <a href="../step0/phase7.html">step0 フェーズ 7</a> にあります）。
+  確実に合わせたいときは、<code>PageDown</code> を <b>4 回以上</b>押していちばん下（<code>0</code>）にしてから、
+  <code>PageUp</code> を <b>3 回</b>で OCTAVE 3 です。
+</div>
+
+<div class="term">
+  <b>打ち込む順のおすすめ</b>
+  OCTAVE を行ったり来たりしないで済むように、<b>高さでまとめて</b>作ると楽です。<br>
+  ① OCTAVE 3 のまま <b>SOUND 0 → 2 → 3 → 4</b>
+  → ② <code>PageDown</code> を 2 回押して OCTAVE 1 にし、<b>SOUND 1 → 5</b>。
+</div>
 
 <h3>3-2. 効果音を 3 つ作る</h3>
 
@@ -249,24 +399,37 @@ BGM と効果音を同じチャンネルにすると、<b>お菓子を取るた�
   <tbody>
     <tr>
       <td><b>0</b><br>お菓子</td>
-      <td><code>C3 E3 G3 C4</code><br>ドミソド（上がる）</td>
+      <td><code>C3 E3 G3 C4</code><br>ドミソド（上がる）
+          <span class="keys">OCTAVE 3 ／ <code>Z C B Q</code></span></td>
       <td><code>P</code></td><td><code>6</code></td><td><code>N</code></td><td><code>8</code></td>
       <td>0.27 秒</td>
     </tr>
     <tr>
       <td><b>1</b><br>捕まった</td>
-      <td><code>G2 E2 C2 A1</code><br>ソミドラ（下がる）</td>
+      <td><code>G2 E2 C2 A1</code><br>ソミドラ（下がる）
+          <span class="keys">OCTAVE 1 ／ <code>T E Q N</code></span></td>
       <td><code>S</code></td><td><code>7</code></td><td><code>F</code></td><td><code>12</code></td>
       <td>0.40 秒</td>
     </tr>
     <tr>
       <td><b>2</b><br>お化け出現</td>
-      <td><code>C3 G3</code><br>ドソ（2 音だけ）</td>
+      <td><code>C3 G3</code><br>ドソ（2 音だけ）
+          <span class="keys">OCTAVE 3 ／ <code>Z B</code></span></td>
       <td><code>P</code></td><td><code>6</code></td><td><code>N</code></td><td><code>10</code></td>
       <td>0.17 秒</td>
     </tr>
   </tbody>
 </table>
+
+<div class="note">
+  <b>打鍵の読み方</b>
+  <b>1 音ごとに「キー → <code>Enter</code>」</b>の 2 打です。
+  <code>Z C B Q</code> と書いてあれば、
+  <code>Z</code> <code>Enter</code> <code>C</code> <code>Enter</code> …… と 4 回くり返します。<br>
+  <b>SOUND 1 だけ OCTAVE 1 なのは、いちばん低い A1 を出すため</b>です。
+  OCTAVE 1 なら A1 は下段の <code>N</code>、G2・E2・C2 は上段の
+  <code>T</code> <code>E</code> <code>Q</code> で届きます。
+</div>
 
 <div class="term">
   <b>TONE（音色）の 4 種類</b>
@@ -298,17 +461,20 @@ BGM と効果音を同じチャンネルにすると、<b>お菓子を取るた�
   <tbody>
     <tr>
       <td><b>3</b><br>メロディ前半</td>
-      <td><code>A3 C4 E4 C4 A3 C4 E4 C4</code><br><code>F3 A3 C4 A3 F3 A3 C4 A3</code></td>
+      <td><code>A3 C4 E4 C4 A3 C4 E4 C4</code><br><code>F3 A3 C4 A3 F3 A3 C4 A3</code>
+          <span class="keys">OCTAVE 3 ／ <code>N Q E Q N Q E Q</code><br><code>V N Q N V N Q N</code></span></td>
       <td><code>T</code></td><td><code>5</code></td><td><code>N</code></td><td><code>20</code></td>
     </tr>
     <tr>
       <td><b>4</b><br>メロディ後半</td>
-      <td><code>G3 B3 D4 B3 G3 B3 D4 B3</code><br><code>A3 C4 E4 C4 A3 E4 C4 A3</code></td>
+      <td><code>G3 B3 D4 B3 G3 B3 D4 B3</code><br><code>A3 C4 E4 C4 A3 E4 C4 A3</code>
+          <span class="keys">OCTAVE 3 ／ <code>B M W M B M W M</code><br><code>N Q E Q N E Q N</code></span></td>
       <td><code>T</code></td><td><code>5</code></td><td><code>N</code></td><td><code>20</code></td>
     </tr>
     <tr>
       <td><b>5</b><br>ベース</td>
-      <td><code>A1 A1 F1 F1 G1 G1 A1 A1</code></td>
+      <td><code>A1 A1 F1 F1 G1 G1 A1 A1</code>
+          <span class="keys">OCTAVE 1 ／ <code>N N V V B B N N</code></span></td>
       <td><code>S</code></td><td><code>3</code></td><td><code>N</code></td><td><code>40</code></td>
     </tr>
   </tbody>
