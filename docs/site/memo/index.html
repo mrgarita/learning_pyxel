@@ -1493,6 +1493,140 @@ SPEED は「1 音の長さ」で、<code>120</code> で 1 音 1 秒。エディ�
   <b>エディタの中だけで完結する「音を並べる」方法のほうが、あとから自分が混乱しません。</b>
 </div>
 
+<h3 id="se-masking">Q. 2 つの効果音を同時に鳴らしたのに、片方しか聞こえない／「出た」感じがしない</h3>
+
+<p>
+原因は<b>2 段階</b>あります。まず <b>①チャンネルの上書き</b>を疑い、
+それが違えば <b>②マスキング（音が似すぎて混ざる）</b>を疑います。
+</p>
+
+<h4>① 同じチャンネルに 2 回鳴らすと、あとの 1 回が前を消す</h4>
+
+<p>
+Pyxel の <code>play(ch, snd)</code> は、<b>そのチャンネルで鳴っているものを止めて、
+新しい音に差し替える</b>命令です。停止と再生が 1 つになっている、と考えてください。
+</p>
+
+<pre><code>            pyxel.play(CH_SE, SOUND_CANDY)      # ch2 ＝ お菓子の音
+            ...
+                pyxel.play(CH_SE, SOUND_GHOST)   # ← 同じ ch2！ 上書きされる</code></pre>
+
+<p>
+やっかいなのは、この 2 行が<b>同じフレームの中</b>で走ることです。
+音が出るのはフレームの終わりなので、<b>お菓子の音は 1 サンプルも鳴らないまま消えます</b>。
+「片方が途中で切れる」のではなく、<b>最初からなかったこと</b>になります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 240" role="img"
+     aria-label="同じチャンネルに 2 つ鳴らすとお菓子の音が消えるが、チャンネルを分けると両方鳴ることを示す時間軸の図">
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="10" text-anchor="middle">
+    <text x="140" y="24">0.0</text>
+    <text x="250" y="24">0.1</text>
+    <text x="360" y="24">0.2</text>
+    <text x="470" y="24">0.3</text>
+    <text x="580" y="24">0.4 秒</text>
+  </g>
+  <g stroke="#232840">
+    <line x1="140" y1="32" x2="140" y2="216"/>
+    <line x1="250" y1="32" x2="250" y2="216"/>
+    <line x1="360" y1="32" x2="360" y2="216"/>
+    <line x1="470" y1="32" x2="470" y2="216"/>
+    <line x1="580" y1="32" x2="580" y2="216"/>
+  </g>
+
+  <text x="20" y="52" fill="#ff6b97" font-size="12">× 2 つとも ch2 に鳴らした</text>
+
+  <rect x="140" y="62" width="294" height="20" rx="3"
+        fill="none" stroke="#3b4166" stroke-dasharray="4 3"/>
+  <text x="150" y="76" fill="#3b4166" font-size="10.5">お菓子 0.267 秒</text>
+  <text x="442" y="76" fill="#ff6b97" font-size="10.5">1 度も鳴らない</text>
+  <text x="118" y="76" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">ch2</text>
+
+  <rect x="140" y="90" width="184" height="20" rx="3" fill="#ffcc44"/>
+  <text x="150" y="104" fill="#10121c" font-size="10.5">増えた 0.167 秒</text>
+  <text x="332" y="104" fill="#ffcc44" font-size="10.5">これだけ鳴る</text>
+  <text x="118" y="104" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">ch2</text>
+
+  <line x1="20" y1="126" x2="620" y2="126" stroke="#3b4166" stroke-dasharray="2 4"/>
+
+  <text x="20" y="150" fill="#2ee6a8" font-size="12">○ ch2 と ch3 に分けた</text>
+
+  <rect x="140" y="160" width="294" height="20" rx="3" fill="#45b0e8"/>
+  <text x="150" y="174" fill="#10121c" font-size="10.5">お菓子 0.267 秒</text>
+  <text x="118" y="174" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">ch2</text>
+
+  <rect x="140" y="188" width="184" height="20" rx="3" fill="#ffcc44"/>
+  <text x="150" y="202" fill="#10121c" font-size="10.5">増えた 0.167 秒</text>
+  <text x="332" y="202" fill="#2ee6a8" font-size="10.5">重なって、2 つとも鳴る</text>
+  <text x="118" y="202" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">ch3</text>
+</svg>
+</div>
+<figcaption>上：あとに書いた <code>play</code> が前を消してしまう。下：チャンネルを分ければ同時に鳴る</figcaption>
+</figure>
+
+<div class="term">
+  <b>見分け方</b>
+  「音が消えた」ではなく<b>「別の音に化けた」</b>ように聞こえたら、これです。
+  お菓子を取ったのに、<b>いつもと違う短い音</b>が鳴る——という聞こえ方をします。
+  <b>片方だけを鳴らす場面（＝ふつうにお菓子を取っただけ）では正常</b>なので、
+  「音は鳴っているのだから合っているはず」と思い込みやすいのが厄介なところです。
+</div>
+
+<h4>② 似すぎている音は、2 つでも 1 つに聞こえる（マスキング）</h4>
+
+<p>
+チャンネルを分けても弱いままなら、こちらです。
+耳は<b>同時に鳴る似た音を 1 つにまとめて</b>聞きます。とくに
+<b>あとから鳴った小さい音・短い音</b>は、先に鳴っている音に隠されます。
+これを<b>マスキング</b>と呼びます。
+</p>
+
+<p>step1 の 2 つの音は、埋もれる条件がそろっていました。</p>
+
+<table>
+  <thead><tr><th></th><th>お菓子（SOUND 0）</th><th>お化けが増えた（SOUND 2）</th><th>差</th></tr></thead>
+  <tbody>
+    <tr><td>音色</td><td><code>P</code></td><td><code>P</code></td><td>同じ</td></tr>
+    <tr><td>音量</td><td><code>6</code></td><td><code>6</code></td><td>同じ</td></tr>
+    <tr><td>音符</td><td>C3 E3 G3 C4</td><td>C3 G3</td><td><b>片方に完全に含まれる</b></td></tr>
+    <tr><td>長さ</td><td>0.267 秒</td><td>0.167 秒</td><td><b>短いほうが負ける</b></td></tr>
+  </tbody>
+</table>
+
+<p>手当ては 4 つ。<b>1 つでも効きますが、2 つ以上ずらすと確実</b>です。</p>
+
+<table>
+  <thead><tr><th>ずらすところ</th><th>やり方</th><th>効き目</th></tr></thead>
+  <tbody>
+    <tr><td><b>音色</b></td><td><code>P</code> → <code>S</code> や <code>N</code></td>
+        <td>別の楽器になるので、いちばん確実</td></tr>
+    <tr><td><b>音域</b></td><td>1 〜 2 オクターブ下げる</td>
+        <td>高い音どうしの取り合いから抜けられる</td></tr>
+    <tr><td><b>長さ</b></td><td>相手より長くする</td>
+        <td>相手が終わったあと<b>ひとりで残る</b>ので必ず気づく</td></tr>
+    <tr><td><b>音量</b></td><td><code>6</code> → <code>7</code></td>
+        <td>単純だが効く。ただし上限があるので他と併用</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>意味の向きもそろえる</b>
+  <b>上がる音＝よいこと、下がる音＝わるいこと</b>という感覚は、ほぼ世界共通です。
+  「お化けが増えた」は<b>わるいこと</b>なので、<b>低い音・下がる音</b>にすると、
+  聞き分けやすさと意味の両方が一度にそろいます。
+</div>
+
+<div class="warn">
+  <b>それでも足りないときは「ずらして鳴らす」</b>
+  同じ瞬間に 2 つ鳴らすのをやめ、<b>数フレーム遅らせて</b>鳴らす手もあります。
+  「お菓子を取った → <b>間</b> → お化けが出た！」となって、演出としても強くなります。
+  ただし<b>コードが増えます</b>（鳴らす音と鳴らす時刻を覚えておき、
+  <code>update</code> でその時刻が来たら鳴らす）。
+  まずは音そのものを変えるほうを試してください。
+</div>
+
 <h3 id="web-fullscreen">Q. Web に公開した Pyxel 作品を全画面にしたい。F11 が効かない</h3>
 <p>
 <b>A.</b> <b>ページに「全画面」ボタンを自分で足します。</b>
