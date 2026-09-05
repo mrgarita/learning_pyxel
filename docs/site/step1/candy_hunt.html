@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/gh/kitao/pyxel@2.9.9/wasm/pyxel.js"></script>
+<script>
+launchPyxel({ command: "play", name: "step1.pyxapp", gamepad: "enabled", base64: "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" });
+</script>
+
+
+<!-- 全画面ボタン（app2html の出力に手で足したもの） -->
+<style>
+  #fs-btn {
+    position: fixed; right: 12px; bottom: 12px; z-index: 9999;
+    padding: 8px 14px; font: 14px system-ui, sans-serif;
+    color: #fff; background: rgba(40, 44, 60, .82);
+    border: 1px solid #7d86a8; border-radius: 6px; cursor: pointer;
+    opacity: .55; transition: opacity .15s;
+  }
+  #fs-btn:hover, #fs-btn:focus { opacity: 1; }
+
+  /* 全画面のあいだはボタンを隠す（抜けるときは ESC） */
+  :root:fullscreen #fs-btn { display: none; }
+  :root:-webkit-full-screen #fs-btn { display: none; }
+</style>
+<button id="fs-btn" title="ゲーム画面をブラウザいっぱいに広げます（もどるときは ESC）">全画面</button>
+<script>
+const fsBtn = document.getElementById("fs-btn");
+
+fsBtn.addEventListener("click", async () => {
+  try {
+    await document.documentElement.requestFullscreen();
+  } catch (e) {
+    console.log("[fs] 全画面にできませんでした:", e.name, e.message);
+  }
+  // クリックでボタンに移った入力先を、ゲーム画面へ戻す
+  const canvas = document.getElementById("canvas");
+  if (canvas) { canvas.focus(); }
+});
+
+// 全画面のあいだはボタンを隠す。ESC で抜けたら戻す
+document.addEventListener("fullscreenchange", () => {
+  fsBtn.hidden = !!document.fullscreenElement;
+  const canvas = document.getElementById("canvas");
+  if (canvas) { canvas.focus(); }
+});
+</script>
