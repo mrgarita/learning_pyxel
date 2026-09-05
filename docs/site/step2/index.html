@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 倉庫番 ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">step2 </span>倉庫番</h1>
+  <p>荷物を押して所定の位置へ運ぶ。10 ステージすべてを解く</p>
+</header>
+
+<p class="crumb"><a href="../">← 目次にもどる</a></p>
+
+<h2 id="goal">1. 完成イメージ</h2>
+
+<p>
+プレイヤーを矢印キーで動かし、<b>荷物を押して、すべてのゴールに乗せる</b>と 1 ステージクリアです。
+荷物は<b>押すことしかできません</b>（引けません）。壁ぎわに押しつけてしまうと二度と動かせなくなるので、
+<b>動かす前に考える</b>のがこのゲームの面白さです。
+</p>
+
+<p>
+全 <b>10 ステージ</b>。最初のステージは荷物 1 個から始まり、だんだん難しくなります。
+詰んでしまったときのために、<b><code>R</code> でやり直し</b>と <b><code>Z</code> で 1 手戻す</b>を用意します。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 340 260" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="完成イメージ：壁で囲まれた盤面に、プレイヤー・荷物 3 個・ゴール 3 か所が並び、荷物 1 個はすでにゴールに乗っている">
+  <text x="62" y="30" fill="#ffcc44" font-family="Consolas, monospace" font-size="13">STAGE 3</text>
+  <text x="196" y="30" fill="#9aa4c4" font-family="Consolas, monospace" font-size="13">MOVES 24</text>
+
+  <!-- 盤面（9 マス × 7 マス。1 マス 24） -->
+  <rect x="62" y="40" width="216" height="168" fill="#10121c"/>
+
+  <!-- 外周の壁 -->
+  <g fill="#232840">
+    <rect x="62"  y="40"  width="216" height="24"/>
+    <rect x="62"  y="184" width="216" height="24"/>
+    <rect x="62"  y="40"  width="24"  height="168"/>
+    <rect x="254" y="40"  width="24"  height="168"/>
+  </g>
+  <!-- 中の壁 1 マス -->
+  <rect x="182" y="112" width="24" height="24" fill="#232840"/>
+
+  <!-- マス目の線 -->
+  <path d="M86 40 v168 M110 40 v168 M134 40 v168 M158 40 v168 M182 40 v168 M206 40 v168 M230 40 v168 M254 40 v168
+           M62 64 h216 M62 88 h216 M62 112 h216 M62 136 h216 M62 160 h216 M62 184 h216"
+        stroke="#1b1f33" stroke-width="1" fill="none"/>
+  <rect x="62" y="40" width="216" height="168" fill="none" stroke="#3b4166" stroke-width="2"/>
+
+  <!-- ゴール（まだ乗っていない） -->
+  <g fill="none" stroke="#ffcc44" stroke-width="2">
+    <path d="M170 70 l6 6 -6 6 -6 -6 z"/>
+    <path d="M218 142 l6 6 -6 6 -6 -6 z"/>
+  </g>
+
+  <!-- 荷物 -->
+  <g stroke="#10121c" stroke-width="1">
+    <rect x="114" y="92"  width="16" height="16" rx="2" fill="#45b0e8"/>
+    <rect x="138" y="140" width="16" height="16" rx="2" fill="#45b0e8"/>
+    <rect x="162" y="116" width="16" height="16" rx="2" fill="#2ee6a8"/>
+  </g>
+  <text x="170" y="128" fill="#10121c" font-size="11" text-anchor="middle" font-weight="bold">✓</text>
+
+  <!-- プレイヤー -->
+  <g>
+    <rect x="116" y="118" width="12" height="12" rx="2" fill="#e8f0ff"/>
+    <rect x="118" y="121" width="2" height="2" fill="#10121c"/>
+    <rect x="124" y="121" width="2" height="2" fill="#10121c"/>
+  </g>
+
+  <!-- 押す向きの矢印 -->
+  <g stroke="#2ee6a8" stroke-width="1.5" fill="none">
+    <path d="M122 114 l0 -8 M118 108 l4 -4 4 4"/>
+  </g>
+
+  <g font-size="11">
+    <rect x="62" y="222" width="12" height="12" rx="2" fill="#45b0e8"/>
+    <text x="80" y="232" fill="#9aa4c4">荷物</text>
+    <rect x="118" y="222" width="12" height="12" rx="2" fill="#2ee6a8"/>
+    <text x="136" y="232" fill="#9aa4c4">ゴールに乗った荷物</text>
+    <path d="M242 228 l5 5 -5 5 -5 -5 z" fill="none" stroke="#ffcc44" stroke-width="2"/>
+    <text x="254" y="232" fill="#9aa4c4">ゴール</text>
+    <rect x="298" y="222" width="12" height="12" fill="#232840"/>
+    <text x="316" y="232" fill="#9aa4c4">壁</text>
+  </g>
+</svg>
+</div>
+<figcaption>完成イメージ（実際の画面は 160×120 ドット、1 マス 8 ドット。図は概念図です）</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>項目</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>画面サイズ</td><td>160 × 120 ドット（step0・step1 と同じ）</td></tr>
+    <tr><td>1 マスの大きさ</td><td>8 × 8 ドット。盤面は最大 <b>18 × 12 マス</b>まで置ける</td></tr>
+    <tr><td>操作</td><td>矢印キーで移動・荷物を押す ／ <code>R</code> でやり直し ／
+      <code>Z</code> で 1 手戻す ／ <code>Enter</code> で決定</td></tr>
+    <tr><td>クリア条件</td><td><b>すべての荷物がゴールに乗る</b>こと。制限時間や手数制限はなし</td></tr>
+    <tr><td>ステージ数</td><td><b>10</b>。番号順に進む。クリアしたステージは選び直せる</td></tr>
+    <tr><td>画面</td><td>タイトル／ステージ選択／プレイ／ステージクリア／全ステージクリアの 5 画面</td></tr>
+    <tr><td>表示</td><td>ステージ番号と手数（画面の上）</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b>step1 といちばん違うのは「時間の進み方」です</b>
+  step1 は<b>毎フレーム世界が動いて</b>いました。手を止めても、お化けは近づいてきます。<br>
+  倉庫番は<b>プレイヤーがキーを押したときだけ世界が動きます</b>。
+  押さないかぎり、盤面は 1 ドットも変わりません。<b>考える時間は無限にある</b>ゲームです。<br>
+  この違いはコードにも出ます。<code>update()</code> でやることが
+  <b>「キーが押されたか」を見るだけ</b>になり、<b>ぬるぬる動く処理がなくなります</b>。
+  そのぶん、<b>「動かしていいかどうかの判断」</b>が中身の主役になります。
+</div>
+
+<div class="note">
+  <b>作品の規模感</b>
+  最終的なコードはおよそ <b>250〜300 行</b>です。step1（150〜200 行）より増えますが、
+  <b>そのうち 3 割ほどは「ステージの地図」そのもの</b>で、考えて書くコードの量は
+  step1 と大きくは変わりません。10 のフェーズに分けて進めます。
+</div>
+
+<div class="note">
+  <b>参考にした記事</b>
+  ゲームの題材は <a href="https://note.com/syun77/n/nd7675f2df64b">こちらの記事</a>を参考にしています。
+  コードや画像は転載せず、<b>ドット絵はリソースエディタで自分で描き、コードもフェーズごとに
+  一から組み立てます</b>。<b>参考記事にステージの概念はないので、
+  10 ステージ制とタイトル画面はこの学習用に足した拡張です。</b>
+</div>
+
+<h2 id="phases">2. フェーズ分割</h2>
+
+<p>
+<b>解説ページは、フェーズを進めるたびに追加していきます。</b>
+</p>
+
+<table>
+  <thead><tr><th>フェーズ</th><th>やること</th><th>主に使う技術</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-no">1</td>
+        <td><b>タイルの絵を描き、ステージを画面に並べる</b><br>
+        壁・床・荷物・ゴール・プレイヤーの 5 つを描き、地図のとおりに置く</td>
+        <td>二次元リスト、マス目とドットの変換、二重ループ</td></tr>
+    <tr><td class="phase-no">2</td>
+        <td><b>プレイヤーを矢印キーで動かす</b><br>
+        壁にぶつかったら動かない</td>
+        <td><b>動かす前に行き先を調べる</b>、<code>btnp</code></td></tr>
+    <tr><td class="phase-no">3</td>
+        <td><b>荷物を押す</b><br>
+        押した先が空いているときだけ、荷物ごと動く</td>
+        <td><b>2 マス先まで見る</b>、位置をまとめて扱う</td></tr>
+    <tr><td class="phase-no">4</td>
+        <td><b>クリア判定と、やり直し</b><br>
+        全部の荷物がゴールに乗ったらクリア。<code>R</code> で最初から</td>
+        <td><code>all()</code>、<b>リストのコピー</b>（浅いコピーの落とし穴）</td></tr>
+    <tr><td class="phase-no">5</td>
+        <td><b>ステージを 10 個にする</b><br>
+        クリアしたら次のステージへ。10 個ぜんぶで全クリア</td>
+        <td>ステージ一覧の持ち方、進行状態の管理</td></tr>
+    <tr><td class="phase-no">6</td>
+        <td><b>タイトル画面とステージ選択</b></td>
+        <td>画面遷移（step1 の復習）、カーソルの移動</td></tr>
+    <tr><td class="phase-no">7</td>
+        <td><b>手数の表示とクリア演出</b><br>
+        ステージ番号・手数を出し、クリアの瞬間に間をつくる</td>
+        <td>HUD、<code>frame_count</code> による演出</td></tr>
+    <tr><td class="phase-no">8</td>
+        <td><b>効果音と BGM をつける</b></td>
+        <td><code>play</code> / <code>playm</code>（step1 の復習）</td></tr>
+    <tr><td class="phase-no">9</td>
+        <td><b>1 手戻す（アンドゥ）</b><br>
+        <code>Z</code> で直前の 1 手を取り消す</td>
+        <td><b>履歴をリストに積む</b>（<code>append</code> と <code>pop</code>）</td></tr>
+    <tr><td class="phase-no">10</td>
+        <td><b>パッケージ化して Web で公開する</b></td>
+        <td><code>pyxel package</code> / <code>app2html</code>（step1 の復習）</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>進め方</b>
+  1 フェーズごとに「考え方 → 必要な API → コード → 解説」を読み、コードを自分で入力して
+  実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
+  疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。<br>
+  はじめて読むときは、この下の<a href="#topics">3. 学ぶ技術項目</a>と
+  <a href="#basics">4. 先に押さえておきたい 2 つの土台</a>に目を通してから、フェーズ 1 へ進んでください。
+</div>
+
+<h2 id="topics">3. この step で学ぶ技術項目</h2>
+
+<p>
+step1 が「ゲームとして成立させるための仕組み」だったのに対し、step2 は
+<b>「データでゲームを作る」</b>のが柱です。
+<b>ステージを増やすのに、コードを書き足さない</b>——
+地図のデータを 1 つ足すだけでステージが増える、という形を目指します。
+</p>
+
+<table>
+  <thead><tr><th>分類</th><th>項目</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="3">データの持ち方</td>
+        <td><b>二次元リストで盤面を持つ</b>（<code>stage[y][x]</code>）</td><td>1</td></tr>
+    <tr><td><b>ステージを「文字の地図」で書き、読んで組み立てる</b></td><td>1</td></tr>
+    <tr><td>10 個のステージをまとめて持ち、番号で取り出す</td><td>5</td></tr>
+    <tr><td rowspan="2">座標</td>
+        <td><b>マス目の座標とドットの座標を行き来する</b></td><td>1</td></tr>
+    <tr><td>位置を <code>(x, y)</code> の組として扱う</td><td>3・9</td></tr>
+    <tr><td rowspan="2">移動の判定</td>
+        <td><b>動かす前に、行き先を調べる</b>（壁なら動かない）</td><td>2</td></tr>
+    <tr><td><b>2 マス先まで見る</b>（荷物を押せるかどうか）</td><td>3</td></tr>
+    <tr><td rowspan="2">状態の管理</td>
+        <td>すべての荷物がゴールに乗ったかを調べる</td><td>4</td></tr>
+    <tr><td><b>初期状態を保存しておき、いつでも戻す</b></td><td>4</td></tr>
+    <tr><td>やり直し</td><td><b>1 手ずつ履歴に積み、取り出して戻す</b></td><td>9</td></tr>
+    <tr><td rowspan="2">ゲーム進行</td>
+        <td>ステージを順に進める／全クリア</td><td>5</td></tr>
+    <tr><td>タイトルとステージ選択（step1 の画面遷移の応用）</td><td>6</td></tr>
+    <tr><td>画面表示</td><td>ステージ番号・手数の表示、クリア演出</td><td>7</td></tr>
+    <tr><td>サウンド</td><td>押す音・ゴールに乗った音・クリア音（step1 の復習）</td><td>8</td></tr>
+    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）</td><td>10</td></tr>
+  </tbody>
+</table>
+
+<h3>あわせて新しく出てくる Python の概念</h3>
+
+<table>
+  <thead><tr><th>概念</th><th>なぜ必要になるか</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>二次元リスト</b><br>（リストの中のリスト）</td>
+      <td>盤面は「縦にも横にも広がる表」です。1 本のリストでは扱いにくいので、
+      <b>行のリストを、さらにリストで束ねます</b>。
+      <code>stage[y][x]</code> と<b>縦が先</b>になる理由も、ここで理解します。</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td><b>リストのコピーは「参照」</b></td>
+      <td><code>R</code> でやり直すには、始めの盤面を取っておく必要があります。
+      ところが <code>backup = stage</code> と書いても<b>控えになりません</b>。
+      片方を書き換えると<b>両方変わります</b>。
+      step2 でいちばん引っかかりやすいところです。</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td><code>all()</code> で<br>「全部そろったか」</td>
+      <td>「すべての荷物がゴールに乗ったか」は、
+      <code>for</code> と旗（フラグ）でも書けますが、<code>all()</code> を使うと
+      <b>1 行で、読んだとおりの意味</b>になります。</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>タプル <code>(x, y)</code></td>
+      <td>位置は<b>2 つの数がいつも一組</b>で動きます。
+      別々の変数で持つと引数が増えて散らかるので、組にしてまとめます。
+      <b>あとから書き換えられない</b>という性質も、履歴を残すときに効いてきます。</td>
+      <td>3・9</td>
+    </tr>
+    <tr>
+      <td>リストを<b>履歴</b>として使う<br>（<code>append</code> と <code>pop</code>）</td>
+      <td>アンドゥは「最後にやったことを、最後に取り消す」処理です。
+      リストの<b>お尻に足して、お尻から取る</b>だけで実現できます。</td>
+      <td>9</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>step1 で作ったものは、そのまま使えます</b>
+  画面遷移（<code>scene</code> による振り分け）、<code>btnp</code> の使い分け、
+  <code>frame_count</code> を使った演出の間、チャンネルを分けた効果音、
+  <code>pyxel package</code> での公開——<b>これらは新しく学び直しません</b>。
+  step2 で頭を使うのは、<b>データの持ち方と、動かす前の判断</b>の 2 つに集中します。
+</div>
+
+<h2 id="basics">4. 先に押さえておきたい 2 つの土台</h2>
+
+<h3>土台 1：マス目で考え、描くときだけドットに直す</h3>
+
+<p>
+step1 では、男の子の位置は<b>ドットの座標</b>（<code>boy_x = 76</code> など）でした。
+倉庫番では<b>マス目の座標</b>（左から 3 番目、上から 1 番目）で考えます。
+<b>「3 番目のマス」なら、壁があるかどうかを表から一発で引ける</b>からです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="マス目の座標とドットの座標の対応図。左から4番目・上から2番目のマスが stage[1][3] にあたる">
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="138" y="42">0</text><text x="174" y="42">1</text><text x="210" y="42">2</text>
+    <text x="246" y="42">3</text><text x="282" y="42">4</text>
+  </g>
+  <text x="210" y="24" fill="#9aa4c4" font-size="11" text-anchor="middle">x（左から何番目）</text>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">
+    <text x="112" y="74">0</text><text x="112" y="110">1</text>
+    <text x="112" y="146">2</text><text x="112" y="182">3</text>
+  </g>
+  <text x="104" y="126" fill="#9aa4c4" font-size="11" text-anchor="end">y</text>
+
+  <rect x="120" y="50" width="180" height="144" fill="#10121c" stroke="#3b4166"/>
+  <path d="M156 50 v144 M192 50 v144 M228 50 v144 M264 50 v144
+           M120 86 h180 M120 122 h180 M120 158 h180"
+        stroke="#232840" fill="none"/>
+
+  <rect x="228" y="86" width="36" height="36" fill="#45b0e8" opacity=".25"/>
+  <rect x="228" y="86" width="36" height="36" fill="none" stroke="#45b0e8" stroke-width="2"/>
+
+  <line x1="264" y1="104" x2="330" y2="104" stroke="#45b0e8" stroke-width="1.5"/>
+  <circle cx="264" cy="104" r="3" fill="#45b0e8"/>
+
+  <text x="340" y="86" fill="#e8f0ff" font-size="12">このマスを指すには</text>
+  <text x="340" y="112" fill="#2ee6a8" font-family="Consolas, monospace" font-size="13">stage[1][3]</text>
+  <text x="340" y="132" fill="#9aa4c4" font-size="11">縦（y）が先、横（x）があと</text>
+
+  <text x="340" y="164" fill="#e8f0ff" font-size="12">画面に描くときだけ、ドットに直す</text>
+  <text x="340" y="188" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">px = OX + 3 * 8</text>
+  <text x="340" y="206" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">py = OY + 1 * 8</text>
+  <text x="340" y="226" fill="#9aa4c4" font-size="11">OX・OY は盤面を中央に寄せるためのずらし幅</text>
+</svg>
+</div>
+<figcaption><code>stage[y][x]</code> の順番は、慣れるまで必ず一度は間違えます。「行を選んでから、その中の列を選ぶ」と覚えます</figcaption>
+</figure>
+
+<div class="term">
+  <b>なぜ「縦が先」なのか</b>
+  地図を<b>行（横 1 列ぶんの文字列）を上から並べたもの</b>として書くからです。
+  <pre><code>"#########"      ← stage[0]
+"#..O....#"      ← stage[1]
+"#..$....#"      ← stage[2]</code></pre>
+  まず<b>何行目か</b>を選び、その行の中で<b>何文字目か</b>を選ぶ——
+  この順番がそのまま <code>stage[y][x]</code> になります。
+</div>
+
+<h3>土台 2：動かす前に、2 マス先まで調べる</h3>
+
+<p>
+step1 の当たり判定は<b>「動かしたあとで、重なっていないか」</b>を見ていました。
+倉庫番は逆で、<b>「動かす前に、動いていいか」</b>を調べます。
+めり込んでから直すのではなく、<b>そもそも動かさない</b>わけです。
+</p>
+
+<p>
+調べるのは<b>すぐ前のマス</b>と、荷物があったときの<b>その 1 つ先</b>——最大 2 マスです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="移動できるかどうかの 4 つの場合。前が床なら進む、前が壁なら動かない、前が荷物でその先が床なら 2 つ動く、その先が壁なら動かない">
+  <g font-size="12">
+    <text x="40" y="26" fill="#9aa4c4">いま</text>
+    <text x="76" y="26" fill="#9aa4c4">1 つ前</text>
+    <text x="124" y="26" fill="#9aa4c4">2 つ前</text>
+  </g>
+
+  <!-- 1. 前が床 -->
+  <g>
+    <rect x="36" y="38" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="42" y="44" width="16" height="16" rx="2" fill="#e8f0ff"/>
+    <rect x="64" y="38" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="92" y="38" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <path d="M128 52 l14 0 M138 48 l5 4 -5 4" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+    <text x="156" y="57" fill="#2ee6a8" font-size="12">前が床 → <tspan font-weight="bold">プレイヤーだけ 1 マス進む</tspan></text>
+  </g>
+
+  <!-- 2. 前が壁 -->
+  <g>
+    <rect x="36" y="90" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="42" y="96" width="16" height="16" rx="2" fill="#e8f0ff"/>
+    <rect x="64" y="90" width="28" height="28" fill="#232840" stroke="#3b4166"/>
+    <rect x="92" y="90" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <path d="M128 104 l14 0 M138 100 l5 4 -5 4" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+    <text x="156" y="109" fill="#ff6b97" font-size="12">前が壁 → <tspan font-weight="bold">何も起こらない</tspan>（手数も増やさない）</text>
+  </g>
+
+  <!-- 3. 前が荷物、その先が床 -->
+  <g>
+    <rect x="36" y="142" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="42" y="148" width="16" height="16" rx="2" fill="#e8f0ff"/>
+    <rect x="64" y="142" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="70" y="148" width="16" height="16" rx="2" fill="#45b0e8"/>
+    <rect x="92" y="142" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <path d="M128 156 l14 0 M138 152 l5 4 -5 4" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+    <text x="156" y="161" fill="#2ee6a8" font-size="12">前が荷物で、その先が床 → <tspan font-weight="bold">荷物とプレイヤーが 1 マスずつ動く</tspan></text>
+  </g>
+
+  <!-- 4. 前が荷物、その先が壁 -->
+  <g>
+    <rect x="36" y="194" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="42" y="200" width="16" height="16" rx="2" fill="#e8f0ff"/>
+    <rect x="64" y="194" width="28" height="28" fill="#10121c" stroke="#3b4166"/>
+    <rect x="70" y="200" width="16" height="16" rx="2" fill="#45b0e8"/>
+    <rect x="92" y="194" width="28" height="28" fill="#232840" stroke="#3b4166"/>
+    <path d="M128 208 l14 0 M138 204 l5 4 -5 4" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+    <text x="156" y="213" fill="#ff6b97" font-size="12">その先が壁（または別の荷物） → <tspan font-weight="bold">動かない</tspan></text>
+  </g>
+
+  <text x="36" y="244" fill="#9aa4c4" font-size="11">この 4 つだけです。荷物を <tspan fill="#e8f0ff">2 つまとめて押すことはできません</tspan>。</text>
+  <text x="36" y="258" fill="#9aa4c4" font-size="11">3 番目の絵の「その先」に荷物があるときは、4 番目と同じ扱いになります。</text>
+</svg>
+</div>
+<figcaption>この表が、そのままフェーズ 2 とフェーズ 3 のコードになります</figcaption>
+</figure>
+
+<div class="note">
+  <b>「引けない」から詰みが生まれます</b>
+  荷物を<b>壁ぎわに押しつけると、もう動かせません</b>。
+  角に入れてしまえば、そこが正解のゴールでないかぎり<b>そのステージは詰み</b>です。
+  <b>これは不具合ではなく、このゲームの本質</b>です。
+  だからこそ <code>R</code>（やり直し）と <code>Z</code>（1 手戻す）を用意します。
+</div>
+
+<footer class="site">
+  <a href="../">← 目次にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
