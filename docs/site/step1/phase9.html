@@ -1122,10 +1122,10 @@ MML なら 1 行でできます。
   <text x="118" y="210" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">ch0/1</text>
 
   <line x1="360" y1="166" x2="360" y2="222" stroke="#2ee6a8" stroke-width="1.5" stroke-dasharray="3 3"/>
-  <text x="368" y="164" fill="#2ee6a8" font-size="10.5">0.5 秒 ＝ GAME OVER が出るのと同時</text>
+  <text x="368" y="164" fill="#2ee6a8" font-size="10.5">GAMEOVER_WAIT ＝ GAME OVER が出るのと同時</text>
 </svg>
 </div>
-<figcaption>待つ長さは <code>GAMEOVER_WAIT</code>（15 フレーム＝0.5 秒）を流用できます。捕まった音は 0.4 秒なので、ちょうど鳴り終わっています</figcaption>
+<figcaption>待つ長さは <code>GAMEOVER_WAIT</code> を流用できます。捕まった音は 0.4 秒なので、フェーズ 7 で決めた 15 フレーム（0.5 秒）でもちょうど鳴り終わります</figcaption>
 </figure>
 
 <h4>書き方</h4>
@@ -1182,7 +1182,11 @@ MML なら 1 行でできます。
   ジングルが始まる瞬間と、<b>GAME OVER の文字が出る瞬間がぴたりとそろいます</b>
   （どちらも <code>GAMEOVER_WAIT</code> を見ているため）。
   <b>音と絵が同時に動くと、演出はそれだけで強くなります</b>。
-  <code>GAMEOVER_WAIT</code> を変えれば、間の長さも 2 つまとめて変わります。
+  <code>GAMEOVER_WAIT</code> を変えれば、間の長さも 2 つまとめて変わります。<br>
+  <b>このプロジェクトでは 15 → 20 フレーム（0.5 → 0.67 秒）に増やしました。</b>
+  ジングルが入ると、捕まってから曲が始まるまでの間は
+  <b>少し長いほうが落ち着きます</b>。数フレーム変えるだけで印象が変わるので、
+  <b>実際に鳴らして決めるのがいちばん</b>です。
 </div>
 
 <h2>7. うまくいかないときは</h2>

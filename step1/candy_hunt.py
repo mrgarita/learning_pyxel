@@ -1,5 +1,5 @@
 # candy_hunt.py
-# step1 フェーズ8：お菓子を集めるほどお化けを増やす
+# step1 フェーズ9：効果音と BGM をつける
 
 import random
 
@@ -24,9 +24,18 @@ SCENE_PLAY = 0          # あそんでいる画面
 SCENE_GAMEOVER = 1      # ゲームオーバーの画面
 SCENE_TITLE = 2         # タイトル画面
 
-GAMEOVER_WAIT = 15      # 捕まってから文字を出すまでのフレーム数（0.5秒）
+GAMEOVER_WAIT = 20      # 捕まってから文字を出すまでのフレーム数（0.5秒）
 BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1秒）
 BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+SOUND_CANDY = 0         # お菓子を取った音
+SOUND_CAUGHT = 1        # 捕まった音
+SOUND_GHOST = 2         # お化けが増えた音
+MUSIC_BGM = 0           # BGM（チャンネル 0 と 1 を使う）
+MUSIC_GAMEOVER = 1      # ゲームオーバーの BGM
+
+CH_SE = 2               # 効果音を鳴らすチャンネル
+CH_EVENT = 3            # お化けが増えた音だけ別のチャンネルにする
 
 CORNERS = [             # お化けが出てくる 4 隅
     (0, 0),
@@ -98,6 +107,12 @@ class App:
 
         pyxel.run(self.update, self.draw)
 
+    def start_game(self):
+        """ゲームを始める。中身を初期化して BGM を鳴らし始める"""
+        self.reset_game()
+        self.scene = SCENE_PLAY
+        pyxel.playm(MUSIC_BGM, loop=True)
+
     def reset_game(self):
         """ゲームの中身を、最初の状態に戻す"""
         self.boy_x = SCREEN_WIDTH // 2 - BOY_SIZE // 2
@@ -125,17 +140,20 @@ class App:
     def update_title(self):
         """タイトル画面。Enter でゲームを始める"""
         if pyxel.btnp(pyxel.KEY_RETURN):
-            self.reset_game()
-            self.scene = SCENE_PLAY
+            self.start_game()
 
     def update_gameover(self):
         """ゲームオーバー画面。少し待ってから、Enter でゲームを再び始める"""
-        if pyxel.frame_count - self.gameover_frame < GAMEOVER_WAIT:
+        elapsed = pyxel.frame_count - self.gameover_frame
+
+        if elapsed == GAMEOVER_WAIT:        # ちょうどこのフレームだけ通る
+            pyxel.playm(MUSIC_GAMEOVER)     # 捕まった音が終わってからジングル
+
+        if elapsed < GAMEOVER_WAIT:
             return
 
         if pyxel.btnp(pyxel.KEY_RETURN):
-            self.reset_game()
-            self.scene = SCENE_PLAY
+            self.start_game()
 
     def update_play(self):
         """あそんでいる間の更新"""
@@ -178,11 +196,13 @@ class App:
         if is_hit(self.boy_x + HIT_OFFSET, self.boy_y + HIT_OFFSET, HIT_SIZE,
                   self.candy_x + HIT_OFFSET, self.candy_y + HIT_OFFSET, HIT_SIZE):
             self.score += 1
+            pyxel.play(CH_SE, SOUND_CANDY)          # 取った音
             self.place_candy()
 
             if (self.score % GHOST_SPAWN_SCORE == 0
                 and len(self.ghosts) < len(GHOST_MOVE_EVERY)):
                 self.add_ghost()
+                pyxel.play(CH_EVENT, SOUND_GHOST)     # 増えた音
 
     def check_ghosts(self):
         """どれか 1 体にでも捕まったらゲームオーバーにする"""
@@ -191,6 +211,9 @@ class App:
                     ghost.x + HIT_OFFSET, ghost.y + HIT_OFFSET, HIT_SIZE):
                 self.scene = SCENE_GAMEOVER
                 self.gameover_frame = pyxel.frame_count     # 捕まった時刻を覚えておく
+                pyxel.stop()                                # BGM を止めてから
+                pyxel.play(CH_SE, SOUND_CAUGHT)             # 捕まった音
+                return
 
     def draw(self):
         """フレーム毎の描画処理"""
