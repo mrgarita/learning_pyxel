@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 フェーズ10：パッケージ化して Web で公開する ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 10 </span>パッケージ化して Web で公開する</h1>
+  <p>2 つのコマンドで HTML 1 枚にまとめ、GitHub Pages に置く</p>
+</header>
+
+<p class="crumb"><a href="../">目次</a> ／ <a href="./">step1 概要</a> ／ フェーズ 10</p>
+
+<h2>ゴール</h2>
+
+<p>
+完成した Candy Hunt を、<b>インストールなしでブラウザから遊べる形</b>にして公開します。
+これで step1 は完了です。
+</p>
+
+<p>
+<b>手順は step0 の Star Voyager でやったものと同じ</b>です。
+やり方そのものは <a href="../step0/phase8.html">step0 フェーズ 8</a> にくわしく書いてあるので、
+このページは<b>手順を短くおさらいし、step1 で新しく出てくることだけ</b>を厚く扱います。
+</p>
+
+<div class="note">
+  <b>step1 で新しく出てくるのは、この 3 つだけです</b>
+  ① <b>フォルダの中身が丸ごと公開される</b>（余計なファイルが混ざっていないか）／
+  ② <b>音のあるゲームを Web に出す</b>ときの決まり（クリックするまで鳴らない）／
+  ③ <b>2 本目の作品</b>をリポジトリに足すときのリンクの張り方。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 2 つのコマンドが、何をしているか</h3>
+
+<p>
+<code>pyxel package</code> と <code>pyxel app2html</code> は、
+<b>フォルダ → 1 つのファイル → 1 枚の HTML</b> と、順にまとめていくコマンドです。
+実際に step1 で実行して、できたファイルの中身と大きさを確かめました。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 356" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="step1 フォルダが pyxel package で step1.pyxapp になり、pyxel app2html で step1.html になり、docs/site/step1 に置かれて公開されるまでの流れ">
+  <style>
+    .bx { fill:#10121c; stroke:#3b4166; }
+    .tt { fill:#e8f0ff; font-family:Consolas,monospace; font-size:12px; }
+    .sb { fill:#9aa4c4; font-size:10.5px; }
+    .cm { fill:#2ee6a8; font-family:Consolas,monospace; font-size:11px; }
+  </style>
+
+  <rect class="bx" x="40" y="26" width="560" height="50" rx="4"/>
+  <text class="tt" x="56" y="46">step1/ フォルダ</text>
+  <text class="sb" x="56" y="64">candy_hunt.py（10,190 バイト） ＋ candy_hunt.pyxres（589 バイト）</text>
+
+  <line x1="320" y1="76" x2="320" y2="100" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M320 106 l-5 -12 10 0 z" fill="#3b4166"/>
+  <text class="cm" x="336" y="94">pyxel package step1 step1/candy_hunt.py</text>
+
+  <rect class="bx" x="40" y="108" width="560" height="50" rx="4"/>
+  <text class="tt" x="56" y="128">step1.pyxapp　<tspan fill="#ffcc44">4,308 バイト</tspan></text>
+  <text class="sb" x="56" y="146">中身は ZIP。フォルダの中身＋「どれで起動するか」の 13 バイトのメモ</text>
+
+  <line x1="320" y1="158" x2="320" y2="182" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M320 188 l-5 -12 10 0 z" fill="#3b4166"/>
+  <text class="cm" x="336" y="176">pyxel app2html step1.pyxapp</text>
+
+  <rect class="bx" x="40" y="190" width="560" height="50" rx="4"/>
+  <text class="tt" x="56" y="210">step1.html　<tspan fill="#ffcc44">5,956 バイト</tspan></text>
+  <text class="sb" x="56" y="228">上の .pyxapp を文字列にして埋め込んだもの。ゲーム本体は 1 枚に収まっている</text>
+
+  <line x1="320" y1="240" x2="320" y2="264" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M320 270 l-5 -12 10 0 z" fill="#3b4166"/>
+  <text class="sb" x="336" y="258">名前を作品名に変えて置く（名前がそのまま URL になる）</text>
+
+  <rect class="bx" x="40" y="272" width="560" height="50" rx="4" stroke="#2ee6a8"/>
+  <text class="tt" x="56" y="292" fill="#2ee6a8">docs/site/step1/candy_hunt.html</text>
+  <text class="sb" x="56" y="310">push すれば、数分後には公開 URL で遊べる</text>
+
+  <text class="sb" x="40" y="344">※ 大きさは Pyxel 2.9.9 で実際にパッケージ化して測った値</text>
+</svg>
+</div>
+<figcaption>ゲーム本体は 6 KB ほど。絵も音もコードも、この 1 枚に入っています</figcaption>
+</figure>
+
+<div class="term">
+  <b>HTML 1 枚で完結——ただし、ネットは必要です</b>
+  できた HTML の 1 行目は、こうなっています。
+  <pre><code>&lt;script src="https://cdn.jsdelivr.net/gh/kitao/pyxel@2.9.9/wasm/pyxel.js"&gt;&lt;/script&gt;</code></pre>
+  <b>ゲーム（6 KB）は埋め込まれていますが、Pyxel 本体は毎回ネットから読み込みます。</b>
+  だからオフラインでは動きません。そして<b>バージョンが <code>2.9.9</code> と書き込まれている</b>ので、
+  あとで Pyxel を新しくしても、この HTML は作ったときのバージョンで動き続けます。
+</div>
+
+<h3>1-2. フォルダの中身は、全部そのまま公開される</h3>
+
+<p>
+<code>pyxel package</code> は、<b>指定したフォルダの中身を丸ごと</b>詰め込みます。
+「起動スクリプトと、それが読むファイルだけ」を選んでくれるわけではありません。
+</p>
+
+<p>実際に step1 フォルダをパッケージ化したら、中身はこうなりました。</p>
+
+<table>
+  <thead><tr><th>入ったもの</th><th>大きさ</th><th>これは？</th></tr></thead>
+  <tbody>
+    <tr><td><code>step1/candy_hunt.py</code></td><td>10,190</td><td>ゲーム本体。当然入る</td></tr>
+    <tr><td><code>step1/candy_hunt.pyxres</code></td><td>589</td><td>絵と音。当然入る</td></tr>
+    <tr><td><code>step1/.pyxapp_startup_script</code></td><td>13</td><td>Pyxel が作るメモ。
+      中身は <code>candy_hunt.py</code> という文字列だけ。<b>どれで起動するか</b>を記録している</td></tr>
+    <tr><td><code>step1/tempCodeRunnerFile.py</code></td><td>67</td>
+      <td><b>これは要りません。</b>VS Code の拡張機能が作った一時ファイルです</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <b>身に覚えのないファイルが、そのまま世界に公開されます</b>
+  <code>tempCodeRunnerFile.py</code> は、動作には影響しません。
+  ただし<b>公開する HTML の中に、そのまま入って配られます</b>。<br>
+  試し書きのメモ、書きかけの別バージョン、他人からもらった素材——
+  <b>そのフォルダに置いたものは全部ついていく</b>と考えてください。
+  <b>パッケージ化の前に、フォルダを見て掃除する</b>のを習慣にします。<br>
+  なお <code>__pycache__</code> フォルダ（Python が自動で作る中間ファイル）は
+  <b>Pyxel が自動で除いてくれます</b>。これは気にしなくて大丈夫です（実測で確認）。
+</div>
+
+<div class="warn">
+  <b><code>.gitignore</code> に書いてあっても、パッケージには入ります</b>
+  このリポジトリの <code>.gitignore</code> には、すでに
+  <code>tempCodeRunnerFile.py</code> が書いてあります。
+  それでも<b>パッケージには入りました</b>（実測）。<br>
+  <code>.gitignore</code> は <b>Git に対する「これは記録しなくていい」という指示</b>であって、
+  ファイルを消すものではありません。<b><code>pyxel package</code> は <code>.gitignore</code> を
+  まったく見ていません</b>。ディスクにあるものは、そのまま入ります。<br>
+  <b>「Git に無視させる」と「フォルダから消す」は別のこと</b>——
+  ここは混同しやすいので、覚えておいてください。
+</div>
+
+<h3>1-3. 音のあるゲームを Web に出すときの決まり</h3>
+
+<p>
+ブラウザには、<b>ユーザーが 1 度も操作していないページから音を出してはいけない</b>
+という共通のルールがあります。広告が勝手に鳴り出すのを防ぐためのものです。
+</p>
+
+<p>
+Pyxel はこれに合わせて、<b>始める前に <code>CLICK TO START</code> をはさむ</b>作りになっています。
+このクリックが「ユーザーの操作」になるので、そのあとは自由に音を鳴らせます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 150" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="ページを開き、CLICK TO START をクリックしてからゲームが起動し、音が鳴らせるようになる流れ">
+  <rect x="20" y="44" width="132" height="46" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text x="86" y="66" fill="#e8f0ff" font-size="11" text-anchor="middle">ページを開く</text>
+  <text x="86" y="82" fill="#ff6b97" font-size="10" text-anchor="middle">音は出せない</text>
+
+  <path d="M158 67 l14 0" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M178 67 l-10 -4 0 8 z" fill="#3b4166"/>
+
+  <rect x="184" y="44" width="132" height="46" rx="4" fill="#10121c" stroke="#ffcc44"/>
+  <text x="250" y="66" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" text-anchor="middle">CLICK TO START</text>
+  <text x="250" y="82" fill="#9aa4c4" font-size="10" text-anchor="middle">まだゲームは動かない</text>
+
+  <path d="M322 67 l14 0" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M342 67 l-10 -4 0 8 z" fill="#3b4166"/>
+
+  <rect x="348" y="44" width="132" height="46" rx="4" fill="#10121c" stroke="#45b0e8"/>
+  <text x="414" y="66" fill="#45b0e8" font-size="11" text-anchor="middle">クリック</text>
+  <text x="414" y="82" fill="#9aa4c4" font-size="10" text-anchor="middle">＝ ユーザーの操作</text>
+
+  <path d="M486 67 l14 0" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M506 67 l-10 -4 0 8 z" fill="#3b4166"/>
+
+  <rect x="512" y="44" width="108" height="46" rx="4" fill="#10121c" stroke="#2ee6a8"/>
+  <text x="566" y="66" fill="#e8f0ff" font-size="11" text-anchor="middle">ゲーム起動</text>
+  <text x="566" y="82" fill="#2ee6a8" font-size="10" text-anchor="middle">音が出せる</text>
+
+  <text x="20" y="122" fill="#9aa4c4" font-size="11">クリックの前に音が鳴らないのは、故障ではなく<tspan fill="#e8f0ff">仕様</tspan>です。</text>
+  <text x="20" y="140" fill="#9aa4c4" font-size="11">Pyxel 側でこの画面が用意されているので、こちらで直すことは何もありません。</text>
+</svg>
+</div>
+<figcaption>この 1 クリックがあるおかげで、コードを書き換えずにそのまま公開できます</figcaption>
+</figure>
+
+<div class="term">
+  <b>Candy Hunt は、たまたま Web と相性のよい作りになっています</b>
+  BGM を鳴らし始める <code>pyxel.playm()</code> は、
+  フェーズ 9 で <code>start_game()</code> の中に置きました。
+  <b>タイトル画面で <code>Enter</code> を押してから鳴り始める</b>ということです。<br>
+  Web で遊ぶ人から見ると、<b>クリック → タイトル → Enter → 音が鳴る</b>と進むので、
+  音が出るころにはとっくに操作が済んでいます。
+  <b>「操作してから音を鳴らす」設計は、そのまま Web でも安全</b>という覚え方ができます。
+</div>
+
+<h2>2. 使うコマンド</h2>
+
+<table>
+  <thead><tr><th>コマンド</th><th>すること</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel package APP_DIR STARTUP_SCRIPT</code></td>
+        <td>フォルダを <code>.pyxapp</code> 1 つにまとめる。
+        出力名は<b>フォルダ名</b>で決まる</td></tr>
+    <tr><td><code>pyxel play FILE.pyxapp</code></td>
+        <td>できた <code>.pyxapp</code> を手元で動かして確かめる</td></tr>
+    <tr><td><code>pyxel app2html FILE.pyxapp</code></td>
+        <td><code>.pyxapp</code> を HTML 1 枚にする</td></tr>
+    <tr><td><code>python -m http.server</code></td>
+        <td>手元で Web サーバーを立てて、公開前の HTML を確かめる</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>出力名はフォルダ名で決まります</b>
+  <code>pyxel package step1 step1/candy_hunt.py</code> なら
+  <b><code>step1.pyxapp</code></b> ができます（<code>candy_hunt.pyxapp</code> ではありません）。
+  1 つのフォルダに作品を 2 つ入れると<b>名前がぶつかって上書きされます</b>。
+  くわしくは備忘録の
+  <a href="../memo/#package-multi">1 つのフォルダに複数の作品がある</a>にまとめてあります。
+</div>
+
+<h2>3. 手順</h2>
+
+<h3>3-1. フォルダを掃除する</h3>
+
+<p>
+まず <code>step1/</code> の中を見て、<b>ゲームに要らないファイルを消します</b>。
+<b><code>.gitignore</code> に書いてあるかどうかは関係ありません</b>（上の警告のとおりです）。
+</p>
+
+<pre><code>step1/
+├── candy_hunt.py         ← 要る
+├── candy_hunt.pyxres     ← 要る
+├── tempCodeRunnerFile.py ← 消す（VS Code の拡張が作った一時ファイル）
+└── __pycache__/          ← 消さなくてよい（Pyxel が自動で除く）</code></pre>
+
+<h3>3-2. パッケージ化する</h3>
+
+<p><b>リポジトリのいちばん上</b>（<code>step1</code> フォルダが見える場所）で実行します。</p>
+
+<pre><code>pyxel package step1 step1/candy_hunt.py</code></pre>
+
+<p>
+成功すると、追加されたファイルが 1 行ずつ表示され、
+<b><code>step1.pyxapp</code></b> ができます。
+<b>ここに表示された一覧が、そのまま公開される中身</b>です。目を通してください。
+</p>
+
+<h3>3-3. 手元で動かして確かめる</h3>
+
+<pre><code>pyxel play step1.pyxapp</code></pre>
+
+<p>
+<b>ブラウザにする前に、ここで必ず確かめます。</b>
+ここで動かなければ HTML にしても動きません。
+とくに <code>pyxel.load("candy_hunt.pyxres")</code> のパスが合っているかは、
+この段階で分かります。
+</p>
+
+<h3>3-4. HTML にする</h3>
+
+<pre><code>pyxel app2html step1.pyxapp</code></pre>
+
+<p><b><code>step1.html</code></b> ができます。</p>
+
+<h3>3-5. ブラウザで確かめる</h3>
+
+<pre><code>python -m http.server</code></pre>
+
+<p>
+そのまま <code>http://localhost:8000/step1.html</code> を開きます。
+</p>
+
+<div class="warn">
+  <b>HTML をダブルクリックで開いても動きません</b>
+  ファイルを直接開くと <code>file://</code> という開き方になり、
+  <b>ブラウザが wasm の読み込みを断ります</b>。
+  必ず <code>python -m http.server</code> 経由（<code>http://</code>）で開いてください。
+  真っ黒のまま何も起きないときは、たいていこれです。
+</div>
+
+<p>確かめること：</p>
+
+<ul>
+  <li><code>CLICK TO START</code> をクリックしてタイトルが出るか</li>
+  <li><b>ゲーム画面を 1 度クリックしてから</b>矢印キーで男の子が動くか
+      （クリックしないとキー入力がページに届きません）</li>
+  <li>お菓子を取る音、お化けが増える音、BGM が鳴るか</li>
+  <li>捕まったときにジングルが鳴り、<code>Enter</code> でやり直せるか</li>
+</ul>
+
+<h3>3-6. 公開する場所へ置く</h3>
+
+<p>
+<code>step1.html</code> を <b><code>docs/site/step1/candy_hunt.html</code></b> という名前で置きます。
+<b>ファイル名がそのまま URL になる</b>ので、<code>step1</code> ではなく作品名にします。
+</p>
+
+<pre><code>https://mrgarita.github.io/learning_pyxel/site/step1/candy_hunt.html</code></pre>
+
+<div class="warn">
+  <b>コピーではなく「移動」します</b>
+  <code>pyxel app2html</code> は、<b>リポジトリの直下</b>に <code>step1.html</code> を作ります。
+  コピーで済ませると、直下にも 1 枚残ります。<br>
+  <code>.gitignore</code> にある <code>step1/*.html</code> は
+  <b><code>step1</code> フォルダの中</b>だけが対象なので、
+  <b>直下の <code>step1.html</code> には効きません</b>。
+  そのままにすると、<code>git status</code> に毎回顔を出します。
+  <b>移動して、直下には残さない</b>のがいちばん簡単です。
+</div>
+
+<div class="note">
+  <b>解説ページと同じフォルダに置きます</b>
+  <code>docs/site/step1/</code> には <code>phase1.html</code> 〜 <code>phase10.html</code> が並んでいます。
+  そこに作品の HTML を 1 枚足す形です。
+  step0 も <code>docs/site/step0/star_voyager.html</code> と、同じ置き方をしています。
+</div>
+
+<h3>3-7. 全画面ボタンを足す</h3>
+
+<p>
+<code>app2html</code> が出す HTML には、<b>全画面にする仕組みが入っていません</b>。
+<code>F11</code> も効きません（Pyxel がキー入力を横取りするため）。
+ボタンを自分で足します。<b>コードは備忘録の
+<a href="../memo/#web-fullscreen">Web に公開した Pyxel 作品を全画面にしたい</a></b> にあります。
+</p>
+
+<div class="warn">
+  <b>HTML を作り直すたびに、足し直しになります</b>
+  <code>pyxel app2html</code> は<b>まっさらな HTML を上書き出力</b>します。
+  手で足したボタンは<b>毎回消えます</b>。
+  ゲームを直して公開しなおすたびに、この作業が発生する——ということを覚えておいてください。
+  <b>先に <code>docs/site/step1/</code> へ置いてから、そこで足す</b>と混乱しません。
+</div>
+
+<h3>3-8. リンクを張る</h3>
+
+<p>2 か所です。step0 のときに作った並びに、1 行足す形になります。</p>
+
+<ul>
+  <li><b>トップページ</b>（<code>docs/site/index.html</code>）の「作品を公開しています」に
+      <code>▶ Candy Hunt をブラウザでみる</code> を足す</li>
+  <li><b>step1 概要</b>（<code>docs/site/step1/index.html</code>）から、遊べる場所へ案内する</li>
+</ul>
+
+<h3>3-9. コミットして公開を確かめる</h3>
+
+<p>
+<code>step1.pyxapp</code> と <code>step1.html</code> は<b>リポジトリの外に置いたままにします</b>
+（<code>.gitignore</code> に <code>*.pyxapp</code> を書いてあります）。
+コミットするのは <code>docs/</code> の中に置いたほうです。
+</p>
+
+<p>
+push して数分待つと、公開 URL で遊べるようになります。
+<b>古い内容が出るときは <code>Ctrl</code>＋<code>F5</code></b> で強制再読み込みしてください。
+</p>
+
+<h2>4. うまくいかないときは</h2>
+
+<p>
+公開まわりのトラブルは、<a href="../step0/phase8.html">step0 フェーズ 8 の一覧</a>が
+そのまま使えます。ここでは<b>step1 で新しく出るもの</b>だけ挙げます。
+</p>
+
+<table>
+  <thead><tr><th>症状</th><th>見るところ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>公開した HTML に、身に覚えのないファイルが入っている</td>
+      <td><code>pyxel package</code> は<b>フォルダを丸ごと</b>詰めます。
+      掃除してからパッケージ化しなおします</td>
+    </tr>
+    <tr>
+      <td><code>CLICK TO START</code> の前に音が鳴らない</td>
+      <td><b>仕様です。</b>ブラウザは、操作されていないページから音を出しません</td>
+    </tr>
+    <tr>
+      <td>クリックしたのに、まったく音が鳴らない</td>
+      <td>① タブがミュートになっていないか（タブのスピーカーアイコン）。
+      ② <code>.pyxres</code> を保存してからパッケージ化したか。
+      <b>保存前の .pyxres を詰めていると、手元では鳴るのに Web で鳴りません</b></td>
+    </tr>
+    <tr>
+      <td>矢印キーで動かない</td>
+      <td><b>ゲーム画面を 1 度クリック</b>します。
+      ブラウザは、選ばれている場所にしかキー入力を送りません</td>
+    </tr>
+    <tr>
+      <td><code>git status</code> に <code>step1.html</code> が出てくる</td>
+      <td>リポジトリ直下に残っています。<code>docs/site/step1/</code> へ<b>移動</b>したか確認します
+      （<code>.gitignore</code> の <code>step1/*.html</code> は直下のファイルには効きません）</td>
+    </tr>
+    <tr>
+      <td>全画面ボタンが消えた</td>
+      <td><code>app2html</code> をやり直したためです。手で足し直します（3-7）</td>
+    </tr>
+    <tr>
+      <td>ゲームを直したのに、公開版が古いまま</td>
+      <td><b>package → app2html → 置きなおす</b>の 3 つを全部やり直す必要があります。
+      <code>.py</code> を直しただけでは公開版は変わりません</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>5. step1 をふりかえる</h2>
+
+<p>
+10 フェーズで、<b>1 本のゲームが最後まで通りました</b>。
+身についたことを並べておきます。
+</p>
+
+<table>
+  <thead><tr><th>フェーズ</th><th>できるようになったこと</th></tr></thead>
+  <tbody>
+    <tr><td>1・2</td><td>ドット絵を描いて動かす。<b>絵はコードではなくエディタで作る</b></td></tr>
+    <tr><td>3</td><td><b>当たり判定</b>と乱数。関数に切り出して戻り値を返す</td></tr>
+    <tr><td>4</td><td>スコアの表示。数を覚えておく変数</td></tr>
+    <tr><td>5</td><td><b>追いかける動き</b>。相対位置による場合分け</td></tr>
+    <tr><td>6・7</td><td><b>画面遷移</b>。状態を変数で持ち、処理を振り分ける</td></tr>
+    <tr><td>8</td><td><b>リストで複数を管理</b>する。<code>class</code> の使いどころ</td></tr>
+    <tr><td>9</td><td><b>音</b>。チャンネルの割り当て、鳴らすタイミングの設計</td></tr>
+    <tr><td>10</td><td><b>公開</b>。人に遊んでもらえる形にする</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>いちばん大きいのは「手ざわり」を直せるようになったこと</b>
+  当たり判定を <code>4</code> に縮め、お化けの速さを<b>動く回数</b>で調整し、
+  出現時に点滅させ、音を重ならないように鳴らし分ける——
+  <b>どれも「動く／動かない」ではなく、「気持ちいい／気持ちよくない」の調整</b>です。
+  step1 で時間をかけたのは、ほとんどここでした。
+</div>
+
+<h2>6. 次の step</h2>
+
+<p>
+<b>step2 は「倉庫番」</b>です。10 ステージ制とタイトル画面をつけます。
+step1 と大きく変わるのは、次の 2 点です。
+</p>
+
+<ul>
+  <li><b>ステージのデータを持つ</b> … 壁・荷物・ゴールの配置を書いたデータを用意し、
+      それを読んで画面を組み立てます。<b>プログラムとデータを分ける</b>という考え方が入ります</li>
+  <li><b>動けるかどうかを先に調べる</b> … 押した先に壁があれば動けません。
+      「動かしてから判定」ではなく<b>「動かす前に判定」</b>に変わります</li>
+</ul>
+
+<p>
+step1 で作った土台——シーンの切り替え、当たり判定、リストでの管理、音の鳴らし分け——は、
+<b>そのまま step2 でも使います</b>。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
