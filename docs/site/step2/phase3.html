@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ3：荷物を押す ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 3 </span>荷物を押す</h1>
+  <p>行き先に荷物があったら、その 1 つ先まで見てから決める</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 3</p>
+
+<h2>ゴール</h2>
+
+<p>
+主人公が荷物を<b>押せる</b>ようにします。押せるのは
+<b>荷物の 1 つ先が空いているとき</b>だけ。壁や別の荷物がつかえていたら動きません。
+あわせて<b>ステージに荷物とゴールをもう 1 組足して</b>、押せない場面も試せるようにします。
+フェーズ 2 のコードに <b>24 行</b>書き足して、できあがりは <b>156 行</b>になります。
+</p>
+
+<div class="note">
+  <b>ここで倉庫番になります</b>
+  荷物が動くようになると、<b>いよいよパズルとして遊べます</b>。
+  同時に「押しまちがえると戻せない」という、このゲームの厳しさも出てきます。
+  やり直し（<code>R</code>）はフェーズ 5 で足すので、
+  それまでは行き詰まったらウィンドウを閉じて起動し直してください。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 押せるかどうかは「2 マス先」で決まる</h3>
+
+<p>
+フェーズ 2 では、<b>行き先の 1 マス</b>だけを見ていました。
+荷物が入ると、それでは足りません。行き先に荷物があったとき、
+<b>その荷物がどこへ行くのか</b>——つまり<b>もう 1 つ先のマス</b>を見ないと、
+押していいかどうか決められないからです。
+</p>
+
+<p>
+<a href="./#basics">step2 概要の土台 2</a> に挙げた 4 パターンを、
+そのまま判断の順番に並べ替えると、次の流れになります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 574" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="キーが押されてから、壁・荷物・その 1 つ先の順に調べて、動かすかどうかを決める流れ図">
+
+  <rect x="110" y="16" width="200" height="32" rx="16" fill="#232840" stroke="#3b4166"/>
+  <text x="210" y="37" fill="#e8f0ff" font-size="13" text-anchor="middle">↑ キーが押された</text>
+  <path d="M210 48 L210 70" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M206 64 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+
+  <rect x="100" y="72" width="220" height="46" rx="6" fill="#232840" stroke="#3b4166"/>
+  <text x="210" y="93" fill="#e8f0ff" font-size="12" text-anchor="middle">行き先 ＝ 今いるマス ＋ (0, -1)</text>
+  <text x="210" y="110" fill="#9aa4c4" font-size="10" text-anchor="middle">※ まだ動いていない</text>
+  <path d="M210 118 L210 140" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M206 134 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+
+  <polygon points="210,141 320,176 210,211 100,176" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="210" y="181" fill="#ffcc44" font-size="13" text-anchor="middle">行き先は壁？</text>
+  <path d="M320 176 L396 176" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+  <path d="M390 172 l6 4 -6 4" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+  <text x="356" y="168" fill="#ff6b97" font-size="11" text-anchor="middle">はい</text>
+  <rect x="400" y="156" width="222" height="40" rx="6" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="511" y="181" fill="#ff6b97" font-size="12" text-anchor="middle">向きだけ変えて、おしまい</text>
+  <path d="M210 211 L210 241" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M206 235 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+  <text x="224" y="232" fill="#9aa4c4" font-size="11">いいえ</text>
+
+  <polygon points="210,243 320,278 210,313 100,278" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="210" y="275" fill="#ffcc44" font-size="13" text-anchor="middle">行き先に</text>
+  <text x="210" y="292" fill="#ffcc44" font-size="13" text-anchor="middle">荷物がある？</text>
+  <path d="M320 278 L396 278" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <path d="M390 274 l6 4 -6 4" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="356" y="270" fill="#2ee6a8" font-size="11" text-anchor="middle">いいえ</text>
+  <rect x="400" y="258" width="222" height="40" rx="6" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="511" y="283" fill="#2ee6a8" font-size="12" text-anchor="middle">1 マス動く（フェーズ 2 と同じ）</text>
+  <path d="M210 313 L210 343" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M206 337 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+  <text x="224" y="334" fill="#9aa4c4" font-size="11">はい</text>
+
+  <rect x="100" y="345" width="220" height="46" rx="6" fill="#232840" stroke="#45b0e8"/>
+  <text x="210" y="366" fill="#45b0e8" font-size="12" text-anchor="middle">荷物の、もう 1 つ先を見る</text>
+  <text x="210" y="383" fill="#9aa4c4" font-size="10" text-anchor="middle">行き先 ＋ (0, -1)</text>
+  <path d="M210 391 L210 413" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M206 407 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+
+  <polygon points="210,414 320,449 210,484 100,449" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="210" y="446" fill="#ffcc44" font-size="13" text-anchor="middle">そこは壁？</text>
+  <text x="210" y="463" fill="#ffcc44" font-size="13" text-anchor="middle">別の荷物？</text>
+  <path d="M320 449 L396 449" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+  <path d="M390 445 l6 4 -6 4" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+  <text x="356" y="441" fill="#ff6b97" font-size="11" text-anchor="middle">はい</text>
+  <rect x="400" y="429" width="222" height="40" rx="6" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="511" y="454" fill="#ff6b97" font-size="12" text-anchor="middle">向きだけ変えて、おしまい</text>
+  <path d="M210 484 L210 508" stroke="#2ee6a8" stroke-width="1.5"/>
+  <path d="M206 502 l4 6 l4 -6" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="224" y="502" fill="#9aa4c4" font-size="11">いいえ</text>
+
+  <rect x="90" y="510" width="240" height="48" rx="6" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="210" y="531" fill="#2ee6a8" font-size="12" text-anchor="middle" font-weight="bold">荷物を 1 マス押して</text>
+  <text x="210" y="549" fill="#2ee6a8" font-size="12" text-anchor="middle" font-weight="bold">自分も 1 マス動く</text>
+</svg>
+</div>
+<figcaption>ピンクの行き止まりが 2 つあります。どちらも <code>return</code> で表します</figcaption>
+</figure>
+
+<div class="term">
+  <b>調べる順番には理由があります</b>
+  <b>壁 → 荷物 → 荷物の 1 つ先</b>の順です。逆にはできません。<br>
+  行き先が壁なら、そこに荷物が乗っていることはありえないので、
+  <b>壁を先に片づけておくと、あとの判断が単純になります</b>。
+  また「荷物の 1 つ先」は、<b>行き先に荷物があったときにしか意味を持たない</b>ので、
+  荷物を見つけたあとで初めて計算します。
+</div>
+
+<h3>1-2. 荷物は <code>self.tiles</code> に入っていない。だから探しに行く</h3>
+
+<p>
+フェーズ 1 で、地図を<b>3 つに分けて</b>持つことにしました。
+ここでその設計が効いてきます。
+</p>
+
+<table>
+  <thead><tr><th>持っているもの</th><th>中身</th><th>これで答えられること</th></tr></thead>
+  <tbody>
+    <tr><td><code>self.tiles</code></td><td>地形だけの二次元リスト</td>
+        <td>そのマスは壁か（<code>tiles[y][x] == "#"</code>）</td></tr>
+    <tr><td><code>self.player_x</code> / <code>self.player_y</code></td><td>主人公のマス目</td>
+        <td>主人公がどこにいるか</td></tr>
+    <tr><td><code>self.boxes</code></td><td><code>[[3, 3], [5, 3]]</code> のような<b>座標の一覧</b></td>
+        <td>そのマスに荷物があるか —— <b>一覧を最後まで見ないと分からない</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+壁かどうかは <code>tiles[y][x]</code> で<b>一発で</b>分かります。
+ところが荷物は、<b>座標の一覧として持っている</b>ので、
+「(4, 3) に荷物はある？」と聞かれたら<b>一覧を順に見ていくしかありません</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 276" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="盤面の荷物 2 つが、self.boxes というリストの中の座標 2 組と対応していることを示す図">
+
+  <text x="24" y="30" fill="#9aa4c4" font-size="11">盤面（8 × 6 マス）</text>
+
+  <rect x="24" y="42" width="176" height="132" fill="#232840" stroke="#3b4166"/>
+  <rect x="46" y="64" width="132" height="88" fill="#10121c"/>
+  <g stroke="#3b4166" stroke-width="0.6">
+    <line x1="46"  y1="42" x2="46"  y2="174"/><line x1="68"  y1="42" x2="68"  y2="174"/>
+    <line x1="90"  y1="42" x2="90"  y2="174"/><line x1="112" y1="42" x2="112" y2="174"/>
+    <line x1="134" y1="42" x2="134" y2="174"/><line x1="156" y1="42" x2="156" y2="174"/>
+    <line x1="178" y1="42" x2="178" y2="174"/>
+    <line x1="24" y1="64"  x2="200" y2="64"/>
+    <line x1="24" y1="86"  x2="200" y2="86"/>
+    <line x1="24" y1="108" x2="200" y2="108"/>
+    <line x1="24" y1="130" x2="200" y2="130"/>
+    <line x1="24" y1="152" x2="200" y2="152"/>
+  </g>
+
+  <circle cx="101" cy="97"  r="6" fill="none" stroke="#ffcc44" stroke-width="1.2"/>
+  <circle cx="145" cy="97"  r="6" fill="none" stroke="#ffcc44" stroke-width="1.2"/>
+  <circle cx="101" cy="119" r="7" fill="#ff6b97"/>
+  <circle cx="145" cy="119" r="7" fill="#ff6b97"/>
+  <rect x="94" y="136" width="14" height="14" rx="2" fill="#e8f0ff"/>
+
+  <text x="112" y="196" fill="#9aa4c4" font-size="10" text-anchor="middle">リンゴ 2 つ、ゴール 2 つ</text>
+
+  <text x="248" y="30" fill="#9aa4c4" font-size="11">プログラムが持っているもの</text>
+
+  <rect x="248" y="42" width="368" height="46" rx="6" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="262" y="70" fill="#ff6b97" font-size="13" font-family="Consolas, monospace">self.boxes = [[3, 3], [5, 3]]</text>
+  <path d="M108 119 L244 66" stroke="#ff6b97" stroke-width="0.8" stroke-dasharray="3 3" fill="none"/>
+  <path d="M152 119 L244 72" stroke="#ff6b97" stroke-width="0.8" stroke-dasharray="3 3" fill="none"/>
+
+  <rect x="248" y="100" width="368" height="84" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="262" y="124" fill="#9aa4c4" font-size="12">tiles[3] は</text>
+  <text x="262" y="148" fill="#e8f0ff" font-size="12" font-family="Consolas, monospace">['#','.','.','.','.','.','.','#']</text>
+  <text x="262" y="172" fill="#2ee6a8" font-size="11">↑ 荷物がいるマスも、ただの床のまま</text>
+
+  <text x="248" y="208" fill="#9aa4c4" font-size="11">だから「(4, 3) に荷物がある？」には、</text>
+  <text x="248" y="228" fill="#e8f0ff" font-size="11"><tspan fill="#ffcc44">self.boxes を先頭から順に見て</tspan>答えるしかありません。</text>
+  <text x="248" y="254" fill="#9aa4c4" font-size="11">その役をするのが、これから作る <tspan fill="#e8f0ff" font-family="Consolas, monospace">has_box()</tspan> です。</text>
+</svg>
+</div>
+<figcaption>荷物がゴールから出たとき「床に戻し忘れる」不具合が起きないのは、この形のおかげです</figcaption>
+</figure>
+
+<h3>1-3. 「押す」とは、一覧の中の数字を書き換えること</h3>
+
+<p>
+荷物を動かすといっても、画面の中で何かをつかんで運ぶわけではありません。
+やることは <code>self.boxes</code> の中の<b>数字を書き換えるだけ</b>です。
+そのあと <code>draw()</code> が新しい座標で絵を描くので、動いたように見えます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="self.boxes の中の 1 組の数字が 3,3 から 3,2 に書き換わる様子を示す図">
+
+  <text x="24" y="28" fill="#9aa4c4" font-size="11">上へ押す前</text>
+  <rect x="24" y="40" width="250" height="52" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="38" y="60" fill="#9aa4c4" font-size="11" font-family="Consolas, monospace">self.boxes</text>
+  <text x="38" y="82" fill="#e8f0ff" font-size="14" font-family="Consolas, monospace">[<tspan fill="#ffcc44">[3, 3]</tspan>, [5, 3]]</text>
+
+  <path d="M290 66 L360 66" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <path d="M354 62 l6 4 -6 4" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="325" y="56" fill="#2ee6a8" font-size="11" text-anchor="middle">押す</text>
+
+  <text x="376" y="28" fill="#9aa4c4" font-size="11">上へ押したあと</text>
+  <rect x="376" y="40" width="250" height="52" rx="6" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="390" y="60" fill="#9aa4c4" font-size="11" font-family="Consolas, monospace">self.boxes</text>
+  <text x="390" y="82" fill="#e8f0ff" font-size="14" font-family="Consolas, monospace">[<tspan fill="#2ee6a8">[3, 2]</tspan>, [5, 3]]</text>
+
+  <line x1="24" y1="112" x2="616" y2="112" stroke="#3b4166"/>
+
+  <text x="24" y="136" fill="#e8f0ff" font-size="12">書き換えているのは、<tspan fill="#ffcc44">かっこの中の数字ひとつ</tspan>だけです。</text>
+  <text x="24" y="158" fill="#9aa4c4" font-size="11">リストの並びは変わりません。荷物を入れ替えたり、消して作り直したりはしていません。</text>
+
+  <rect x="24" y="176" width="592" height="42" rx="6" fill="#1b1f33" stroke="#45b0e8"/>
+  <text x="38" y="195" fill="#45b0e8" font-size="12" font-family="Consolas, monospace">box[1] += dy</text>
+  <text x="160" y="195" fill="#e8f0ff" font-size="12">…… この 1 行で、<tspan font-family="Consolas, monospace">self.boxes</tspan> の中身が変わります。</text>
+  <text x="160" y="212" fill="#9aa4c4" font-size="11">なぜそうなるのかは、<tspan fill="#e8f0ff">6-2</tspan> でくわしく見ます。ここでは「変わる」とだけ覚えてください。</text>
+</svg>
+</div>
+<figcaption>盤面の見た目が変わるのは、この数字が書き換わったからです</figcaption>
+</figure>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<p>
+新しい Pyxel の機能は出てきません。<b>Python だけ</b>です。
+</p>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>return True</code> / <code>return False</code></td>
+        <td><b>答えを返して終わる</b>。「ある／ない」を答えるメソッドを書くのに使う</td></tr>
+    <tr><td><code>for</code> の中の <code>return</code></td>
+        <td>見つかった時点で<b>ループごと抜ける</b>。最後まで回さない</td></tr>
+    <tr><td><code>and</code></td><td>2 つの条件が<b>両方とも</b>成り立つか（step1 の当たり判定で使いました）</td></tr>
+    <tr><td><code>box[0] += dx</code></td><td>リストの中の数字を<b>その場で書き換える</b></td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+<b>3 段階</b>に分けます。今回は最後まで書かないと動きが変わらないので、
+<b>3-3 まで書いてから実行</b>してください。
+</p>
+
+<h3>3-1. ステージに、荷物とゴールをもう 1 組足す</h3>
+
+<p>
+<code>STAGE1</code> を次のように書き換えます。<b>盤面の大きさは変えません</b>
+（8 × 6 のままなので、中央寄せの計算結果も変わりません）。
+</p>
+
+<pre><code>STAGE1 = [
+    "########",
+    "#......#",
+    "#..O.O.#",     # ← ゴールを 1 つ増やす
+    "#..$.$.#",     # ← 荷物を 1 つ増やす
+    "#..@...#",
+    "########",
+]</code></pre>
+
+<div class="note">
+  <b>なぜ荷物を 2 つにするのか</b>
+  荷物が 1 つだと、<b>「その先に別の荷物があって押せない」を試せません</b>。
+  2 つあれば、荷物を並べてつかえさせる場面を自分で作れます。
+  ゴールも 2 つにしておくと、フェーズ 5 の「全部乗ったらクリア」がそのまま使えます。
+</div>
+
+<h3>3-2. 荷物を調べる・動かすメソッドを足す</h3>
+
+<p>
+<code>try_move()</code> の<b>手前</b>に、メソッドを 2 つ足します。
+どちらも <code>self.boxes</code> を先頭から順に見ていくだけの、短いメソッドです。
+</p>
+
+<pre><code>    def has_box(self, x, y):
+        """そのマスに荷物があるかどうかを答える"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        """(x, y) にある荷物を、(dx, dy) だけ動かす"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return</code></pre>
+
+<div class="term">
+  <b><code>return False</code> の位置に注意してください</b>
+  <code>return False</code> は <code>for</code> の<b>外側</b>（<code>for</code> と同じ深さ）に置きます。
+  もし <code>for</code> の中に入れてしまうと、
+  <b>1 つめの荷物を見た時点で「ない」と答えて</b>しまい、2 つめ以降を見に行きません。<br>
+  「全部見たけれど見つからなかった」という意味なので、
+  <b>ループが終わったあと</b>に置くのが正しい位置です。
+</div>
+
+<h3>3-3. <code>try_move()</code> に「押す」を足す</h3>
+
+<p>
+壁の判定と、位置を書き換える 2 行の<b>あいだ</b>に差し込みます。
+</p>
+
+<pre><code>        if self.tiles[next_y][next_x] == "#":    # 行き先が壁なら
+            return                               # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):         # 行き先に荷物があるなら
+            far_x = next_x + dx                  # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == "#":  # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):       # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+
+        self.player_x = next_x
+        self.player_y = next_y</code></pre>
+
+<div class="warn">
+  <b>字下げに注意</b>
+  <code>far_x</code> から <code>move_box()</code> までの 6 行は、
+  <b><code>if self.has_box(...)</code> の中</b>です（<code>self.player_x = next_x</code> より 1 段深い）。<br>
+  いちばん下の 2 行（<code>self.player_x</code> と <code>self.player_y</code>）は<b>外側</b>に置きます。
+  荷物を押したときも、押さずに進むときも、<b>どちらでも主人公は動く</b>からです。
+  ここを 1 段深く書いてしまうと、<b>荷物を押したときしか主人公が動かなく</b>なります。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+書き足したのは <code>STAGE1</code> の 2 行と、<code>has_box()</code>・<code>move_box()</code>、
+そして <code>try_move()</code> の中ほどだけです。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ3：荷物を押す
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER = 8            # 主人公の段（コマ A）
+U_FLOOR = 0
+U_WALL = 8
+U_GOAL = 16
+U_BOX = 24
+
+# 向き。この番号が、そのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),             # 下
+    (0, -1),            # 上
+    (-1, 0),            # 左
+    (1, 0),             # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [
+    "########",
+    "#......#",
+    "#..O.O.#",
+    "#..$.$.#",
+    "#..@...#",
+    "########",
+]
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.load_stage(STAGE1)
+        pyxel.run(self.update, self.draw)
+
+    def load_stage(self, rows):
+        """文字の地図を読んで、地形・主人公・荷物に分ける"""
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == "@":
+                    self.player_x = x
+                    self.player_y = y
+                    mark = "."      # 主人公の足元は床
+                elif mark == "$":
+                    self.boxes.append([x, y])
+                    mark = "."      # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.handle_key()
+
+    def handle_key(self):
+        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
+        if pyxel.btnp(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btnp(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btnp(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btnp(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def has_box(self, x, y):
+        """そのマスに荷物があるかどうかを答える"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        """(x, y) にある荷物を、(dx, dy) だけ動かす"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
+    def try_move(self, direction):
+        """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == "#":    # 行き先が壁なら
+            return                               # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):         # 行き先に荷物があるなら
+            far_x = next_x + dx                  # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == "#":  # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):       # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+
+        self.player_x = next_x
+        self.player_y = next_y
+
+    def draw(self):
+        """描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        # 地形を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == "#":
+                    u = U_WALL
+                elif mark == "O":
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                          0, u, V_TILE, TILE, TILE)
+
+        # 荷物
+        for box in self.boxes:
+            pyxel.blt(self.ox + box[0] * TILE, self.oy + box[1] * TILE,
+                      0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公（向いている方向の絵）
+        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y * TILE,
+                  0, self.player_dir * TILE, V_PLAYER, TILE, TILE, pyxel.COLOR_BLACK)
+
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<p>
+盤面にリンゴが 2 つ、ゴールが 2 つ出ます。確かめてほしいのは次の 5 つです。
+</p>
+
+<table>
+  <thead><tr><th>やってみること</th><th>こうなれば成功</th></tr></thead>
+  <tbody>
+    <tr><td>荷物に向かって進む</td><td><b>荷物と主人公が、いっしょに 1 マス動く</b></td></tr>
+    <tr><td>そのまま押し続ける</td><td>荷物が壁の手前まで来たら<b>止まる</b>。主人公も止まる</td></tr>
+    <tr><td>荷物をゴールに乗せる</td><td>荷物が<b>ゴールの印の上に重なる</b>（見た目はまだ変わりません）</td></tr>
+    <tr><td>ゴールから押し出す</td><td><b>ゴールの印がちゃんと残っている</b></td></tr>
+    <tr><td>荷物を 2 つ並べて押す</td><td><b>動かない</b>。手前の荷物も主人公も止まったまま</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>荷物を 2 つ並べるには</b>
+  最初の配置から <code>←</code> <code>↑</code> <code>→</code> と押すと、
+  左のリンゴが 1 マス右に動いて、<b>2 つのリンゴが隣どうし</b>になります。
+  そこでもう一度 <code>→</code> を押しても、<b>もう動きません</b>。
+  倉庫番で荷物をまとめて押せないのは、この判定のおかげです。
+</div>
+
+<div class="note">
+  <b>数字で確かめたいとき</b>
+  <code>try_move()</code> の最後に <code>print(self.boxes)</code> を書き足すと、
+  動くたびに荷物の座標が出ます。はじめは <code>[[3, 3], [5, 3]]</code> で、
+  <code>↑</code> を 1 回押すと <code>[[3, 2], [5, 3]]</code> になります。
+  <b>もう一度押すと <code>[[3, 1], [5, 3]]</code>、3 回目は変わりません</b>（その先が壁のため）。
+  確かめ終わったら消してください。
+</div>
+
+<div class="warn">
+  <b>行き詰まったら、いったん閉じてください</b>
+  荷物を<b>壁ぎわや角に押し込むと、もう戻せません</b>。
+  これは不具合ではなく、倉庫番というゲームそのものの性質です。
+  やり直し（<code>R</code>）はフェーズ 5 で足すので、それまではウィンドウを閉じて起動し直してください。
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3>6-1. <code>has_box()</code> は「見つけたら即答、なければ最後に否定」</h3>
+
+<pre><code>    def has_box(self, x, y):
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True          # 見つかった。ここで終わり
+        return False                 # 全部見たけれど、なかった</code></pre>
+
+<p>
+<code>return</code> はメソッドを<b>その場で終わらせる</b>ので、
+<code>for</code> の途中にあっても<b>ループごと抜けます</b>。
+荷物が 10 個あっても、1 個目で見つかれば残りの 9 個は見に行きません。
+</p>
+
+<p>
+そして <code>return False</code> は <code>for</code> の<b>外</b>にあります。
+ここに到達したということは、<b>ループが最後まで回りきった</b>——
+つまり<b>どの荷物とも一致しなかった</b>ということです。
+</p>
+
+<div class="term">
+  <b>「ある？」と聞かれたら <code>True</code> か <code>False</code> を返す</b>
+  <code>has_box(4, 3)</code> は「(4, 3) に荷物はある？」という質問で、
+  答えは <code>True</code> か <code>False</code> です。
+  だから <code>if self.has_box(next_x, next_y):</code> と、
+  <b><code>if</code> にそのまま置けます</b>。<br>
+  <code>== True</code> と書き足す必要はありません。
+  <code>if self.has_box(...) == True:</code> は間違いではありませんが、
+  <b>「ある？が本当なら」と二度言っている</b>ようなもので、回りくどくなります。
+</div>
+
+<h3>6-2. なぜ <code>box[0] += dx</code> で <code>self.boxes</code> が変わるのか</h3>
+
+<p>
+<code>move_box()</code> は <code>self.boxes</code> という名前を一度も書き換えていません。
+それなのに、<b>荷物の座標が変わります</b>。ここは Python の大事なところなので、
+小さな例で確かめてみてください。
+</p>
+
+<pre><code>&gt;&gt;&gt; kazu = [1, 2, 3]
+&gt;&gt;&gt; for n in kazu:
+...     n += 1
+&gt;&gt;&gt; kazu
+[1, 2, 3]              ← 変わらない
+
+&gt;&gt;&gt; boxes = [[3, 3], [5, 3]]
+&gt;&gt;&gt; for box in boxes:
+...     box[0] += 1
+&gt;&gt;&gt; boxes
+[[4, 3], [6, 3]]       ← 変わる！</code></pre>
+
+<p>
+同じ形の <code>for</code> なのに、結果が違います。違いは<b>何をしているか</b>です。
+</p>
+
+<table>
+  <thead><tr><th>書き方</th><th>やっていること</th><th>元のリストは</th></tr></thead>
+  <tbody>
+    <tr><td><code>n += 1</code></td>
+        <td><code>n</code> という<b>名札を、別の数に付け替えている</b>。
+        数そのものは書き換えられない</td>
+        <td>変わらない</td></tr>
+    <tr><td><code>box[0] += 1</code></td>
+        <td><code>box</code> が指している<b>リストの中身を書き換えている</b>。
+        名札は付け替えていない</td>
+        <td><b>変わる</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>for box in self.boxes:</code> と書いたとき、<code>box</code> は
+<b><code>self.boxes</code> の中のリストそのもの</b>を指しています。
+写しではありません。だから <code>box[0]</code> を書き換えると、
+<code>self.boxes</code> の中身も同時に変わります。
+</p>
+
+<div class="warn">
+  <b>この性質は、フェーズ 5 で牙をむきます</b>
+  いまは<b>都合よく働いてくれている</b>この性質が、
+  フェーズ 5 で「<code>R</code> でやり直す」を作るときに<b>いちばんの落とし穴</b>になります。
+  <code>backup = self.boxes</code> と書いても<b>控えになりません</b>。
+  <b>同じリストに名札が 2 枚付くだけ</b>で、片方を押すともう片方も動いてしまうからです。<br>
+  いまは「リストは名札で扱われる」とだけ頭の隅に置いておいてください。
+</div>
+
+<h3>6-3. 同じ荷物を 2 回探している</h3>
+
+<p>
+よく見ると、<code>has_box()</code> で見つけた荷物を、
+<code>move_box()</code> で<b>もう一度探し直しています</b>。
+1 回で済ませたほうが速いのは確かです。
+</p>
+
+<p>
+それでもこう書いたのは、<b>2 つのメソッドの役目がはっきり分かれるから</b>です。
+<code>has_box()</code> は<b>調べるだけ</b>で、盤面を変えません。
+<code>move_box()</code> は<b>動かすだけ</b>です。混ぜると、
+「調べたつもりが動いていた」という分かりにくい不具合を生みます。
+</p>
+
+<p>
+そして<b>荷物はせいぜい数個</b>です。2 回探しても、
+1 回のキー入力で見る回数は多くて十数回。<b>60 分の 1 秒の中では、無いに等しい手間</b>です。
+<b>速さより読みやすさを選んでよい場面</b>だと判断しました。
+</p>
+
+<h3>6-4. フェーズ 1 の「3 つに分ける」が効いています</h3>
+
+<p>
+荷物を <code>self.tiles</code> の中に <code>"$"</code> として置く作りにしていたら、
+押すたびに<b>2 か所を書き換える</b>ことになっていました。
+</p>
+
+<pre><code>tiles[3][3] = "."      # 荷物がいたマスを、床に戻す
+tiles[2][3] = "$"      # 新しいマスに、荷物を置く</code></pre>
+
+<p>
+一見わかりやすそうですが、<b>ゴールの上に乗った荷物</b>で破綻します。
+ゴール <code>"O"</code> のマスに荷物を置くと <code>"O"</code> が <code>"$"</code> で上書きされ、
+そこから押し出したときに<b>床 <code>"."</code> に戻してしまう</b>——
+<b>ゴールが消えるのです</b>。
+</p>
+
+<p>
+いまの作りなら、この不具合は<b>起こりようがありません</b>。
+<code>self.tiles</code> は最初から最後まで<b>地形だけ</b>で、荷物がどこにあっても書き換えないからです。
+実行して「ゴールから押し出してもゴールの印が残る」ことを確かめてください。
+<b>何もしていないのに正しく動く</b>——それが、設計で不具合を防ぐということです。
+</p>
+
+<h3>6-5. <code>far_x</code> / <code>far_y</code> という名前</h3>
+
+<pre><code>            far_x = next_x + dx      # 荷物の、1 つ先のマス
+            far_y = next_y + dy</code></pre>
+
+<p>
+<code>next</code>（次の）に対して <code>far</code>（遠い）です。
+<b>主人公から見て 2 マス先</b>を指しています。
+<code>next_next_x</code> でも間違いではありませんが、長くて読みにくくなります。
+</p>
+
+<p>
+この 2 行を <code>if self.has_box(...)</code> の<b>中</b>に置いているのも意図があります。
+<b>行き先に荷物があったときにしか、この座標は意味を持たない</b>からです。
+使う直前に、使う場所で計算する——こうしておくと、
+<b>関係のない変数が増えず</b>、あとで読み返したときに迷いません。
+</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>荷物をすり抜けてしまう</td>
+      <td><code>try_move()</code> に <code>if self.has_box(next_x, next_y):</code> の
+      ひとかたまりを足し忘れています</td>
+    </tr>
+    <tr>
+      <td>主人公だけ動いて、荷物がその場に残る</td>
+      <td><code>self.move_box(next_x, next_y, dx, dy)</code> を呼んでいないか、
+      渡す座標が違います。<b>渡すのは「荷物がいまいるマス」</b>
+      （<code>far_x</code> ではなく <code>next_x</code>）です</td>
+    </tr>
+    <tr>
+      <td>荷物を押したときしか、主人公が動かない</td>
+      <td>いちばん下の <code>self.player_x = next_x</code> の 2 行が、
+      <b><code>if</code> の中に入って</b>います。字下げを 1 段浅くしてください</td>
+    </tr>
+    <tr>
+      <td>荷物が壁にめり込む／盤面から出る</td>
+      <td><code>if self.tiles[far_y][far_x] == "#":</code> を書いていません。
+      <b><code>next</code> ではなく <code>far</code></b> を見ているか確認してください</td>
+    </tr>
+    <tr>
+      <td>荷物どうしが重なる</td>
+      <td><code>if self.has_box(far_x, far_y):</code> を書いていません</td>
+    </tr>
+    <tr>
+      <td>荷物 2 つが同時に動く</td>
+      <td><code>move_box()</code> の中で <code>far_x</code> を使っています。
+      <b>動かす荷物を探すのは <code>x, y</code>（＝<code>next</code> の位置）</b>で、
+      足すのは <code>dx, dy</code> です</td>
+    </tr>
+    <tr>
+      <td>荷物の手前で必ず止まる（押せない）</td>
+      <td><code>has_box()</code> の <code>return False</code> が
+      <b><code>for</code> の中</b>に入っていませんか。
+      1 個目を見た時点で答えを返してしまい、
+      <code>far</code> の判定が常に「荷物あり」になっている可能性もあります</td>
+    </tr>
+    <tr>
+      <td><code>IndexError: list index out of range</code></td>
+      <td>地図の<b>外周が壁で囲まれていません</b>。
+      2 マス先を見るようになったぶん、フェーズ 2 より起きやすくなります</td>
+    </tr>
+    <tr>
+      <td>ゴールに乗せた荷物が、見た目で分からない</td>
+      <td><b>いまはそれで正しい</b>です。「ゴールに乗った荷物」の絵に切り替えるのは
+      フェーズ 5 です（<a href="phase1.html#sheet">配置図</a>の <code>u = 32</code> に描く予定の 1 枚）</td>
+    </tr>
+    <tr>
+      <td>荷物を角に入れてしまい、詰んだ</td>
+      <td><b>不具合ではありません。</b>倉庫番はそういうゲームです。
+      いったんウィンドウを閉じて起動し直してください。
+      <code>R</code> でのやり直しはフェーズ 5 で足します</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+これで倉庫番として遊べるようになりました。ただし動きはまだ<b>カクッと瞬間移動</b>です。
+次は<b>歩くアニメ</b>を入れて、隣のマスへ<b>すべるように</b>動かします。
+</p>
+
+<div class="note">
+  <b>次に出てくる考え方</b>
+  <b>マス目の位置と、画面に見えている位置を分けます</b>。
+  キーを押した瞬間、盤面の上ではもう隣のマスに着いていて、
+  <b>あとから追いつくのは絵だけ</b>——という作りです
+  （<a href="./#basics">step2 概要の土台 3</a> に図があります）。<br>
+  絵も使います。<b>足踏みの 2 コマ目（4 方向ぶん）</b>を
+  <a href="phase1.html#sheet">配置図</a>の 3 段目（<code>v = 16</code>）に描き足すことになります。
+  1 コマ目とほとんど同じ絵で、<b>足の位置だけ左右を入れ替える</b>のが手軽です。
+</div>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
