@@ -59,7 +59,8 @@ step1 の絵（男の子・お化け・お菓子）は、<b>画面のどこに�
     <tr><td><b>荷物</b></td><td><code>$</code></td>
         <td>押して動かすもの。画面でいちばん目立つ色に</td><td><b>あり</b></td></tr>
     <tr><td><b>主人公</b></td><td><code>@</code></td>
-        <td>今回は<b>下向きの 1 枚だけ</b>。残り 7 枚はフェーズ 4 で描く</td><td><b>あり</b></td></tr>
+        <td>今回は<b>下向きの 1 枚だけ</b>。上・左・右の 3 枚はフェーズ 2、
+        足踏みの 2 コマ目 4 枚はフェーズ 4 で描く</td><td><b>あり</b></td></tr>
   </tbody>
 </table>
 
@@ -756,7 +757,7 @@ pyxel.blt(..., 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)  # 荷物：黒�
 <h2>8. 次のフェーズ</h2>
 
 <p>
-盤面が出せました。次は<b>主人公を矢印キーで動かします</b>。
+盤面が出せました。次は<a href="phase2.html"><b>主人公を矢印キーで動かします</b></a>。
 このフェーズで作った <code>self.tiles</code>・<code>self.player_x</code>・<code>self.player_y</code> が
 そのまま土台になり、<code>update()</code> の <code>pass</code> が中身に置き換わります。
 </p>
@@ -765,6 +766,7 @@ pyxel.blt(..., 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)  # 荷物：黒�
   <b>次に出てくる考え方</b>
   倉庫番の移動は、step1 の「動かしてから、ぶつかっていないか調べる」とは逆で、
   <b>「動かす前に、行き先が壁でないか調べる」</b>です。
+  あわせて<b>主人公の上・左・右の 3 枚</b>も描き、向いた方向の絵に切り替えます。
   <a href="./#basics">step2 概要の土台 2</a> にその 4 パターンをまとめてあるので、
   先に目を通しておくと理解が早くなります。
 </div>

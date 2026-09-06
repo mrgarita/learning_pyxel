@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ2：主人公を矢印キーで動かす ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 2 </span>主人公を矢印キーで動かす</h1>
+  <p>動かす前に行き先を調べて、壁なら進まない。向いた方向の絵に切り替える</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 2</p>
+
+<h2>ゴール</h2>
+
+<p>
+矢印キーで主人公が<b>1 マスずつ</b>動くようにします。壁の方向を押しても進みません。
+そして<b>向いている方向の絵</b>に切り替わります。
+フェーズ 1 のコードに <b>38 行</b>書き足して、できあがりは <b>132 行</b>になります。
+</p>
+
+<div class="note">
+  <b>このフェーズで使う絵</b>
+  主人公の <b>4 方向（下・上・左・右）</b>を使います。
+  フェーズ 1 で下向き 1 枚だけ描いた方は、<b>残り 3 枚（上・左・右）を先に描いてください</b>。
+  <a href="phase1.html#sheet">フェーズ 1 の配置図</a>のとおり、
+  <b>2 段目（v = 8）の左から 下・上・左・右</b>の順に並べます。<br>
+  <b>足踏みの 2 コマ目（3 段目）は、まだ描かなくて構いません。</b>
+  歩くアニメはフェーズ 4 で扱います。
+</div>
+
+<div class="warn">
+  <b>荷物は、まだすり抜けます</b>
+  このフェーズでは<b>壁だけ</b>を調べます。荷物のマスには入り込めてしまいますが、
+  <b>それで正しい動き</b>です。荷物を押す処理はフェーズ 3 で足します。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3>1-1. 動かしてから直すのではなく、動かす前に調べる</h3>
+
+<p>
+step1 では、<b>まず動かして</b>、画面の外に出ていたら <code>max</code> と <code>min</code> で
+<b>あとから押し戻して</b>いました。ドット単位でぬるぬる動くゲームでは、それでうまくいきます。
+</p>
+
+<p>
+倉庫番は<b>マス単位</b>です。1 マスは 8 ドットあるので、
+壁にめり込んでから戻すと<b>ガタッと見えてしまいます</b>。
+それに、このあと荷物を押すようになると
+「動かしてから戻す」では<b>荷物まで巻き戻さなければならず</b>、話がややこしくなります。
+</p>
+
+<p>
+そこで倉庫番では<b>順番を逆にします</b>。
+<b>行き先のマスを先に計算して、そこが壁かどうか調べてから</b>、動かすかどうかを決めます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 336" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="上キーが押されたら、行き先を計算し、壁かどうか調べてから動かすかを決める流れ図">
+
+  <rect x="225" y="16" width="190" height="34" rx="17" fill="#232840" stroke="#3b4166"/>
+  <text x="320" y="38" fill="#e8f0ff" font-size="13" text-anchor="middle">↑ キーが押された</text>
+
+  <path d="M320 50 L320 80" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M316 74 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+
+  <rect x="170" y="82" width="300" height="52" rx="6" fill="#232840" stroke="#3b4166"/>
+  <text x="320" y="105" fill="#e8f0ff" font-size="13" text-anchor="middle">行き先 ＝ 今いるマス ＋ (0, -1)</text>
+  <text x="320" y="123" fill="#9aa4c4" font-size="11" text-anchor="middle">※ この時点では、まだ動いていない</text>
+
+  <path d="M320 134 L320 162" stroke="#3b4166" stroke-width="1.5"/>
+  <path d="M316 156 l4 6 l4 -6" fill="none" stroke="#3b4166" stroke-width="1.5"/>
+
+  <polygon points="320,164 428,205 320,246 212,205" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="320" y="203" fill="#ffcc44" font-size="13" text-anchor="middle">行き先のマスは</text>
+  <text x="320" y="220" fill="#ffcc44" font-size="13" text-anchor="middle">壁？</text>
+
+  <path d="M212 205 L110 205 L110 262" stroke="#ff6b97" stroke-width="1.5" fill="none"/>
+  <path d="M106 256 l4 6 l4 -6" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+  <text x="160" y="197" fill="#ff6b97" font-size="12" text-anchor="middle">はい</text>
+
+  <rect x="20" y="264" width="180" height="56" rx="6" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="110" y="286" fill="#ff6b97" font-size="13" text-anchor="middle" font-weight="bold">向きだけ変える</text>
+  <text x="110" y="306" fill="#9aa4c4" font-size="11" text-anchor="middle">位置はそのまま</text>
+
+  <path d="M428 205 L535 205 L535 262" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <path d="M531 256 l4 6 l4 -6" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="485" y="197" fill="#2ee6a8" font-size="12" text-anchor="middle">いいえ</text>
+
+  <rect x="443" y="264" width="185" height="56" rx="6" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="535" y="286" fill="#2ee6a8" font-size="13" text-anchor="middle" font-weight="bold">1 マス動く</text>
+  <text x="535" y="306" fill="#9aa4c4" font-size="11" text-anchor="middle">向きも変える</text>
+</svg>
+</div>
+<figcaption>この流れが、そのまま <code>try_move()</code> というメソッド 1 つになります</figcaption>
+</figure>
+
+<div class="term">
+  <b>壁を押したときも、向きは変わります</b>
+  上の図で、壁だったときも<b>「向きだけ変える」</b>としているのは、
+  そのほうが<b>手ざわりが良い</b>からです。
+  壁に向かってキーを押したのに主人公が知らん顔をしていると、
+  <b>キーを取りこぼしたのか、壁なのか、区別が付きません</b>。
+  向きが変われば「押したことは伝わっている。ただし壁だ」と一目で分かります。<br>
+  この「入力に必ず何か反応を返す」という考え方は、
+  <a href="./#phases">フェーズ 8</a> のクリア演出まで、ずっと出てきます。
+</div>
+
+<h3>1-2. 向きを「番号」にすると、進む先も絵も同じ番号で引ける</h3>
+
+<p>
+矢印キーは 4 つあります。押されたキーごとに
+「<code>x</code> を 1 増やす」「<code>y</code> を 1 減らす」……と書いていくと、
+同じような行が 4 つ並びます。フェーズ 3 で荷物を押すようになると、
+<b>その 4 つがもう一組必要</b>になり、8 か所を書き分けることになります。
+</p>
+
+<p>
+そこで<b>向きに番号を振ります</b>。フェーズ 1 で
+<b>下 0・上 1・左 2・右 3</b> と決めておいた、あの順番です。
+番号が決まっていれば、<b>進む先の計算も、絵の切り出し位置も、同じ番号 1 つで引けます</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="向き番号 0から3 が、進むずれと絵の切り出し位置の両方を決めることを示す表">
+
+  <text x="30"  y="30" fill="#9aa4c4" font-size="11">向き</text>
+  <text x="150" y="30" fill="#9aa4c4" font-size="11" text-anchor="middle">番号</text>
+  <text x="250" y="30" fill="#9aa4c4" font-size="11">MOVES[番号]</text>
+  <text x="420" y="30" fill="#9aa4c4" font-size="11">絵の切り出し位置</text>
+  <line x1="24" y1="38" x2="616" y2="38" stroke="#3b4166"/>
+
+  <g>
+    <text x="30" y="70" fill="#e8f0ff" font-size="13">下</text>
+    <polygon points="72,58 82,58 77,70" fill="#45b0e8"/>
+    <rect x="136" y="52" width="28" height="26" rx="4" fill="#1b1f33" stroke="#ffcc44"/>
+    <text x="150" y="70" fill="#ffcc44" font-size="13" text-anchor="middle" font-family="Consolas, monospace">0</text>
+    <text x="250" y="70" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">(0, 1)</text>
+    <text x="336" y="70" fill="#9aa4c4" font-size="11">y が 1 増える</text>
+    <text x="420" y="70" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">u = 0</text>
+    <rect x="500" y="52" width="26" height="26" fill="#10121c" stroke="#3b4166"/>
+    <rect x="506" y="58" width="14" height="14" rx="2" fill="#e8f0ff"/>
+    <polygon points="510,62 516,62 513,68" fill="#10121c"/>
+  </g>
+
+  <g>
+    <text x="30" y="112" fill="#e8f0ff" font-size="13">上</text>
+    <polygon points="72,112 82,112 77,100" fill="#45b0e8"/>
+    <rect x="136" y="94" width="28" height="26" rx="4" fill="#1b1f33" stroke="#ffcc44"/>
+    <text x="150" y="112" fill="#ffcc44" font-size="13" text-anchor="middle" font-family="Consolas, monospace">1</text>
+    <text x="250" y="112" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">(0, -1)</text>
+    <text x="336" y="112" fill="#9aa4c4" font-size="11">y が 1 減る</text>
+    <text x="420" y="112" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">u = 8</text>
+    <rect x="500" y="94" width="26" height="26" fill="#10121c" stroke="#3b4166"/>
+    <rect x="506" y="100" width="14" height="14" rx="2" fill="#e8f0ff"/>
+    <polygon points="510,110 516,110 513,104" fill="#10121c"/>
+  </g>
+
+  <g>
+    <text x="30" y="154" fill="#e8f0ff" font-size="13">左</text>
+    <polygon points="82,136 82,146 70,141" fill="#45b0e8"/>
+    <rect x="136" y="136" width="28" height="26" rx="4" fill="#1b1f33" stroke="#ffcc44"/>
+    <text x="150" y="154" fill="#ffcc44" font-size="13" text-anchor="middle" font-family="Consolas, monospace">2</text>
+    <text x="250" y="154" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">(-1, 0)</text>
+    <text x="336" y="154" fill="#9aa4c4" font-size="11">x が 1 減る</text>
+    <text x="420" y="154" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">u = 16</text>
+    <rect x="500" y="136" width="26" height="26" fill="#10121c" stroke="#3b4166"/>
+    <rect x="506" y="142" width="14" height="14" rx="2" fill="#e8f0ff"/>
+    <polygon points="516,146 516,152 510,149" fill="#10121c"/>
+  </g>
+
+  <g>
+    <text x="30" y="196" fill="#e8f0ff" font-size="13">右</text>
+    <polygon points="70,178 70,188 82,183" fill="#45b0e8"/>
+    <rect x="136" y="178" width="28" height="26" rx="4" fill="#1b1f33" stroke="#ffcc44"/>
+    <text x="150" y="196" fill="#ffcc44" font-size="13" text-anchor="middle" font-family="Consolas, monospace">3</text>
+    <text x="250" y="196" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">(1, 0)</text>
+    <text x="336" y="196" fill="#9aa4c4" font-size="11">x が 1 増える</text>
+    <text x="420" y="196" fill="#e8f0ff" font-size="13" font-family="Consolas, monospace">u = 24</text>
+    <rect x="500" y="178" width="26" height="26" fill="#10121c" stroke="#3b4166"/>
+    <rect x="506" y="184" width="14" height="14" rx="2" fill="#e8f0ff"/>
+    <polygon points="510,188 510,194 516,191" fill="#10121c"/>
+  </g>
+
+  <line x1="24" y1="216" x2="616" y2="216" stroke="#3b4166"/>
+  <text x="150" y="242" fill="#ffcc44" font-size="11" text-anchor="middle">この 1 つの番号が</text>
+  <path d="M186 238 L242 238" stroke="#ffcc44" stroke-width="1.2"/>
+  <path d="M236 234 l6 4 -6 4" fill="none" stroke="#ffcc44" stroke-width="1.2"/>
+  <text x="250" y="242" fill="#e8f0ff" font-size="11">進む先を決め、</text>
+  <path d="M356 238 L412 238" stroke="#ffcc44" stroke-width="1.2"/>
+  <path d="M406 234 l6 4 -6 4" fill="none" stroke="#ffcc44" stroke-width="1.2"/>
+  <text x="420" y="242" fill="#e8f0ff" font-size="11">絵も決めます（u ＝ 番号 × 8）</text>
+</svg>
+</div>
+<figcaption>フェーズ 1 で絵を「下・上・左・右」の順に並べたのは、この表を成立させるためです</figcaption>
+</figure>
+
+<div class="term">
+  <b>この形は step1 でも使いました</b>
+  <code>MOVES</code> は、<b>かっこの組をリストに並べたもの</b>です。
+  step1 フェーズ 9 の <code>CORNERS</code>（お化けが出てくる 4 隅）とまったく同じ形で、
+  <code>MOVES[2]</code> と番号で引くと <code>(-1, 0)</code> が返ります。<br>
+  かっこの組は<b>タプル</b>といって、リストの兄弟のようなものです。
+  <b>あとから書き換えない並び</b>に使います。
+  「左は x が 1 減る」は今後も変わらないので、タプルがふさわしい場所です。
+</div>
+
+<h3>1-3. 行き先が壁かどうかは <code>self.tiles[y][x]</code> で調べる</h3>
+
+<p>
+フェーズ 1 で作った <code>self.tiles</code> は、<b>地形だけが入った二次元リスト</b>です。
+調べたいマスの文字が <code>"#"</code> なら壁、それ以外（<code>"."</code> か <code>"O"</code>）なら通れます。
+</p>
+
+<p>
+気を付けるのは<b>かっこの順番</b>です。<code>self.tiles</code> は<b>行のリスト</b>なので、
+<b>先に行（<code>y</code>）を選び、あとから列（<code>x</code>）を選びます</b>。
+<code>tiles[x][y]</code> と書くと、盤面の縦横が入れ替わったところを見てしまいます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 274" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="8かける6の盤面に行番号と列番号を振り、主人公のマスが tiles 4 3 であることを示す図">
+
+  <text x="180" y="30" fill="#9aa4c4" font-size="11" text-anchor="end">x（列）→</text>
+  <text x="200" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">0</text>
+  <text x="224" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">1</text>
+  <text x="248" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">2</text>
+  <text x="272" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">3</text>
+  <text x="296" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">4</text>
+  <text x="320" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">5</text>
+  <text x="344" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">6</text>
+  <text x="368" y="38" fill="#9aa4c4" font-size="10" text-anchor="middle" font-family="Consolas, monospace">7</text>
+  <text x="24" y="60" fill="#9aa4c4" font-size="11">y（行）</text>
+  <text x="34" y="78" fill="#9aa4c4" font-size="11">↓</text>
+
+  <rect x="188" y="44" width="192" height="144" fill="#232840" stroke="#3b4166"/>
+  <rect x="212" y="68" width="144" height="96" fill="#10121c"/>
+
+  <g stroke="#3b4166" stroke-width="0.6">
+    <line x1="212" y1="44" x2="212" y2="188"/><line x1="236" y1="44" x2="236" y2="188"/>
+    <line x1="260" y1="44" x2="260" y2="188"/><line x1="284" y1="44" x2="284" y2="188"/>
+    <line x1="308" y1="44" x2="308" y2="188"/><line x1="332" y1="44" x2="332" y2="188"/>
+    <line x1="356" y1="44" x2="356" y2="188"/>
+    <line x1="188" y1="68"  x2="380" y2="68"/>
+    <line x1="188" y1="92"  x2="380" y2="92"/>
+    <line x1="188" y1="116" x2="380" y2="116"/>
+    <line x1="188" y1="140" x2="380" y2="140"/>
+    <line x1="188" y1="164" x2="380" y2="164"/>
+  </g>
+
+  <text x="180" y="61"  fill="#9aa4c4" font-size="10" text-anchor="end" font-family="Consolas, monospace">0</text>
+  <text x="180" y="85"  fill="#9aa4c4" font-size="10" text-anchor="end" font-family="Consolas, monospace">1</text>
+  <text x="180" y="109" fill="#9aa4c4" font-size="10" text-anchor="end" font-family="Consolas, monospace">2</text>
+  <text x="180" y="133" fill="#9aa4c4" font-size="10" text-anchor="end" font-family="Consolas, monospace">3</text>
+  <text x="180" y="157" fill="#9aa4c4" font-size="10" text-anchor="end" font-family="Consolas, monospace">4</text>
+  <text x="180" y="181" fill="#9aa4c4" font-size="10" text-anchor="end" font-family="Consolas, monospace">5</text>
+
+  <rect x="266" y="98" width="12" height="12" rx="6" fill="none" stroke="#ffcc44" stroke-width="1.2"/>
+  <rect x="264" y="120" width="16" height="16" rx="2" fill="#45b0e8"/>
+  <rect x="264" y="144" width="16" height="16" rx="2" fill="#e8f0ff"/>
+  <rect x="260" y="140" width="24" height="24" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <rect x="260" y="116" width="24" height="24" fill="none" stroke="#ff6b97" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <path d="M284 152 L432 152" stroke="#2ee6a8" stroke-width="1.2" fill="none"/>
+  <text x="440" y="149" fill="#2ee6a8" font-size="13" font-family="Consolas, monospace">self.tiles[4][3]</text>
+  <text x="440" y="167" fill="#9aa4c4" font-size="11">y が先、x があと</text>
+
+  <text x="440" y="196" fill="#ff6b97" font-size="12">上へ 1 歩進むと</text>
+  <text x="440" y="215" fill="#ff6b97" font-size="13" font-family="Consolas, monospace">self.tiles[3][3]</text>
+
+  <text x="188" y="240" fill="#9aa4c4" font-size="11">y は<tspan fill="#e8f0ff">下へ行くほど大きく</tspan>なります。画面の座標と同じ向きです。</text>
+  <text x="188" y="260" fill="#9aa4c4" font-size="11">だから「上へ進む」は <tspan fill="#e8f0ff" font-family="Consolas, monospace">(0, -1)</tspan> と、<tspan fill="#e8f0ff">マイナス</tspan>になります。</text>
+</svg>
+</div>
+<figcaption>主人公がいる (x=3, y=4) のマスは <code>self.tiles[4][3]</code> と書きます</figcaption>
+</figure>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.btnp(キー)</code></td><td><b>押した瞬間の 1 フレームだけ</b> <code>True</code> になる。step1 フェーズ 2 で扱いました</td></tr>
+    <tr><td><code>pyxel.KEY_DOWN</code> ほか 3 つ</td><td>矢印キー。<code>KEY_UP</code> / <code>KEY_LEFT</code> / <code>KEY_RIGHT</code></td></tr>
+    <tr><td><code>(0, 1)</code> のような<b>タプル</b></td><td>あとから書き換えない、値の組</td></tr>
+    <tr><td><code>dx, dy = MOVES[n]</code></td><td>組を<b>2 つの変数へ一度に受け取る</b>（step1 の <code>best_x, best_y = CORNERS[0]</code> と同じ形）</td></tr>
+    <tr><td><code>return</code>（値なし）</td><td>メソッドを<b>そこで終わらせる</b>。「何もしない」を書くのに使う</td></tr>
+    <tr><td><code>if</code> … <code>elif</code></td><td>どれか<b>1 つだけ</b>を選ぶ。「1 フレームに 1 方向だけ」にするために使う</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+フェーズ 1 の <code>sokoban.py</code> に書き足していきます。<b>3 段階に分けて</b>進めます。
+</p>
+
+<h3>3-1. 向きの番号と、向きごとのずれを用意する</h3>
+
+<p>
+定数の並びのいちばん下、<code>STAGE1</code> の<b>手前</b>に足します。
+</p>
+
+<pre><code>U_BOX = 24
+
+# 向き。この番号が、そのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),             # 下
+    (0, -1),            # 上
+    (-1, 0),            # 左
+    (1, 0),             # 右
+]</code></pre>
+
+<p>
+次に、<b>はじめの向き</b>を覚えさせます。
+<code>load_stage()</code> の <code>self.boxes = []</code> の下に 1 行足してください。
+</p>
+
+<pre><code>    def load_stage(self, rows):
+        """文字の地図を読んで、地形・主人公・荷物に分ける"""
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # ← 足す：はじめは下を向いている</code></pre>
+
+<div class="term">
+  <b>なぜ <code>MOVES</code> の順番を変えてはいけないのか</b>
+  <code>MOVES</code> の並びは <b>下・上・左・右</b>で、
+  <code>DIR_DOWN</code> が 0、<code>DIR_UP</code> が 1……という番号とそろえてあります。
+  ここを入れ替えると、<b>右を押したのに左へ進む</b>といったことが起きます。
+  絵の並びとも連動しているので、<b>3 か所（番号・<code>MOVES</code>・絵）を必ずそろえて</b>ください。
+</div>
+
+<h3>3-2. キーを見て、動かす</h3>
+
+<p>
+<code>update()</code> の <code>pass</code> を消して、メソッドを 2 つ足します。
+<b><code>update()</code> のすぐ下</b>に続けて書いてください。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        self.handle_key()
+
+    def handle_key(self):
+        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
+        if pyxel.btnp(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btnp(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btnp(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btnp(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def try_move(self, direction):
+        """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == "#":    # 行き先が壁なら
+            return                               # 何もしないで戻る
+
+        self.player_x = next_x
+        self.player_y = next_y</code></pre>
+
+<p>
+ここで一度実行してください。<b>矢印キーで主人公が 1 マスずつ動き、壁で止まれば成功</b>です。
+まだ絵は下向きのままで、荷物はすり抜けます。
+</p>
+
+<h3>3-3. 向いている方向の絵にする</h3>
+
+<p>
+<code>draw()</code> のいちばん下、主人公を描いている <code>blt()</code> の
+<b><code>0,</code> のところを <code>self.player_dir * TILE,</code> に書き換えます</b>。
+</p>
+
+<pre><code>        # 主人公（向いている方向の絵）
+        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y * TILE,
+                  0, self.player_dir * TILE, V_PLAYER, TILE, TILE, pyxel.COLOR_BLACK)</code></pre>
+
+<div class="note">
+  <b>書き換えるのは 1 か所だけです</b>
+  もとのコードは <code>0, 0, V_PLAYER, ...</code> と 0 が 2 つ並んでいました。
+  <b>1 つめの 0 はイメージバンクの番号</b>（そのまま）、
+  <b>2 つめの 0 が切り出し位置 <code>u</code></b> です。書き換えるのは<b>2 つめ</b>です。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<pre><code># sokoban.py
+# step2 フェーズ2：主人公を矢印キーで動かす
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER = 8            # 主人公の段（コマ A）
+U_FLOOR = 0
+U_WALL = 8
+U_GOAL = 16
+U_BOX = 24
+
+# 向き。この番号が、そのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),             # 下
+    (0, -1),            # 上
+    (-1, 0),            # 左
+    (1, 0),             # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [
+    "########",
+    "#......#",
+    "#..O...#",
+    "#..$...#",
+    "#..@...#",
+    "########",
+]
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.load_stage(STAGE1)
+        pyxel.run(self.update, self.draw)
+
+    def load_stage(self, rows):
+        """文字の地図を読んで、地形・主人公・荷物に分ける"""
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == "@":
+                    self.player_x = x
+                    self.player_y = y
+                    mark = "."      # 主人公の足元は床
+                elif mark == "$":
+                    self.boxes.append([x, y])
+                    mark = "."      # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.handle_key()
+
+    def handle_key(self):
+        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
+        if pyxel.btnp(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btnp(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btnp(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btnp(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def try_move(self, direction):
+        """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == "#":    # 行き先が壁なら
+            return                               # 何もしないで戻る
+
+        self.player_x = next_x
+        self.player_y = next_y
+
+    def draw(self):
+        """描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        # 地形を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == "#":
+                    u = U_WALL
+                elif mark == "O":
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                          0, u, V_TILE, TILE, TILE)
+
+        # 荷物
+        for box in self.boxes:
+            pyxel.blt(self.ox + box[0] * TILE, self.oy + box[1] * TILE,
+                      0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公（向いている方向の絵）
+        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y * TILE,
+                  0, self.player_dir * TILE, V_PLAYER, TILE, TILE, pyxel.COLOR_BLACK)
+
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<p>
+確かめてほしいのは、次の 4 つです。
+</p>
+
+<table>
+  <thead><tr><th>やってみること</th><th>こうなれば成功</th></tr></thead>
+  <tbody>
+    <tr><td>矢印キーを<b>1 回ずつ押す</b></td><td>主人公が<b>1 マスずつ</b>動く</td></tr>
+    <tr><td>壁に向かって押す</td><td><b>動かないが、向きだけ変わる</b></td></tr>
+    <tr><td>4 方向すべてに向く</td><td>下・上・左・右の<b>絵が正しく切り替わる</b></td></tr>
+    <tr><td>矢印キーを<b>押しっぱなしにする</b></td><td><b>1 マスだけ動いて止まる</b>（これで正しい）</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>押しっぱなしで進まないのは、わざとです</b>
+  <code>btnp()</code> は<b>押した瞬間の 1 フレームだけ</b> <code>True</code> になるので、
+  押しっぱなしでは 1 歩しか進みません。<br>
+  <code>pyxel.btnp(キー, 12, 4)</code> のように数を 2 つ足すと
+  「12 フレーム押しっぱなしにしたら、以降 4 フレームごとに繰り返す」という動きにできます。
+  ただし<b>フェーズ 4 で歩くアニメを入れるときに、この仕組みごと <code>btn()</code> に作り替えます</b>。
+  ここでは足さずに進んでください。
+</div>
+
+<div class="note">
+  <b>数字で確かめたいとき</b>
+  <code>try_move()</code> の最後に <code>print(self.player_x, self.player_y, self.player_dir)</code>
+  を書き足すと、動くたびにターミナルへマス目の位置と向きが出ます。
+  はじめの位置は <code>3 4 0</code> です。右を 3 回押すと <code>6 4 3</code> になり、
+  4 回目は<b>壁なので何も出ません</b>（<code>return</code> で先に戻っているためです）。
+  確かめ終わったら消してください。
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3>6-1. <code>if</code> を 4 つ並べず、<code>elif</code> でつなぐ</h3>
+
+<p>
+step1 の <code>move_boy()</code> では、<code>if</code> を<b>4 つ並べて</b>いました。
+上と右を同時に押したら<b>斜めに動いてほしかった</b>からです。
+</p>
+
+<p>
+倉庫番は逆です。<b>1 回の入力で動くのは、1 マスだけ</b>。
+斜めには進めませんし、上と右を同時に押したときに 2 マスぶん動いてしまっては困ります。
+</p>
+
+<pre><code>        if pyxel.btnp(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btnp(pyxel.KEY_UP):      # ← elif なので、下が成立したら見に来ない
+            self.try_move(DIR_UP)</code></pre>
+
+<p>
+<code>elif</code> でつなぐと、<b>上から順に見ていって、最初に当てはまった 1 つだけ</b>が実行されます。
+だから同時押しでも、動くのは 1 方向だけです
+（この書き方では<b>下がいちばん優先</b>されます。倉庫番では困らないので、この順のままにします）。
+</p>
+
+<h3>6-2. <code>dx, dy = MOVES[direction]</code> —— 組を 2 つの変数で受け取る</h3>
+
+<p>
+<code>MOVES[direction]</code> は <code>(0, -1)</code> のような<b>2 つ組</b>を返します。
+左辺にカンマで 2 つ変数を並べると、<b>順番どおりに 1 つずつ入ります</b>。
+</p>
+
+<pre><code>dx, dy = MOVES[1]       # MOVES[1] は (0, -1)
+                        # → dx に 0、dy に -1 が入る</code></pre>
+
+<p>
+step1 フェーズ 9 の <code>best_x, best_y = CORNERS[0]</code> と同じ書き方です。
+1 行で済むうえ、<code>MOVES[direction][0]</code> のように
+<b>かっこを二重に書かなくてよい</b>ので読みやすくなります。
+</p>
+
+<div class="term">
+  <b><code>dx</code> と <code>dy</code> という名前について</b>
+  <code>d</code> は「difference（差）」の頭文字で、
+  <b>「どれだけ変化するか」を表す変数によく使われる名前</b>です。
+  ゲームのコードでは <code>dx</code>・<code>dy</code> がほぼ決まり文句なので、
+  ここでもその慣習に合わせています。
+  <code>move_x</code>・<code>move_y</code> と書いても動きは同じです。
+</div>
+
+<h3>6-3. <code>return</code> だけを書いて「何もしない」を表す</h3>
+
+<pre><code>        if self.tiles[next_y][next_x] == "#":
+            return
+
+        self.player_x = next_x
+        self.player_y = next_y</code></pre>
+
+<p>
+<code>return</code> は<b>そこでメソッドを終わらせる</b>合図です。
+値を書かずに <code>return</code> とだけ置くと、<b>「ここで打ち切り」</b>という意味になります。
+壁だったときは位置を書き換えないまま終わるので、主人公はその場に留まります。
+</p>
+
+<p>
+<code>else:</code> を使って書くこともできますが、<code>return</code> のほうが<b>字下げが浅く済みます</b>。
+フェーズ 3 で「荷物があるか」「その先はどうか」と調べる条件が増えると、
+この差がはっきり効いてきます。step1 の <code>check_ghosts()</code> でも同じ書き方をしました。
+</p>
+
+<h3>6-4. なぜ <code>handle_key()</code> と <code>try_move()</code> に分けたのか</h3>
+
+<p>
+1 つのメソッドにまとめて書くこともできます。分けたのは、
+<b>2 つが答えている問いが違う</b>からです。
+</p>
+
+<table>
+  <thead><tr><th>メソッド</th><th>答えている問い</th><th>この先どう変わるか</th></tr></thead>
+  <tbody>
+    <tr><td><code>handle_key()</code></td><td><b>どの向きが指示されたか</b></td>
+        <td>フェーズ 10 で<b>スマホの十字キー</b>にも対応します。変わるのはここだけです</td></tr>
+    <tr><td><code>try_move()</code></td><td><b>その向きへ動けるか、動くとどうなるか</b></td>
+        <td>フェーズ 3 で<b>荷物を押す処理</b>が入り、フェーズ 8 で<b>手数を数える</b>行が入ります</td></tr>
+  </tbody>
+</table>
+
+<p>
+分けておくと、あとで<b>片方だけを直せば済みます</b>。
+「キーボードでもスマホでも、指示された向きは <code>try_move()</code> に渡すだけ」という形にしておくと、
+入力の種類が増えても移動のルールには手を触れずに済みます。
+</p>
+
+<h3>6-5. <code>self.player_dir * TILE</code> で切り出し位置を求める</h3>
+
+<pre><code>        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y * TILE,
+                  0, self.player_dir * TILE, V_PLAYER, TILE, TILE, pyxel.COLOR_BLACK)</code></pre>
+
+<p>
+主人公の絵は<b>横に 8 ドットずつ</b>並べて描いてあるので、
+向きの番号に 8 を掛ければ、そのまま切り出し位置になります。
+</p>
+
+<pre><code>下（0） → 0 * 8 = 0
+上（1） → 1 * 8 = 8
+左（2） → 2 * 8 = 16
+右（3） → 3 * 8 = 24</code></pre>
+
+<p>
+<code>8</code> と直接書かずに <code>TILE</code> を使っているのは、
+<b>この 8 が「絵 1 枚の幅」だから</b>です。
+<code>self.player_x * TILE</code>（マス目をドットに直す）と同じ理由の 8 です。
+このように<b>意味が同じ数は、同じ名前で書いておく</b>と、
+あとで数を変えたくなったときに直す場所が 1 か所で済みます。
+</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>キーを押しても何も起きない</td>
+      <td><code>update()</code> に <code>pass</code> が残っていませんか。
+      <code>self.handle_key()</code> に書き換わっているか確認してください</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'player_dir'</code></td>
+      <td><code>load_stage()</code> に <code>self.player_dir = DIR_DOWN</code> を足し忘れています</td>
+    </tr>
+    <tr>
+      <td><code>TypeError: try_move() takes 1 positional argument but 2 were given</code></td>
+      <td><code>def try_move(self, direction):</code> の <b><code>self,</code> が抜けています</b>。
+      メソッドの引数は<b>必ず <code>self</code> から</b>始めます</td>
+    </tr>
+    <tr>
+      <td>押した向きと<b>逆</b>に動く／上下と左右が入れ替わる</td>
+      <td><code>MOVES</code> の並びが違います。上から
+      <code>(0, 1)</code>・<code>(0, -1)</code>・<code>(-1, 0)</code>・<code>(1, 0)</code> の順です。
+      <b>組の中身は「x のずれ, y のずれ」の順</b>である点にも注意してください</td>
+    </tr>
+    <tr>
+      <td>壁をすり抜ける</td>
+      <td><code>self.tiles[next_x][next_y]</code> と<b>順番が逆</b>になっていませんか。
+      <b><code>y</code> が先、<code>x</code> があと</b>です</td>
+    </tr>
+    <tr>
+      <td><code>IndexError: list index out of range</code></td>
+      <td>地図の<b>外周が壁で囲まれていません</b>。盤面の端から出ようとして、
+      リストの外を見に行っています。倉庫番の地図は<b>必ず外周をすべて <code>#</code> にする</b>
+      決まりにしておくと、範囲を調べる処理を書かずに済みます</td>
+    </tr>
+    <tr>
+      <td>絵が下向きのまま変わらない</td>
+      <td><code>blt()</code> の<b>2 つめの 0</b> を <code>self.player_dir * TILE</code> に
+      書き換えたか確認してください（1 つめはイメージバンク番号なので 0 のままです）</td>
+    </tr>
+    <tr>
+      <td>向きを変えると<b>荷物やゴールの絵</b>が出る</td>
+      <td><code>V_PLAYER</code> のところが <code>V_TILE</code>（または 0）になっています。
+      主人公は<b>2 段目（v = 8）</b>から切り出します</td>
+    </tr>
+    <tr>
+      <td>ある向きだけ<b>絵が真っ黒</b>／崩れている</td>
+      <td>リソースエディタの <b>2 段目（v = 8）に 4 枚そろっていません</b>。
+      左から <b>下・上・左・右</b>の順に、<b>8 ドット刻み</b>で並べてください</td>
+    </tr>
+    <tr>
+      <td>1 回押すと 2 マス動く</td>
+      <td><code>btnp</code> が <code>btn</code> になっていませんか。
+      <code>btn</code> は<b>押している間ずっと</b> <code>True</code> なので、毎フレーム動いてしまいます</td>
+    </tr>
+    <tr>
+      <td>荷物のマスに入り込める</td>
+      <td><b>いまはそれで正しい動き</b>です。フェーズ 3 で荷物を押す処理を足します</td>
+    </tr>
+    <tr>
+      <td>ゴールのマスに乗ると、ゴールの印が消える</td>
+      <td>主人公が上に描かれているだけで、地形は消えていません。正しい動きです</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+主人公が動くようになりました。次は<b>荷物を押します</b>。
+考え方は同じで、<b>調べる範囲が 1 マス先から 2 マス先に広がる</b>だけです。
+</p>
+
+<div class="note">
+  <b>次に出てくる考え方</b>
+  「行き先に荷物があるなら、<b>その 1 つ先</b>も見る」——
+  <a href="./#basics">step2 概要の土台 2</a> にある 4 パターンのうち、
+  残りの 2 つ（3 番目と 4 番目）を <code>try_move()</code> に足します。<br>
+  そのとき、<b>荷物が置かれているマスをどうやって調べるか</b>が問題になります。
+  荷物は <code>self.tiles</code> ではなく <code>self.boxes</code>（座標のリスト）で持っているので、
+  <b>「そのマスに荷物があるか」を答える小さなメソッド</b>を 1 つ作ることになります。
+</div>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
