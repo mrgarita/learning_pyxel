@@ -15,7 +15,7 @@
   <p>荷物を押して所定の位置へ運ぶ。10 ステージすべてを解く</p>
 </header>
 
-<p class="crumb"><a href="../">← 目次にもどる</a></p>
+<p class="crumb"><a href="../">← トップページへもどる</a></p>
 
 <h2 id="goal">1. 完成イメージ</h2>
 
@@ -27,7 +27,20 @@
 
 <p>
 全 <b>10 ステージ</b>。最初のステージは荷物 1 個から始まり、だんだん難しくなります。
-詰んでしまったときのために、<b><code>R</code> でやり直し</b>と <b><code>Z</code> で 1 手戻す</b>を用意します。
+詰んでしまったときは、<b><code>R</code> で最初からやり直し</b>ます。
+<b>1 手戻す（アンドゥ）はあえて付けません。</b>
+気軽に戻せてしまうと、<b>押す前に一手先を読む</b>というこのゲームのいちばんの面白さが薄れるからです。
+</p>
+
+<p>
+主人公は<b>向いている方向の絵になり、歩くときは足踏みしながら隣のマスへすべっていきます</b>。
+盤面そのものは静かなゲームで、<b>動くのは主人公と荷物だけ</b>——だからこそ、そこは丁寧に作り込みます。
+</p>
+
+<p>
+そして今回は <b>スマホでも遊べるようにします</b>。Pyxel の Web 版はタッチ端末で開くと
+<b>画面の下に十字キーとボタンを自動で出してくれる</b>ので、コード側は
+「キーボードも、その画面ボタンも、どちらも見る」ようにしておくだけで済みます。
 </p>
 
 <figure>
@@ -94,7 +107,8 @@
   </g>
 </svg>
 </div>
-<figcaption>完成イメージ（実際の画面は 160×120 ドット、1 マス 8 ドット。図は概念図です）</figcaption>
+<figcaption>完成イメージ（実際の画面は 160×120 ドット、1 マス 8 ドット。図は概念図で、
+主人公は実際には向きに応じた 4 方向のドット絵になります）</figcaption>
 </figure>
 
 <table>
@@ -102,8 +116,14 @@
   <tbody>
     <tr><td>画面サイズ</td><td>160 × 120 ドット（step0・step1 と同じ）</td></tr>
     <tr><td>1 マスの大きさ</td><td>8 × 8 ドット。盤面は最大 <b>18 × 12 マス</b>まで置ける</td></tr>
-    <tr><td>操作</td><td>矢印キーで移動・荷物を押す ／ <code>R</code> でやり直し ／
-      <code>Z</code> で 1 手戻す ／ <code>Enter</code> で決定</td></tr>
+    <tr><td>操作（PC）</td><td>矢印キーで移動・荷物を押す ／ <code>R</code> でやり直し ／
+      <code>Enter</code> で決定</td></tr>
+    <tr><td>操作（スマホ）</td><td>画面下の<b>十字キー</b>で移動 ／ <b>B ボタン</b>でやり直し ／
+      <b>A ボタン</b>で決定。Pyxel がタッチ端末に自動で出す仮想ゲームパッドを使う</td></tr>
+    <tr><td>主人公の表示</td><td><b>4 方向 × 2 コマ</b>のドット絵。歩くときは隣のマスへ
+      <b>8 フレームかけてなめらかにすべる</b></td></tr>
+    <tr><td>やり直し</td><td><code>R</code>（スマホは B ボタン）でステージの最初から。
+      <b>1 手戻す機能はなし</b></td></tr>
     <tr><td>クリア条件</td><td><b>すべての荷物がゴールに乗る</b>こと。制限時間や手数制限はなし</td></tr>
     <tr><td>ステージ数</td><td><b>10</b>。番号順に進む。クリアしたステージは選び直せる</td></tr>
     <tr><td>画面</td><td>タイトル／ステージ選択／プレイ／ステージクリア／全ステージクリアの 5 画面</td></tr>
@@ -123,9 +143,9 @@
 
 <div class="note">
   <b>作品の規模感</b>
-  最終的なコードはおよそ <b>250〜300 行</b>です。step1（150〜200 行）より増えますが、
+  最終的なコードはおよそ <b>280〜330 行</b>です。step1（150〜200 行）より増えますが、
   <b>そのうち 3 割ほどは「ステージの地図」そのもの</b>で、考えて書くコードの量は
-  step1 と大きくは変わりません。10 のフェーズに分けて進めます。
+  step1 と大きくは変わりません。<b>11 のフェーズ</b>に分けて進めます。
 </div>
 
 <div class="note">
@@ -147,7 +167,7 @@
   <tbody>
     <tr><td class="phase-no">1</td>
         <td><b>タイルの絵を描き、ステージを画面に並べる</b><br>
-        壁・床・荷物・ゴール・プレイヤーの 5 つを描き、地図のとおりに置く</td>
+        壁・床・荷物・ゴールと、主人公の絵 1 枚を描き、地図のとおりに置く</td>
         <td>二次元リスト、マス目とドットの変換、二重ループ</td></tr>
     <tr><td class="phase-no">2</td>
         <td><b>プレイヤーを矢印キーで動かす</b><br>
@@ -158,28 +178,35 @@
         押した先が空いているときだけ、荷物ごと動く</td>
         <td><b>2 マス先まで見る</b>、位置をまとめて扱う</td></tr>
     <tr><td class="phase-no">4</td>
+        <td><b>向きを付け、歩くアニメを入れる</b>（step2 で追加した内容）<br>
+        主人公の残り 7 枚を描いて、向いている方向の絵にする。
+        隣のマスへ 8 フレームかけてすべらせ、足踏みさせる。押した荷物も一緒にすべる</td>
+        <td><b>マス目の位置と見た目の位置を分ける</b>、途中の位置の計算、
+        <code>btnp</code> から <code>btn</code> への切り替え</td></tr>
+    <tr><td class="phase-no">5</td>
         <td><b>クリア判定と、やり直し</b><br>
         全部の荷物がゴールに乗ったらクリア。<code>R</code> で最初から</td>
         <td><code>all()</code>、<b>リストのコピー</b>（浅いコピーの落とし穴）</td></tr>
-    <tr><td class="phase-no">5</td>
+    <tr><td class="phase-no">6</td>
         <td><b>ステージを 10 個にする</b><br>
         クリアしたら次のステージへ。10 個ぜんぶで全クリア</td>
         <td>ステージ一覧の持ち方、進行状態の管理</td></tr>
-    <tr><td class="phase-no">6</td>
+    <tr><td class="phase-no">7</td>
         <td><b>タイトル画面とステージ選択</b></td>
         <td>画面遷移（step1 の復習）、カーソルの移動</td></tr>
-    <tr><td class="phase-no">7</td>
+    <tr><td class="phase-no">8</td>
         <td><b>手数の表示とクリア演出</b><br>
         ステージ番号・手数を出し、クリアの瞬間に間をつくる</td>
         <td>HUD、<code>frame_count</code> による演出</td></tr>
-    <tr><td class="phase-no">8</td>
+    <tr><td class="phase-no">9</td>
         <td><b>効果音と BGM をつける</b></td>
         <td><code>play</code> / <code>playm</code>（step1 の復習）</td></tr>
-    <tr><td class="phase-no">9</td>
-        <td><b>1 手戻す（アンドゥ）</b><br>
-        <code>Z</code> で直前の 1 手を取り消す</td>
-        <td><b>履歴をリストに積む</b>（<code>append</code> と <code>pop</code>）</td></tr>
     <tr><td class="phase-no">10</td>
+        <td><b>スマホで遊べるようにする</b>（step2 で追加した内容）<br>
+        仮想ゲームパッドの十字キーとボタンも受け付ける。
+        試しにパッケージして、自分のスマホで実際に動かして確かめる</td>
+        <td><code>GAMEPAD1_BUTTON_*</code>、<b>入力の判定を自分の関数にまとめる</b></td></tr>
+    <tr><td class="phase-no">11</td>
         <td><b>パッケージ化して Web で公開する</b></td>
         <td><code>pyxel package</code> / <code>app2html</code>（step1 の復習）</td></tr>
   </tbody>
@@ -191,7 +218,7 @@
   実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
   疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。<br>
   はじめて読むときは、この下の<a href="#topics">3. 学ぶ技術項目</a>と
-  <a href="#basics">4. 先に押さえておきたい 2 つの土台</a>に目を通してから、フェーズ 1 へ進んでください。
+  <a href="#basics">4. 先に押さえておきたい 3 つの土台</a>に目を通してから、フェーズ 1 へ進んでください。
 </div>
 
 <h2 id="topics">3. この step で学ぶ技術項目</h2>
@@ -209,23 +236,30 @@ step1 が「ゲームとして成立させるための仕組み」だったの�
     <tr><td rowspan="3">データの持ち方</td>
         <td><b>二次元リストで盤面を持つ</b>（<code>stage[y][x]</code>）</td><td>1</td></tr>
     <tr><td><b>ステージを「文字の地図」で書き、読んで組み立てる</b></td><td>1</td></tr>
-    <tr><td>10 個のステージをまとめて持ち、番号で取り出す</td><td>5</td></tr>
-    <tr><td rowspan="2">座標</td>
+    <tr><td>10 個のステージをまとめて持ち、番号で取り出す</td><td>6</td></tr>
+    <tr><td rowspan="3">座標</td>
         <td><b>マス目の座標とドットの座標を行き来する</b></td><td>1</td></tr>
-    <tr><td>位置を <code>(x, y)</code> の組として扱う</td><td>3・9</td></tr>
+    <tr><td>位置を <code>(x, y)</code> の組として扱う</td><td>3</td></tr>
+    <tr><td><b>マス目の位置と、画面に見えている位置を別々に持つ</b></td><td>4</td></tr>
     <tr><td rowspan="2">移動の判定</td>
         <td><b>動かす前に、行き先を調べる</b>（壁なら動かない）</td><td>2</td></tr>
     <tr><td><b>2 マス先まで見る</b>（荷物を押せるかどうか）</td><td>3</td></tr>
+    <tr><td rowspan="3">絵とアニメーション</td>
+        <td><b>向きを覚えて、絵を差し替える</b>（4 方向 × 2 コマ）</td><td>4</td></tr>
+    <tr><td><b>出発マスと行き先のあいだを、少しずつ埋める</b></td><td>4</td></tr>
+    <tr><td>足踏みのコマ替えと、<b>歩いている間は次の入力を待たせる</b></td><td>4</td></tr>
     <tr><td rowspan="2">状態の管理</td>
-        <td>すべての荷物がゴールに乗ったかを調べる</td><td>4</td></tr>
-    <tr><td><b>初期状態を保存しておき、いつでも戻す</b></td><td>4</td></tr>
-    <tr><td>やり直し</td><td><b>1 手ずつ履歴に積み、取り出して戻す</b></td><td>9</td></tr>
+        <td>すべての荷物がゴールに乗ったかを調べる</td><td>5</td></tr>
+    <tr><td><b>初期状態を保存しておき、いつでも戻す</b></td><td>5</td></tr>
     <tr><td rowspan="2">ゲーム進行</td>
-        <td>ステージを順に進める／全クリア</td><td>5</td></tr>
-    <tr><td>タイトルとステージ選択（step1 の画面遷移の応用）</td><td>6</td></tr>
-    <tr><td>画面表示</td><td>ステージ番号・手数の表示、クリア演出</td><td>7</td></tr>
-    <tr><td>サウンド</td><td>押す音・ゴールに乗った音・クリア音（step1 の復習）</td><td>8</td></tr>
-    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）</td><td>10</td></tr>
+        <td>ステージを順に進める／全クリア</td><td>6</td></tr>
+    <tr><td>タイトルとステージ選択（step1 の画面遷移の応用）</td><td>7</td></tr>
+    <tr><td>画面表示</td><td>ステージ番号・手数の表示、クリア演出</td><td>8</td></tr>
+    <tr><td>サウンド</td><td>押す音・ゴールに乗った音・クリア音（step1 の復習）</td><td>9</td></tr>
+    <tr><td rowspan="2">スマホ対応</td>
+        <td><b>仮想ゲームパッドのボタンを受け取る</b>（<code>GAMEPAD1_BUTTON_*</code>）</td><td>10</td></tr>
+    <tr><td>キーとボタンの判定を<b>自分の関数にまとめる</b></td><td>10</td></tr>
+    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）</td><td>11</td></tr>
   </tbody>
 </table>
 
@@ -247,27 +281,30 @@ step1 が「ゲームとして成立させるための仕組み」だったの�
       ところが <code>backup = stage</code> と書いても<b>控えになりません</b>。
       片方を書き換えると<b>両方変わります</b>。
       step2 でいちばん引っかかりやすいところです。</td>
-      <td>4</td>
+      <td>5</td>
     </tr>
     <tr>
       <td><code>all()</code> で<br>「全部そろったか」</td>
       <td>「すべての荷物がゴールに乗ったか」は、
       <code>for</code> と旗（フラグ）でも書けますが、<code>all()</code> を使うと
       <b>1 行で、読んだとおりの意味</b>になります。</td>
-      <td>4</td>
+      <td>5</td>
     </tr>
     <tr>
       <td>タプル <code>(x, y)</code></td>
       <td>位置は<b>2 つの数がいつも一組</b>で動きます。
       別々の変数で持つと引数が増えて散らかるので、組にしてまとめます。
-      <b>あとから書き換えられない</b>という性質も、履歴を残すときに効いてきます。</td>
-      <td>3・9</td>
+      向き（上下左右）も <code>(-1, 0)</code> のような組で表しておくと、
+      <b>4 方向ぶんの処理が 1 本のコードで書けます</b>。</td>
+      <td>3・4</td>
     </tr>
     <tr>
-      <td>リストを<b>履歴</b>として使う<br>（<code>append</code> と <code>pop</code>）</td>
-      <td>アンドゥは「最後にやったことを、最後に取り消す」処理です。
-      リストの<b>お尻に足して、お尻から取る</b>だけで実現できます。</td>
-      <td>9</td>
+      <td><b>「いま動いている途中」を<br>変数で覚えておく</b></td>
+      <td>歩くアニメの 8 フレームのあいだ、プログラムは<b>「いま移動中である」ことを
+      覚えていないといけません</b>。数えるための変数（タイマー）を 1 つ持ち、
+      <b>0 なら止まっている・0 でなければ歩いている途中</b>と決めます。
+      <b>状態を数で表す</b>という、ゲームでいちばんよく使う考え方です。</td>
+      <td>4</td>
     </tr>
   </tbody>
 </table>
@@ -280,7 +317,7 @@ step1 が「ゲームとして成立させるための仕組み」だったの�
   step2 で頭を使うのは、<b>データの持ち方と、動かす前の判断</b>の 2 つに集中します。
 </div>
 
-<h2 id="basics">4. 先に押さえておきたい 2 つの土台</h2>
+<h2 id="basics">4. 先に押さえておきたい 3 つの土台</h2>
 
 <h3>土台 1：マス目で考え、描くときだけドットに直す</h3>
 
@@ -415,11 +452,108 @@ step1 の当たり判定は<b>「動かしたあとで、重なっていない�
   荷物を<b>壁ぎわに押しつけると、もう動かせません</b>。
   角に入れてしまえば、そこが正解のゴールでないかぎり<b>そのステージは詰み</b>です。
   <b>これは不具合ではなく、このゲームの本質</b>です。
-  だからこそ <code>R</code>（やり直し）と <code>Z</code>（1 手戻す）を用意します。
+  だからこそ <code>R</code>（やり直し）を、いつでも押せるようにしておきます。<br>
+  <b>1 手戻す機能はあえて付けません。</b>戻せないとわかっているから、
+  <b>押す前に「このあとどうなるか」を読む</b>ようになります。そこがこのゲームの遊びどころです。
+</div>
+
+<h3>土台 3：マス目の位置と、目に見えている位置は別もの</h3>
+
+<p>
+歩くアニメを入れると、<b>「盤面の上でどのマスにいるか」と「画面のどこに描かれているか」がずれます</b>。
+キーを押した<b>その瞬間に、盤面の上ではもう隣のマスに着いています</b>。
+壁の判定もクリア判定も、その新しいマスで行われます。<b>あとから追いつくのは、絵だけ</b>です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 258" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="キーを押した瞬間に盤面上の位置は隣のマスへ移り、絵だけが 8 フレームかけて追いつくことを示す図">
+  <text x="20" y="22" fill="#e8f0ff" font-size="12">右キーを押してから 8 フレームのあいだに起きていること</text>
+
+  <!-- 0 フレーム目 -->
+  <g>
+    <text x="100" y="46" fill="#9aa4c4" font-size="11" text-anchor="middle">0 フレーム目</text>
+    <rect x="60"  y="54" width="40" height="40" fill="#10121c" stroke="#3b4166"/>
+    <rect x="100" y="54" width="40" height="40" fill="#2ee6a8" opacity=".14"/>
+    <rect x="100" y="54" width="40" height="40" fill="none" stroke="#2ee6a8" stroke-width="2"/>
+    <g>
+      <rect x="68" y="62" width="24" height="24" rx="3" fill="#e8f0ff"/>
+      <rect x="73" y="69" width="3" height="3" fill="#10121c"/>
+      <rect x="84" y="69" width="3" height="3" fill="#10121c"/>
+    </g>
+    <text x="100" y="112" fill="#ffcc44" font-size="11" text-anchor="middle">コマ A</text>
+  </g>
+
+  <!-- 4 フレーム目 -->
+  <g>
+    <text x="310" y="46" fill="#9aa4c4" font-size="11" text-anchor="middle">4 フレーム目</text>
+    <rect x="270" y="54" width="40" height="40" fill="#10121c" stroke="#3b4166"/>
+    <rect x="310" y="54" width="40" height="40" fill="#2ee6a8" opacity=".14"/>
+    <rect x="310" y="54" width="40" height="40" fill="none" stroke="#2ee6a8" stroke-width="2"/>
+    <g>
+      <rect x="298" y="62" width="24" height="24" rx="3" fill="#e8f0ff"/>
+      <rect x="303" y="69" width="3" height="3" fill="#10121c"/>
+      <rect x="314" y="69" width="3" height="3" fill="#10121c"/>
+    </g>
+    <text x="310" y="112" fill="#ffcc44" font-size="11" text-anchor="middle">コマ B</text>
+  </g>
+
+  <!-- 8 フレーム目 -->
+  <g>
+    <text x="520" y="46" fill="#9aa4c4" font-size="11" text-anchor="middle">8 フレーム目</text>
+    <rect x="480" y="54" width="40" height="40" fill="#10121c" stroke="#3b4166"/>
+    <rect x="520" y="54" width="40" height="40" fill="#2ee6a8" opacity=".14"/>
+    <rect x="520" y="54" width="40" height="40" fill="none" stroke="#2ee6a8" stroke-width="2"/>
+    <g>
+      <rect x="528" y="62" width="24" height="24" rx="3" fill="#e8f0ff"/>
+      <rect x="533" y="69" width="3" height="3" fill="#10121c"/>
+      <rect x="544" y="69" width="3" height="3" fill="#10121c"/>
+    </g>
+    <text x="520" y="112" fill="#ffcc44" font-size="11" text-anchor="middle">コマ A にもどる</text>
+  </g>
+
+  <!-- 進む向き -->
+  <g stroke="#3b4166" stroke-width="1.5" fill="none">
+    <path d="M170 74 l60 0 M222 69 l6 5 -6 5"/>
+    <path d="M380 74 l60 0 M432 69 l6 5 -6 5"/>
+  </g>
+
+  <!-- 論理位置の帯 -->
+  <rect x="20" y="126" width="600" height="26" rx="4" fill="#2ee6a8" opacity=".10"/>
+  <text x="32" y="144" fill="#2ee6a8" font-size="11">
+    緑のマス＝<tspan font-weight="bold">stage の上での位置</tspan>。いちばん左の絵の時点で、もう右のマスに移っています
+  </text>
+
+  <text x="20" y="182" fill="#e8f0ff" font-size="12">画面に描くドット位置は、こう出します</text>
+  <text x="20" y="206" fill="#ffcc44" font-family="Consolas, monospace" font-size="13">
+    px = OX + from_x * CELL + (to_x - from_x) * CELL * timer // MOVE
+  </text>
+  <text x="20" y="230" fill="#9aa4c4" font-size="11">
+    <tspan font-family="Consolas, monospace">CELL</tspan> は 8 ドット、<tspan font-family="Consolas, monospace">MOVE</tspan> は 8 フレーム。
+    つまり<tspan fill="#e8f0ff">1 フレームにちょうど 1 ドットずつ</tspan>進みます
+  </text>
+  <text x="20" y="250" fill="#9aa4c4" font-size="11">
+    <tspan font-family="Consolas, monospace">timer</tspan> が 8 になったら 0 に戻し、
+    <tspan font-family="Consolas, monospace">from_x</tspan> を <tspan font-family="Consolas, monospace">to_x</tspan> に合わせて「到着」とします
+  </text>
+</svg>
+</div>
+<figcaption>この 2 つは<b>別の変数で持ちます</b>。1 つにまとめようとすると、必ず判定がおかしくなります</figcaption>
+</figure>
+
+<div class="term">
+  <b>ターン制なのに、時間が流れる？</b>
+  「倉庫番はキーを押したときだけ世界が動く」と書きましたが、
+  <b>歩いている 8 フレームのあいだだけは時間が流れます</b>。
+  そのあいだは<b>次の入力を受け付けません</b>。<br>
+  これは制限のようでいて、じつは都合がよいところです。
+  <b>この 8 フレームが、そのままキーリピートの間隔になります</b>。
+  矢印キーを押しっぱなしにすると、8 フレームおきに 1 マスずつ、とことこ歩き続けます。
 </div>
 
 <footer class="site">
-  <a href="../">← 目次にもどる</a>　｜
+  <a href="../">← トップページへもどる</a>　｜
   リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
   グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
 </footer>
