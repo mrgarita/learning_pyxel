@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ2：主人公を矢印キーで動かす
+# step2 フェーズ3：荷物を押す
 
 import pyxel
 
@@ -11,7 +11,7 @@ HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けて
 # イメージバンク 0 の、切り出し位置
 V_TILE = 0              # タイルの段
 V_PLAYER = 8            # 主人公の段（コマ A）
-U_FLOOR =0
+U_FLOOR = 0
 U_WALL = 8
 U_GOAL = 16
 U_BOX = 24
@@ -35,8 +35,8 @@ MOVES = [
 STAGE1 = [
     "########",
     "#......#",
-    "#..O...#",
-    "#..$...#",
+    "#..O.O.#",
+    "#..$.$.#",
     "#..@...#",
     "########",
 ]
@@ -90,6 +90,21 @@ class App:
         elif pyxel.btnp(pyxel.KEY_RIGHT):
             self.try_move(DIR_RIGHT)
 
+    def has_box(self, x, y):
+        """そのマスに荷物があるかどうかを答える"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        """(x, y) にある荷物を、(dx, dy) だけ動かす"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
     def try_move(self, direction):
         """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
         self.player_dir = direction     # 動けなくても、向きだけは変える
@@ -100,6 +115,15 @@ class App:
 
         if self.tiles[next_y][next_x] == "#":   # 行き先が壁なら
             return                              # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):        # 行き先に荷物があるなら
+            far_x = next_x + dx                 # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == "#": # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
 
         self.player_x = next_x
         self.player_y = next_y
@@ -127,7 +151,7 @@ class App:
                         0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
 
         # 主人公
-        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y *TILE,
+        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y * TILE,
                     0, self.player_dir * TILE, V_PLAYER, TILE, TILE, pyxel.COLOR_BLACK)
 
 App()
