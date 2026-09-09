@@ -2751,6 +2751,116 @@ Pyxel は座標に小数を渡せる（<a href="#float-coord">#float-coord</a>�
   （フェーズ 4 で決めた「2 か所以上に出たら格上げ」の基準）。
 </div>
 
+<h3 id="zero-as-flag">Q. <code>walk_timer = 1</code> としているのは、<code>walk_timer = 0</code> ではだめ？</h3>
+
+<p>
+<b>A.</b> だめです。<b><code>0</code> という値そのものに「止まっている」という意味を持たせている</b>ので、
+歩き出すところで <code>0</code> を入れるのは「歩き出さなかったことにする」のと同じになります。
+（step2 <a href="../step2/phase4.html">フェーズ 4</a> の <code>try_move()</code> の最終行の話です）
+</p>
+
+<pre><code>        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ← ここを 0 にすると壊れる</code></pre>
+
+<h4>① 実際に 0 にすると、こうなります</h4>
+
+<p>
+上キーを押しっぱなしにしたときの、最初の 6 フレームです。
+</p>
+
+<pre><code>=== walk_timer = 1（正しいほう）===
+  f0 timer=1  盤面 y=3  from_y=4  画面 py=73
+  f1 timer=2  盤面 y=3  from_y=4  画面 py=72     ← 1 フレームに 1 ドット
+  f2 timer=3  盤面 y=3  from_y=4  画面 py=71
+  f3 timer=4  盤面 y=3  from_y=4  画面 py=70
+
+=== walk_timer = 0（まちがい）===
+  f0 timer=0  盤面 y=3  from_y=4  画面 py=74
+  f1 timer=0  盤面 y=2  from_y=4  画面 py=74     ← 1 フレームに 1 マス！
+  f2 timer=0  盤面 y=2  from_y=4  画面 py=74     ← 絵はまったく動かない
+  f3 timer=0  盤面 y=2  from_y=4  画面 py=74</code></pre>
+
+<p>
+<b>絵は出発地点に張りついたまま、盤面の上だけ猛スピードで進みます。</b>
+壁にぶつかるまで一瞬です。原因は 2 つあります。
+</p>
+
+<h4>② タイマーが一度も進まないので、到着処理も走らない</h4>
+
+<pre><code>    def update(self):
+        if self.walk_timer &gt; 0:                 # ← 0 のままなので、ここに一度も入れない
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:
+                self.walk_timer = 0
+                self.from_x = self.player_x     # ← だから、これも実行されない
+                self.from_y = self.player_y</code></pre>
+
+<p>
+<code>self.from_y</code> が<b>ずっと最初の値のまま</b>です。
+<code>slide_pos()</code> は <code>from_y</code> を出発点にして描くので、
+<code>player_y</code> がいくら進んでも<b>絵は最初のマスから動きません</b>。
+上の実測で <code>py=74</code> が並んでいるのが、それです。
+</p>
+
+<h4>③ 毎フレーム、キーを見に行ってしまう</h4>
+
+<pre><code>        if self.walk_timer == 0:                # ← ずっと成り立ってしまう
+            self.handle_key()</code></pre>
+
+<p>
+<code>pyxel.btn()</code> は<b>押しているあいだ、ずっと <code>True</code></b> です。
+「歩いているあいだはキーを見ない」というブレーキが効かなくなるので、
+<b>1 フレームに 1 マス＝毎秒 30 マス</b>進みます。
+</p>
+
+<h4>④ では、なぜ <code>1</code> なのか（<code>0</code> 始まりの 0〜7 ではだめ？）</h4>
+
+<p>
+<code>walk_timer</code> は「<b>歩き始めてから何フレーム経ったか</b>」を表す数です。
+キーを押したそのフレームは、もう<b>1 フレーム目</b>なので <code>1</code> から始めます。
+</p>
+
+<p>
+そして <b>1〜8 の 8 段階が、1〜8 ドットにそのまま対応</b>します。
+<code>0</code> 始まりで 0〜7 にすると<b>「0 ドットの回」</b>ができてしまい、
+1 マス歩くのに 9 フレームぶんの位置が必要になります。
+<b>0 ドットの絵（＝出発マスにいる姿）は、キーを押す前のフレームですでに描かれている</b>ので、
+動き出す最初の 1 枚は 1 ドットが正解です。
+</p>
+
+<table>
+  <thead><tr><th>フレーム</th><th><code>walk_timer</code></th><th>出発マスからのドット</th></tr></thead>
+  <tbody>
+    <tr><td>キーを押す前</td><td>0</td><td>0（止まっている姿）</td></tr>
+    <tr><td>押したフレーム</td><td><b>1</b></td><td>1</td></tr>
+    <tr><td>その次</td><td>2</td><td>2</td></tr>
+    <tr><td>…</td><td>…</td><td>…</td></tr>
+    <tr><td>8 フレーム目</td><td>8</td><td><b>8 ＝ 到着</b></td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>「特別な値」に意味を持たせる書き方</b>
+  <code>0</code> のような<b>ふつうは出てこない値に、特別な意味を持たせる</b>やり方は、
+  プログラムでよく使われます。<b>変数が 1 つで済む</b>のが利点です。<br>
+  もし <code>0</code> 始まりのカウンタにしたいなら、
+  <code>self.walking = True / False</code> を<b>別に持つ</b>ことになります。
+  こちらは意味がはっきりする代わりに、<b>2 つの変数を常にそろえて動かす</b>手間が増え、
+  片方だけ更新し忘れる不具合が起きやすくなります。<br>
+  <b>どちらが正解というものではありません。</b>
+  今回は「止まっている」と「何フレーム目か」が<b>同時に成り立たない</b>ので、
+  1 つにまとめても混乱しない、と判断しています。
+</div>
+
+<div class="note">
+  <b>同じ形は step1 にもありました</b>
+  step1 の <code>self.scene</code>（タイトル／ゲーム／ゲームオーバー）も、
+  <b>数字 1 つで状態を表す</b>という同じ考え方です。
+  <code>walk_timer</code> は、そこに<b>「経過フレーム数」という別の役目も兼ねさせている</b>ぶん、
+  少し欲ばりな作りになっています。
+</div>
+
 <h2>環境・ツールについて</h2>
 
 <h3>Q. Pyxel のウィンドウが閉じられない</h3>
