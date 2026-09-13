@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ3：荷物を押す
+# step2 フェーズ4：歩くアニメを入れる
 
 import pyxel
 
@@ -7,10 +7,12 @@ SCREEN_WIDTH = 160
 SCREEN_HEIGHT = 120
 TILE = 8                # 1 マスの大きさ（ドット）
 HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
 
 # イメージバンク 0 の、切り出し位置
 V_TILE = 0              # タイルの段
-V_PLAYER = 8            # 主人公の段（コマ A）
+V_PLAYER_A = 8          # 主人公の段（コマ A）
+V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
 U_FLOOR = 0
 U_WALL = 8
 U_GOAL = 16
@@ -53,7 +55,9 @@ class App:
         """文字の地図を読んで、壁・主人公・荷物に分ける"""
         self.tiles = []
         self.boxes = []
-        self.player_dir = DIR_DOWN  # はじめは下を向いている
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        self.walk_timer = 0             # 0 なら止まっている。1～8は歩いている途中
+        self.pushing = False            # いまの一歩で荷物を押しているか
 
         for y in range(len(rows)):
             line = []
@@ -62,12 +66,15 @@ class App:
                 if mark == "@":
                     self.player_x = x
                     self.player_y = y
-                    mark = "."      # 主人公の足元は床
+                    mark = "."          # 主人公の足元は床
                 elif mark == "$":
                     self.boxes.append([x, y])
-                    mark = "."      # 荷物の下も床
+                    mark = "."          # 荷物の下も床
                 line.append(mark)
             self.tiles.append(line)
+
+        self.from_x = self.player_x     # 見た目の出発マス
+        self.from_y = self.player_y
 
         # 盤面を画面の中央に置くための、ずらし幅
         board_w = len(self.tiles[0]) * TILE
@@ -77,17 +84,26 @@ class App:
 
     def update(self):
         """フレーム毎の更新処理"""
-        self.handle_key()
+        if self.walk_timer > 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer > MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+
+        if self.walk_timer == 0:                # 止まっているときだけ、キーを見る
+            self.handle_key()
 
     def handle_key(self):
         """矢印キーを見て、押された向きへ 1 歩進もうとする"""
-        if pyxel.btnp(pyxel.KEY_DOWN):
+        if pyxel.btn(pyxel.KEY_DOWN):
             self.try_move(DIR_DOWN)
-        elif pyxel.btnp(pyxel.KEY_UP):
+        elif pyxel.btn(pyxel.KEY_UP):
             self.try_move(DIR_UP)
-        elif pyxel.btnp(pyxel.KEY_LEFT):
+        elif pyxel.btn(pyxel.KEY_LEFT):
             self.try_move(DIR_LEFT)
-        elif pyxel.btnp(pyxel.KEY_RIGHT):
+        elif pyxel.btn(pyxel.KEY_RIGHT):
             self.try_move(DIR_RIGHT)
 
     def has_box(self, x, y):
@@ -124,9 +140,16 @@ class App:
             if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
                 return
             self.move_box(next_x, next_y, dx, dy)
+            self.pushing = True                 # この一歩は、荷物を押している
 
         self.player_x = next_x
         self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+
+    def slide_pos(self, origin, from_cell, to_cell):
+        """出発マスから到着マスへ、いまどこまで来たかをドットで返す"""
+        moved = (to_cell - from_cell) * TILE * self.walk_timer // MOVE_FRAMES
+        return origin + from_cell * TILE + moved
 
     def draw(self):
         """描画処理"""
@@ -145,13 +168,25 @@ class App:
                 pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
                             0, u, V_TILE, TILE, TILE)
 
-        # 荷物
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる
+        dx, dy = MOVES[self.player_dir]
+        push_x = self.player_x + dx             # 押した荷物は主人公の目の前にいる
+        push_y = self.player_y + dy
         for box in self.boxes:
-            pyxel.blt(self.ox + box[0] * TILE, self.oy + box[1] * TILE,
-                        0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+            if self.pushing and box[0] == push_x and box[1] == push_y:
+                bx = self.slide_pos(self.ox, box[0] - dx, box[0])
+                by = self.slide_pos(self.oy, box[1] - dy, box[1])
+            else:
+                bx = self.ox + box[0] * TILE
+                by = self.oy + box[1] * TILE
+            pyxel.blt(bx, by, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
 
         # 主人公
-        pyxel.blt(self.ox + self.player_x * TILE, self.oy + self.player_y * TILE,
-                    0, self.player_dir * TILE, V_PLAYER, TILE, TILE, pyxel.COLOR_BLACK)
+        px = self.slide_pos(self.ox, self.from_x, self.player_x)
+        py = self.slide_pos(self.oy, self.from_y, self.player_y)
+        v = V_PLAYER_A
+        if self.walk_timer >= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
 
 App()
