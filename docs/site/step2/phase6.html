@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ6：ステージを 10 個にする ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 6 </span>ステージを 10 個にする</h1>
+  <p>データを増やす。コードは、ほとんど増やさない</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 6</p>
+
+<h2>ゴール</h2>
+
+<p>
+ステージを <b>10 個</b>にします。クリアしたら <code>Enter</code> で次へ、
+10 個ぜんぶ終わったら <b>全クリア</b>です。
+</p>
+
+<p>
+ここでうれしいのは、<b>頭を使って書くコードが 25 行しかない</b>ことです。
+残りはぜんぶ<b>地図のデータ</b>。フェーズ 1 で
+<code>load_stage()</code> を「<b>文字の地図をもらって、遊べる状態を作る係</b>」にしておいたので、
+<b>渡す地図を変えるだけでステージが変わります</b>。
+フェーズ 5 の 218 行に足して、できあがりは <b>356 行</b>になります。
+</p>
+
+<div class="note">
+  <b>これが step2 の柱です</b>
+  <a href="./#topics">概要の 3</a> に「<b>データでゲームを作る</b>」と書きました。
+  <b>ステージを増やすのに、コードを書き足さない。</b>
+  この形にしておくと、11 個目を足したくなったときも<b>地図を 1 つ書いて、
+  リストに名前を 1 つ足すだけ</b>で済みます。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-list">1-1. 地図を並べて、番号で取り出す</h3>
+
+<p>
+いまは <code>STAGE1</code> という名前を <code>load_stage()</code> に直接渡しています。
+これを <b>10 個まとめたリスト</b>にして、<b>「いま何番目か」を数ひとつで覚える</b>形に変えます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 252" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="STAGE1 から STAGE10 までを STAGES というリストにまとめ、self.stage_no という番号で取り出す図">
+
+  <text x="20" y="24" fill="#e8f0ff" font-size="13">地図に名前をつけ、<tspan font-weight="bold">1 本のリストに並べて、番号で取り出します</tspan></text>
+
+  <!-- 左：地図それぞれ -->
+  <rect x="20" y="44" width="130" height="92" rx="5" fill="#232840" stroke="#3b4166"/>
+  <g font-family="Consolas, monospace" font-size="11" fill="#9aa4c4">
+    <text x="32" y="64">STAGE1</text>
+    <text x="32" y="84">STAGE2</text>
+    <text x="32" y="104">   …</text>
+    <text x="32" y="124">STAGE10</text>
+  </g>
+
+  <path d="M158 90 l26 0 M178 85 l7 5 -7 5" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+
+  <!-- 右：STAGES の並び -->
+  <text x="194" y="40" fill="#9aa4c4" font-size="11">STAGES</text>
+  <g>
+    <rect x="194" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="236" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="278" y="70" width="42" height="30" fill="#2ee6a8" opacity=".18"/>
+    <rect x="278" y="70" width="42" height="30" fill="none" stroke="#2ee6a8" stroke-width="2"/>
+    <rect x="320" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="362" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="404" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="446" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="488" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="530" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+    <rect x="572" y="70" width="42" height="30" fill="#10121c" stroke="#3b4166"/>
+  </g>
+  <g font-family="Consolas, monospace" font-size="10" fill="#9aa4c4" text-anchor="middle">
+    <text x="215" y="64">0</text><text x="257" y="64">1</text>
+    <text x="299" y="64" fill="#2ee6a8" font-weight="bold">2</text>
+    <text x="341" y="64">3</text><text x="383" y="64">4</text><text x="425" y="64">5</text>
+    <text x="467" y="64">6</text><text x="509" y="64">7</text><text x="551" y="64">8</text>
+    <text x="593" y="64">9</text>
+  </g>
+  <g font-family="Consolas, monospace" font-size="9" fill="#45b0e8" text-anchor="middle">
+    <text x="215" y="90">STG1</text><text x="257" y="90">STG2</text>
+    <text x="299" y="90" fill="#2ee6a8">STG3</text>
+    <text x="341" y="90">STG4</text><text x="383" y="90">STG5</text><text x="425" y="90">STG6</text>
+    <text x="467" y="90">STG7</text><text x="509" y="90">STG8</text><text x="551" y="90">STG9</text>
+    <text x="593" y="90">STG10</text>
+  </g>
+
+  <!-- 指す矢印 -->
+  <path d="M299 126 L299 104 M294 110 l5 -6 5 6" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <text x="299" y="142" fill="#2ee6a8" font-family="Consolas, monospace" font-size="12" text-anchor="middle">self.stage_no = 2</text>
+
+  <!-- 下段 -->
+  <rect x="20" y="160" width="600" height="80" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="36" y="182" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">self.load_stage(STAGES[self.stage_no])</text>
+  <text x="36" y="204" fill="#9aa4c4" font-size="11">番号は <tspan font-family="Consolas, monospace" fill="#e8f0ff">0</tspan> から数えるので、<tspan font-family="Consolas, monospace" fill="#2ee6a8">STAGES[2]</tspan> は<tspan fill="#e8f0ff">3 番目</tspan>の地図です</text>
+  <text x="36" y="228" fill="#9aa4c4" font-size="11">画面に出すときだけ <tspan font-family="Consolas, monospace" fill="#e8f0ff">stage_no + 1</tspan> にして「STAGE 3」と書きます</text>
+</svg>
+</div>
+<figcaption>覚えておくのは<b>数ひとつ</b>だけ。盤面そのものは <code>load_stage()</code> が毎回まっさらに作り直します</figcaption>
+</figure>
+
+<h3 id="idea-flow">1-2. クリアしてから、次が始まるまで</h3>
+
+<p>
+ステージが 1 つだったときは、クリアしたらそこで終わりでした。
+これからは<b>その先</b>があります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 282" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="プレイ中から、クリア、Enter で次のステージへ、最後のステージなら全クリアへ進む流れ図">
+
+  <!-- 上段：プレイ中 → CLEAR! → 判断 -->
+  <rect x="40" y="24" width="130" height="40" rx="20" fill="#232840" stroke="#45b0e8"/>
+  <text x="105" y="49" fill="#45b0e8" font-size="13" text-anchor="middle">プレイ中</text>
+
+  <text x="200" y="36" fill="#9aa4c4" font-size="10" text-anchor="middle">全部乗った</text>
+  <path d="M170 44 l50 0 M214 39 l7 5 -7 5" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+
+  <rect x="230" y="24" width="150" height="40" rx="6" fill="#1b1f33" stroke="#ffcc44"/>
+  <text x="305" y="49" fill="#ffcc44" font-size="13" text-anchor="middle">CLEAR! と表示</text>
+
+  <text x="400" y="36" fill="#9aa4c4" font-size="10" text-anchor="middle">Enter</text>
+  <path d="M380 44 l40 0 M414 39 l7 5 -7 5" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+
+  <polygon points="510,14 600,44 510,74 420,44" fill="#1b1f33" stroke="#ffcc44" stroke-width="1.5"/>
+  <text x="510" y="48" fill="#ffcc44" font-size="12" text-anchor="middle">最後のステージ？</text>
+
+  <!-- いいえ：下を回って、プレイ中へ戻る -->
+  <path d="M510 74 L510 104 L105 104 L105 68" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <path d="M100 76 l5 -7 5 7" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text x="300" y="96" fill="#2ee6a8" font-size="11" text-anchor="middle">いいえ　stage_no を 1 増やして、次の地図を読み込む</text>
+
+  <!-- はい：右を回って、全クリアへ -->
+  <path d="M600 44 L620 44 L620 150 L478 150" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+  <path d="M484 145 l-7 5 7 5" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+  <text x="612" y="100" fill="#ff6b97" font-size="11" text-anchor="end">はい</text>
+
+  <rect x="288" y="128" width="182" height="44" rx="6" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="379" y="156" fill="#ff6b97" font-size="13" text-anchor="middle">ALL CLEAR! と表示</text>
+
+  <!-- 全クリアのあと Enter で 1 面へ -->
+  <path d="M288 150 L60 150 L60 68" fill="none" stroke="#ff6b97" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M55 76 l5 -7 5 7" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+  <text x="72" y="170" fill="#ff6b97" font-size="10">Enter で 1 面へ</text>
+
+  <!-- 下段の補足 -->
+  <rect x="20" y="192" width="600" height="78" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="36" y="214" fill="#e8f0ff" font-size="12">「最後のステージ？」を、コードではこう書きます</text>
+  <text x="36" y="236" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">if self.stage_no + 1 &lt; len(STAGES):</text>
+  <text x="36" y="260" fill="#9aa4c4" font-size="11"><tspan font-family="Consolas, monospace" fill="#e8f0ff">R</tspan> は、いつ押しても<tspan fill="#e8f0ff">「いま遊んでいるステージ」</tspan>の最初に戻ります（1 面ではありません）</text>
+</svg>
+</div>
+<figcaption>増える状態は <code>self.stage_no</code> と <code>self.all_cleared</code> の <b>2 つだけ</b>です</figcaption>
+</figure>
+
+<div class="term">
+  <b>最後のステージでも、まず CLEAR! が出ます</b>
+  10 面を解いた瞬間に <code>ALL CLEAR!</code> が出るのではなく、
+  <b>いったん <code>CLEAR!</code> が出て、<code>Enter</code> を押すと <code>ALL CLEAR!</code></b> になります。<br>
+  「1 面ぶんを解いた」と「10 面ぜんぶ終わった」は<b>別のできごと</b>なので、
+  分けて見せたほうが気持ちがそろいます。コードのうえでも、
+  <b>10 面目だけ特別扱いする分岐が増えません</b>。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>リストの中にリスト</code></td>
+        <td><code>STAGES</code> は「地図（文字列のリスト）」を 10 個並べたもの。
+        <code>MOVES</code> と同じ<b>「並べて、番号で引く」</b>形</td></tr>
+    <tr><td><code>len(STAGES)</code></td>
+        <td>ステージの<b>個数</b>。<code>10</code> と直接書かないので、増やしても直す場所がない</td></tr>
+    <tr><td><code>pyxel.btnp(pyxel.KEY_RETURN)</code></td>
+        <td><code>Enter</code> キー。step1 のタイトル画面と同じ</td></tr>
+    <tr><td>f 文字列</td>
+        <td><code>f"STAGE {self.stage_no + 1}/{len(STAGES)}"</code>。step1 のスコア表示と同じ</td></tr>
+    <tr><td><code>class</code> の外の関数</td>
+        <td><code>draw_center()</code>。<code>self</code> を使わないので外に置く</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+<b>7 段階</b>です。3-1 の入力がいちばん長いので、<b>気長にいきましょう</b>。
+</p>
+
+<h3 id="maps">3-1. ステージの地図を 9 個足す</h3>
+
+<p>
+<code>STAGE1</code> の下に、<code>STAGE2</code> から <code>STAGE10</code> まで並べます。
+<b>10 個とも、解けることを確かめてあります</b>（確かめ方は <a href="#make">7</a> に書きました）。
+</p>
+
+<pre><code>STAGE2 = [          # 横にも押せる
+    "########",
+    "#......#",
+    "#.$..O.#",
+    "#.@....#",
+    "#.$..O.#",
+    "#......#",
+    "########",
+]
+
+STAGE3 = [          # 縦と横を組み合わせる
+    "#########",
+    "#.O...O.#",
+    "#.......#",
+    "#..$....#",
+    "#....$..#",
+    "#..@....#",
+    "#.......#",
+    "#########",
+]
+
+STAGE4 = [          # 壁があるので、押す側へ回り込む
+    "##########",
+    "#........#",
+    "#.O.##.O.#",
+    "#...##...#",
+    "#..$..$..#",
+    "#........#",
+    "#...@....#",
+    "##########",
+]
+
+STAGE5 = [          # 段が仕切られていて、行き来に回り道がいる
+    "##########",
+    "#........#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE6 = [          # どれから動かすか、順番を考える
+    "##########",
+    "#........#",
+    "#.O.O.O..#",
+    "#........#",
+    "#.$......#",
+    "#..$.....#",
+    "#...$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE7 = [          # 細い通路。押せる向きが決まってしまう
+    "##########",
+    "#....#...#",
+    "#.$..#.O.#",
+    "#....#...#",
+    "#.$......#",
+    "#....#...#",
+    "#.@..#.O.#",
+    "#....#...#",
+    "##########",
+]
+
+STAGE8 = [          # 真ん中のゴールへ、四方から運ぶ
+    "############",
+    "#..........#",
+    "#.$......$.#",
+    "#....##....#",
+    "#...OOOO...#",
+    "#....##....#",
+    "#.$......$.#",
+    "#.....@....#",
+    "############",
+]
+
+STAGE9 = [          # 中央の壁を大きく回る
+    "###########",
+    "#.........#",
+    "#.OO..$$..#",
+    "#.........#",
+    "#...###...#",
+    "#.........#",
+    "#.OO..$$..#",
+    "#....@....#",
+    "###########",
+]
+
+STAGE10 = [         # 仕上げ。四隅へ運ぶ
+    "###########",
+    "#O.......O#",
+    "#.........#",
+    "#...$.$...#",
+    "#..#...#..#",
+    "#...$.$...#",
+    "#.........#",
+    "#O...@...O#",
+    "###########",
+]</code></pre>
+
+<div class="warn">
+  <b>ここだけは、写し間違いが命取りです</b>
+  <code>#</code> と <code>.</code> を 1 つ間違えるだけで、<b>解けない地図</b>になります。
+  写したあとで <a href="#solver">検算ツール</a>を走らせると、<b>その場で分かります</b>。<br>
+  とくに気をつけるのは<b>行の長さ</b>です。同じステージの中では、
+  <b>すべての行が同じ文字数</b>でなければいけません。
+</div>
+
+<h3>3-2. 10 個をリストにまとめる</h3>
+
+<p>
+<code>STAGE10</code> のすぐ下です。<b>並べた順が、遊ぶ順</b>になります。
+</p>
+
+<pre><code>STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
+          STAGE6, STAGE7, STAGE8, STAGE9, STAGE10]</code></pre>
+
+<h3>3-3. 文字を中央に描く関数を足す</h3>
+
+<p>
+<code>STAGES</code> の下、<code>class App:</code> の<b>手前</b>に書きます。
+</p>
+
+<pre><code>def draw_center(text, y, color):
+    """文字を、画面の横まんなかに描く"""
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)</code></pre>
+
+<div class="note">
+  <b>なぜ <code>class</code> の外なのか</b>
+  この関数は <code>self</code> を<b>1 度も使いません</b>。
+  画面の幅と文字列だけで答えが出ます。<br>
+  step1 でも <code>is_hit()</code> と <code>draw_center()</code> を外に置きました。
+  基準は同じで、<b>「ゲームの状態を見ないなら、外に出す」</b>です。
+  フェーズ 5 では 1 か所でしか使わなかったので <code>draw()</code> の中に直接書いていましたが、
+  <b>2 か所から使うことになったので、名前をつけて外に出します</b>。
+</div>
+
+<h3>3-4. <code>__init__()</code> に、進み具合を 2 つ足す</h3>
+
+<pre><code>    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）   ← 足す
+        self.all_cleared = False        # 10 個ぜんぶ終わったか                    ← 足す
+        self.load_stage(STAGES[self.stage_no])      # ← STAGE1 から書き換える
+        pyxel.run(self.update, self.draw)</code></pre>
+
+<div class="warn">
+  <b><code>load_stage()</code> の中に書いてはいけません</b>
+  <code>self.stage_no</code> は <b><code>__init__()</code> に書きます</b>。
+  <code>load_stage()</code> に書くと、<b><code>R</code> を押すたびに 1 面に戻ってしまいます</b>。<br>
+  見分け方は<b>「1 回だけやること」か「ステージが変わるたびにやること」か</b>です。
+  <code>walk_timer</code> や <code>cleared</code> はステージごとに <code>0</code> / <code>False</code> へ。
+  <code>stage_no</code> は<b>ステージをまたいで覚えておく数</b>なので、外側です。
+</div>
+
+<h3>3-5. <code>next_stage()</code> を足す</h3>
+
+<p>
+<code>is_cleared()</code> のうしろに書きます。
+</p>
+
+<pre><code>    def next_stage(self):
+        """次のステージへ進む。最後だったら全クリア"""
+        if self.stage_no + 1 &lt; len(STAGES):
+            self.stage_no += 1
+            self.load_stage(STAGES[self.stage_no])
+        else:
+            self.all_cleared = True</code></pre>
+
+<h3>3-6. <code>update()</code> の先頭を書き換える</h3>
+
+<p>
+<code>R</code> の 3 行を<b>差し替えて</b>、その前後に<b>ブロックを 2 つ</b>足します。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        if self.all_cleared:                    # ぜんぶ終わった。Enter で 1 面から   ← 足す
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.load_stage(STAGES[self.stage_no])
+            return
+
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、このステージをやり直せる
+            self.load_stage(STAGES[self.stage_no])      # ← STAGE1 から書き換える
+            return
+
+        if self.cleared:                        # クリアした。Enter で次のステージへ   ← 足す
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.next_stage()
+            return
+
+        if self.walk_timer &gt; 0:                 # 歩いている途中（ここから下はそのまま）</code></pre>
+
+<div class="term">
+  <b>いちばん下の <code>and not self.cleared</code> は、そのまま残します</b>
+  「<code>if self.cleared: return</code> を足したのだから、もういらないのでは？」と思うかもしれません。
+  <b>いります。</b><br>
+  上の <code>return</code> が効くのは、<b>フレームの初めからクリアしていたとき</b>だけです。
+  <b>いままさに、このフレームでクリアした</b>ときは通り抜けてしまいます。
+  フェーズ 5 の <a href="phase5.html#same-frame">6-2</a> と同じ話です。
+</div>
+
+<h3>3-7. <code>draw()</code> の表示を書き換える</h3>
+
+<p>
+<code>draw()</code> のいちばん下、フェーズ 5 で書いた 5 行を差し替えます。
+</p>
+
+<pre><code>        # 画面の上の表示
+        if self.all_cleared:
+            draw_center("ALL CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
+        else:
+            pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
+                       pyxel.COLOR_GRAY)
+            if self.cleared:
+                draw_center("CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)</code></pre>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+地図が 113 行、コードが 25 行の追加です。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ6：ステージを 10 個にする
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER_A = 8          # 主人公の段（コマ A）
+V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
+U_FLOOR = 0
+U_WALL = 8
+U_GOAL = 16
+U_BOX = 24
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物
+
+# 向き。この番号がそのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),         # 下
+    (0, -1),        # 上
+    (-1, 0),        # 左
+    (1, 0),         # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [          # 押すことを覚える
+    "########",
+    "#......#",
+    "#..O.O.#",
+    "#..$.$.#",
+    "#..@...#",
+    "########",
+]
+
+STAGE2 = [          # 横にも押せる
+    "########",
+    "#......#",
+    "#.$..O.#",
+    "#.@....#",
+    "#.$..O.#",
+    "#......#",
+    "########",
+]
+
+STAGE3 = [          # 縦と横を組み合わせる
+    "#########",
+    "#.O...O.#",
+    "#.......#",
+    "#..$....#",
+    "#....$..#",
+    "#..@....#",
+    "#.......#",
+    "#########",
+]
+
+STAGE4 = [          # 壁があるので、押す側へ回り込む
+    "##########",
+    "#........#",
+    "#.O.##.O.#",
+    "#...##...#",
+    "#..$..$..#",
+    "#........#",
+    "#...@....#",
+    "##########",
+]
+
+STAGE5 = [          # 段が仕切られていて、行き来に回り道がいる
+    "##########",
+    "#........#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE6 = [          # どれから動かすか、順番を考える
+    "##########",
+    "#........#",
+    "#.O.O.O..#",
+    "#........#",
+    "#.$......#",
+    "#..$.....#",
+    "#...$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE7 = [          # 細い通路。押せる向きが決まってしまう
+    "##########",
+    "#....#...#",
+    "#.$..#.O.#",
+    "#....#...#",
+    "#.$......#",
+    "#....#...#",
+    "#.@..#.O.#",
+    "#....#...#",
+    "##########",
+]
+
+STAGE8 = [          # 真ん中のゴールへ、四方から運ぶ
+    "############",
+    "#..........#",
+    "#.$......$.#",
+    "#....##....#",
+    "#...OOOO...#",
+    "#....##....#",
+    "#.$......$.#",
+    "#.....@....#",
+    "############",
+]
+
+STAGE9 = [          # 中央の壁を大きく回る
+    "###########",
+    "#.........#",
+    "#.OO..$$..#",
+    "#.........#",
+    "#...###...#",
+    "#.........#",
+    "#.OO..$$..#",
+    "#....@....#",
+    "###########",
+]
+
+STAGE10 = [         # 仕上げ。四隅へ運ぶ
+    "###########",
+    "#O.......O#",
+    "#.........#",
+    "#...$.$...#",
+    "#..#...#..#",
+    "#...$.$...#",
+    "#.........#",
+    "#O...@...O#",
+    "###########",
+]
+
+STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
+          STAGE6, STAGE7, STAGE8, STAGE9, STAGE10]
+
+def draw_center(text, y, color):
+    """文字を、画面の横まんなかに描く"""
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.all_cleared = False        # 10 個ぜんぶ終わったか
+        self.load_stage(STAGES[self.stage_no])
+        pyxel.run(self.update, self.draw)
+
+    def load_stage(self, rows):
+        """文字の地図を読んで、壁・主人公・荷物に分ける"""
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        self.walk_timer = 0             # 0 なら止まっている。1〜8 は歩いている途中
+        self.pushing = False            # いまの一歩で、荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
+
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == "@":
+                    self.player_x = x
+                    self.player_y = y
+                    mark = "."          # 主人公の足元は床
+                elif mark == "$":
+                    self.boxes.append([x, y])
+                    mark = "."          # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        self.from_x = self.player_x     # 見た目の出発マス
+        self.from_y = self.player_y
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        if self.all_cleared:                    # ぜんぶ終わった。Enter で 1 面から
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.load_stage(STAGES[self.stage_no])
+            return
+
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、このステージをやり直せる
+            self.load_stage(STAGES[self.stage_no])
+            return
+
+        if self.cleared:                        # クリアした。Enter で次のステージへ
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.next_stage()
+            return
+
+        if self.walk_timer &gt; 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
+
+        # 止まっていて、まだクリアしていないときだけ、キーを見る
+        if self.walk_timer == 0 and not self.cleared:
+            self.handle_key()
+
+    def handle_key(self):
+        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btn(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btn(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btn(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def has_box(self, x, y):
+        """そのマスに荷物があるかどうかを答える"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        """(x, y) にある荷物を、(dx, dy) だけ動かす"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
+    def on_goal(self, box):
+        """その荷物が、ゴールのマスに乗っているか"""
+        return self.tiles[box[1]][box[0]] == "O"
+
+    def is_cleared(self):
+        """すべての荷物がゴールに乗ったか"""
+        return all(self.on_goal(box) for box in self.boxes)
+
+    def next_stage(self):
+        """次のステージへ進む。最後だったら全クリア"""
+        if self.stage_no + 1 &lt; len(STAGES):
+            self.stage_no += 1
+            self.load_stage(STAGES[self.stage_no])
+        else:
+            self.all_cleared = True
+
+    def try_move(self, direction):
+        """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == "#":   # 行き先が壁なら
+            return                              # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):        # 行き先に荷物があるなら
+            far_x = next_x + dx                 # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == "#": # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+            self.pushing = True                 # この一歩は、荷物を押している
+
+        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+
+    def slide_pos(self, origin, from_cell, to_cell):
+        """出発マスから到着マスへ、いまどこまで来たかをドットで返す"""
+        moved = (to_cell - from_cell) * TILE * self.walk_timer // MOVE_FRAMES
+        return origin + from_cell * TILE + moved
+
+    def draw(self):
+        """描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        # 壁を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == "#":
+                    u = U_WALL
+                elif mark == "O":
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                            0, u, V_TILE, TILE, TILE)
+
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる
+        dx, dy = MOVES[self.player_dir]
+        push_x = self.player_x + dx             # 押した荷物は、主人公の目の前にいる
+        push_y = self.player_y + dy
+        for box in self.boxes:
+            if self.pushing and box[0] == push_x and box[1] == push_y:
+                bx = self.slide_pos(self.ox, box[0] - dx, box[0])
+                by = self.slide_pos(self.oy, box[1] - dy, box[1])
+            else:
+                bx = self.ox + box[0] * TILE
+                by = self.oy + box[1] * TILE
+            u = U_BOX
+            if self.on_goal(box):               # ゴールに乗っているあいだは別の絵
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公
+        px = self.slide_pos(self.ox, self.from_x, self.player_x)
+        py = self.slide_pos(self.oy, self.from_y, self.player_y)
+        v = V_PLAYER_A
+        if self.walk_timer &gt;= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+
+        # 画面の上の表示
+        if self.all_cleared:
+            draw_center("ALL CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
+        else:
+            pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
+                       pyxel.COLOR_GRAY)
+            if self.cleared:
+                draw_center("CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
+
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<table>
+  <thead><tr><th>やってみること</th><th>こうなれば成功</th></tr></thead>
+  <tbody>
+    <tr><td>起動する</td><td>画面の左上に <code>STAGE 1/10</code> と出る。盤面はいままでと同じ</td></tr>
+    <tr><td>1 面を解く</td><td><code>CLEAR!  ENTER</code> が出る</td></tr>
+    <tr><td><code>Enter</code> を押す</td><td><b>2 面が出る</b>。左上が <code>STAGE 2/10</code> になり、盤面の形も変わる</td></tr>
+    <tr><td>3 面へ進む</td><td>盤面が<b>大きくなり、位置も真ん中のまま</b>ずれない</td></tr>
+    <tr><td>2 面の途中で <code>R</code></td><td><b>2 面の最初</b>に戻る（1 面には戻らない）</td></tr>
+    <tr><td><code>Enter</code> を押しっぱなし</td><td><b>1 つだけ</b>進む。一気に飛ばない</td></tr>
+    <tr><td>10 面を解く</td><td><code>CLEAR!  ENTER</code> → <code>Enter</code> → <code>ALL CLEAR!  ENTER</code></td></tr>
+    <tr><td>全クリアで <code>Enter</code></td><td><b>1 面に戻る</b>。最初から遊び直せる</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>ステージの手ごたえ</b>
+  10 個は、<b>だんだん難しくなるように並べてあります</b>。
+  「押し」は荷物を押した回数、「矢印」はそのときの矢印キーの回数です
+  （どちらも<a href="#solver">検算ツール</a>が出した数です）。
+  <table>
+    <thead><tr><th>面</th><th>大きさ</th><th>荷物</th><th>押し</th><th>矢印</th><th>ねらい</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>8×6</td><td>2</td><td>2</td><td>7</td><td>押すことを覚える</td></tr>
+      <tr><td>2</td><td>8×7</td><td>2</td><td>6</td><td>13</td><td>横にも押せる</td></tr>
+      <tr><td>3</td><td>9×8</td><td>2</td><td>7</td><td>20</td><td>縦と横を組み合わせる</td></tr>
+      <tr><td>4</td><td>10×8</td><td>2</td><td>6</td><td>22</td><td>壁を回り込む</td></tr>
+      <tr><td>5</td><td>10×9</td><td>3</td><td>9</td><td>40</td><td>仕切りがあって遠回り</td></tr>
+      <tr><td>6</td><td>10×9</td><td>3</td><td>12</td><td>35</td><td>どれから動かすか</td></tr>
+      <tr><td>7</td><td>10×9</td><td>2</td><td>16</td><td>34</td><td>細い通路</td></tr>
+      <tr><td>8</td><td>12×9</td><td>4</td><td>18</td><td>76</td><td>真ん中のゴールへ四方から</td></tr>
+      <tr><td>9</td><td>11×9</td><td>4</td><td>20</td><td>82</td><td>中央の壁を大きく回る</td></tr>
+      <tr><td>10</td><td>11×9</td><td>4</td><td>20</td><td>57</td><td>四隅へ運ぶ</td></tr>
+    </tbody>
+  </table>
+  10 面は<b>手数こそ短い</b>のに、いちばん頭を使います。
+  <b>短い＝やさしい、ではない</b>のが倉庫番のおもしろいところです。
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3 id="index-origin">6-1. <code>0</code> から数える番号と、<code>1</code> から数える表示</h3>
+
+<pre><code>self.stage_no = 0                       # 中では 0 から
+f"STAGE {self.stage_no + 1}/{len(STAGES)}"   # 見せるときだけ +1</code></pre>
+
+<p>
+リストの番号は <code>0</code> から始まります。<code>STAGES[0]</code> が 1 面です。
+でも遊ぶ人に「STAGE 0」と見せるのは変なので、<b>描くときだけ <code>+1</code> します</b>。
+</p>
+
+<p>
+<b>この <code>+1</code> は、なるべく 1 か所にまとめます。</b>
+あちこちで足したり引いたりすると、<b>どちらの数なのか分からなくなります</b>。
+「<b>中はいつも 0 から。画面に出すときだけ +1</b>」と決めておくと迷いません。
+</p>
+
+<h3 id="len-not-10">6-2. <code>10</code> と書かずに <code>len(STAGES)</code> と書く</h3>
+
+<pre><code>if self.stage_no + 1 &lt; len(STAGES):     # 「まだ次がある？」</code></pre>
+
+<p>
+ここを <code>if self.stage_no + 1 &lt; 10:</code> と書いても、いまは同じように動きます。
+でも<b>11 個目を足した瞬間に、10 面で全クリアになってしまいます</b>。
+</p>
+
+<p>
+<code>len(STAGES)</code> と書いておけば、<b>地図を 1 つ足すだけで、
+どこも直さずに 11 ステージのゲームになります</b>。
+画面の <code>STAGE 3/10</code> の <code>10</code> も、同じ理由で <code>len(STAGES)</code> です。
+</p>
+
+<div class="term">
+  <b>「数えられるものは、数えさせる」</b>
+  step1 でも <code>GHOST_MOVE_EVERY[len(self.ghosts)]</code> という書き方をしました。
+  <b>いま何体いるかを、リストの長さから取り出す</b>やり方です。
+  自分で数を書くと、<b>本体とその数の 2 か所を、いつもそろえる義務</b>が生まれます。
+  数えさせれば、その義務は消えます。
+</div>
+
+<h3 id="early-returns">6-3. <code>update()</code> の頭に、早い <code>return</code> が 3 つ並ぶ</h3>
+
+<p>
+<code>update()</code> の上半分は、<b>「ふつうの操作ではないもの」を先に片づけて帰る</b>形になりました。
+</p>
+
+<table>
+  <thead><tr><th>順番</th><th>見るもの</th><th>なぜその順か</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>全クリアしているか</td>
+        <td>いちばん特別な状態。ここでは <code>R</code> も矢印も意味がない</td></tr>
+    <tr><td>2</td><td><code>R</code> が押されたか</td>
+        <td><b>歩いている途中でも効かせたい</b>ので、歩きの処理より前</td></tr>
+    <tr><td>3</td><td>ステージをクリアしたか</td>
+        <td><code>Enter</code> だけを受け付ける。矢印はもう見ない</td></tr>
+    <tr><td>4</td><td>ふつうの操作</td>
+        <td>歩きを進めて、キーを見る</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>特別な場合を上から順に <code>return</code> で落としていくと、いちばん下に
+「ふつうのとき」だけが残ります。</b>
+<code>if</code> を何重にも入れ子にするより、ずっと読みやすくなります。
+</p>
+
+<div class="note">
+  <b>順番を入れ替えると、動きが変わります</b>
+  たとえば <code>R</code> の判定を <code>if self.cleared:</code> の<b>あと</b>に置くと、
+  <b>クリアしたあとに <code>R</code> が効かなくなります</b>
+  （<code>cleared</code> の <code>return</code> で引き返してしまうため）。<br>
+  早い <code>return</code> は読みやすい反面、<b>並べた順がそのまま優先順位になります</b>。
+  足すときは「これは、どれより先に見るべきか」を必ず考えてください。
+</div>
+
+<h3 id="reset-scope">6-4. どこで初期化するか、3 つの段</h3>
+
+<table>
+  <thead><tr><th>置き場所</th><th>いつ実行されるか</th><th>何を置くか</th></tr></thead>
+  <tbody>
+    <tr><td><code>__init__()</code></td><td><b>起動のとき 1 回だけ</b></td>
+        <td><code>stage_no</code>、<code>all_cleared</code></td></tr>
+    <tr><td><code>load_stage()</code></td><td><b>ステージが変わるたび</b>（<code>R</code> も含む）</td>
+        <td><code>tiles</code>、<code>boxes</code>、<code>player_x/y</code>、
+        <code>walk_timer</code>、<code>pushing</code>、<code>cleared</code>、<code>ox</code>/<code>oy</code></td></tr>
+    <tr><td><code>update()</code> の中</td><td><b>毎フレーム</b></td>
+        <td>途中で変わる値（<code>walk_timer</code> を増やす、など）</td></tr>
+  </tbody>
+</table>
+
+<p>
+新しい変数を足すときは、<b>まずこの表のどこに置くかを決めます</b>。
+迷ったら「<b><code>R</code> を押したとき、これは戻ってほしいか？</b>」と考えてください。
+戻ってほしいなら <code>load_stage()</code>、覚えていてほしいなら <code>__init__()</code> です。
+</p>
+
+<h2 id="make">7. 自分でステージを作る</h2>
+
+<p>
+ここからは<b>おまけ</b>です。10 個の地図はもう用意してありますが、
+<b>作りたくなったとき</b>のために、考え方と道具を置いておきます。
+</p>
+
+<h3 id="deadlock">7-1. 詰みの形は、おぼえてしまえば 4 つ</h3>
+
+<p>
+倉庫番の地図づくりでいちばん大事なのは、<b>「荷物が二度と動かせなくなる形」</b>を知ることです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="荷物が動かせなくなる 4 つの形。角、壁ぎわ、2かける2のかたまり、押す側に立てない場合">
+
+  <text x="20" y="24" fill="#e8f0ff" font-size="13">この 4 つに入ったら、その荷物は<tspan font-weight="bold">もう動きません</tspan></text>
+
+  <!-- ① 角 -->
+  <text x="20" y="52" fill="#ff6b97" font-size="12">① 角（2 辺が壁）</text>
+  <g>
+    <rect x="20" y="62" width="96" height="96" fill="#10121c" stroke="#3b4166"/>
+    <rect x="20" y="62" width="96" height="32" fill="#232840"/>
+    <rect x="20" y="62" width="32" height="96" fill="#232840"/>
+    <rect x="56" y="98" width="24" height="24" rx="2" fill="#45b0e8"/>
+    <text x="68" y="84" fill="#ff6b97" font-size="14" text-anchor="middle">×</text>
+    <text x="36" y="116" fill="#ff6b97" font-size="14" text-anchor="middle">×</text>
+  </g>
+  <text x="20" y="176" fill="#9aa4c4" font-size="10">右か下にしか押せず、</text>
+  <text x="20" y="190" fill="#9aa4c4" font-size="10">その × に立てない。</text>
+  <text x="20" y="204" fill="#9aa4c4" font-size="10">もう二度と動かない</text>
+
+  <!-- ② 壁ぎわ -->
+  <text x="176" y="52" fill="#ffcc44" font-size="12">② 壁ぎわ（1 辺が壁）</text>
+  <g>
+    <rect x="176" y="62" width="96" height="96" fill="#10121c" stroke="#3b4166"/>
+    <rect x="176" y="62" width="96" height="32" fill="#232840"/>
+    <rect x="212" y="98" width="24" height="24" rx="2" fill="#45b0e8"/>
+    <path d="M204 110 l-18 0 M191 105 l-6 5 6 5" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+    <path d="M244 110 l18 0 M257 105 l6 5 -6 5" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  </g>
+  <text x="176" y="176" fill="#9aa4c4" font-size="10">その壁沿いにしか</text>
+  <text x="176" y="190" fill="#9aa4c4" font-size="10">動けない。同じ列に</text>
+  <text x="176" y="204" fill="#9aa4c4" font-size="10">ゴールがなければ詰み</text>
+
+  <!-- ③ 2×2 -->
+  <text x="332" y="52" fill="#ff6b97" font-size="12">③ 2×2 のかたまり</text>
+  <g>
+    <rect x="332" y="62" width="96" height="96" fill="#10121c" stroke="#3b4166"/>
+    <rect x="356" y="86" width="24" height="24" rx="2" fill="#45b0e8"/>
+    <rect x="380" y="86" width="24" height="24" rx="2" fill="#45b0e8"/>
+    <rect x="356" y="110" width="24" height="24" rx="2" fill="#45b0e8"/>
+    <rect x="380" y="110" width="24" height="24" rx="2" fill="#45b0e8"/>
+  </g>
+  <text x="332" y="176" fill="#9aa4c4" font-size="10">たがいが壁になり、</text>
+  <text x="332" y="190" fill="#9aa4c4" font-size="10">4 つとも動かない。</text>
+  <text x="332" y="204" fill="#9aa4c4" font-size="10">壁との組でも同じ</text>
+
+  <!-- ④ 立てない -->
+  <text x="488" y="52" fill="#ffcc44" font-size="12">④ 押す側に立てない</text>
+  <g>
+    <rect x="488" y="62" width="96" height="96" fill="#10121c" stroke="#3b4166"/>
+    <rect x="488" y="62" width="96" height="32" fill="#232840"/>
+    <rect x="524" y="98" width="24" height="24" rx="2" fill="#45b0e8"/>
+    <g>
+      <rect x="527" y="125" width="18" height="18" rx="2" fill="#f0c98a"/>
+      <rect x="531" y="130" width="3" height="3" fill="#10121c"/>
+      <rect x="538" y="130" width="3" height="3" fill="#10121c"/>
+    </g>
+    <text x="536" y="86" fill="#ff6b97" font-size="14" text-anchor="middle">×</text>
+  </g>
+  <text x="488" y="176" fill="#9aa4c4" font-size="10">上へ押したいのに、</text>
+  <text x="488" y="190" fill="#9aa4c4" font-size="10">下から押す形。壁の</text>
+  <text x="488" y="204" fill="#9aa4c4" font-size="10">中には立てない</text>
+
+  <!-- まとめ -->
+  <rect x="20" y="218" width="600" height="106" rx="6" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="36" y="240" fill="#2ee6a8" font-size="12">いちばん確実な作り方：<tspan font-weight="bold">「解けた形」から逆に作る</tspan></text>
+  <text x="36" y="264" fill="#e8f0ff" font-size="11">① ゴールの上に荷物を置いた、<tspan fill="#2ee6a8">クリア済みの盤面</tspan>を先に描く</text>
+  <text x="36" y="284" fill="#e8f0ff" font-size="11">② 荷物を「<tspan fill="#ffcc44">引っぱって</tspan>」散らしていく（押すのと逆向きに動かす）</text>
+  <text x="36" y="304" fill="#e8f0ff" font-size="11">③ できた形が、出題の形。<tspan font-weight="bold">引いてこられた道は、必ず押して戻せます</tspan></text>
+</svg>
+</div>
+<figcaption>①③は<b>絶対に詰み</b>、②④は<b>形しだい</b>です。検算ツールは、この 4 つをぜんぶ調べています</figcaption>
+</figure>
+
+<div class="note">
+  <b>「引っぱって作る」がうまくいく理由</b>
+  押す操作をそのまま逆に再生すれば、出題の形からクリアの形へ戻れるからです。
+  <b>作った時点で、解き方が 1 つ手に入っている</b>ことになります。<br>
+  この考え方は、検算ツールの中でも使っています。
+  「<b>ゴールから荷物を引っぱって行けるマス</b>」をぜんぶ集めておき、
+  そこに入っていないマスへ荷物が入ったら、その時点で<b>詰みと判断して調べるのをやめます</b>。
+</div>
+
+<h3 id="solver">7-2. 検算ツールの使い方</h3>
+
+<p>
+作った地図が<b>本当に解けるのか</b>を、手で確かめるのは大変です。
+リポジトリの <code>.todo/solve.py</code> が調べてくれます。
+</p>
+
+<pre><code>python .todo/solve.py            # step2/sokoban.py の地図をぜんぶ調べる
+python .todo/solve.py 7          # 7 番目だけ調べて、解き方も表示する</code></pre>
+
+<pre><code>D:\claude\learning_pyxel\step2\sokoban.py から 10 個のステージを読みました
+
+  STAGE1   8x6   荷物2/ゴール2  ✅ 押し  2 回 / 矢印   7 回
+  STAGE2   8x7   荷物2/ゴール2  ✅ 押し  6 回 / 矢印  13 回
+  ...
+  STAGE10  11x9  荷物4/ゴール4  ✅ 押し 20 回 / 矢印  57 回
+
+10 個中 10 個が解けました</code></pre>
+
+<p>
+<code>sokoban.py</code> を<b>実行せずに読んで</b>いるので、走らせてもゲームは始まりません。
+地図を書き換えたら、そのまま走らせるだけです。
+</p>
+
+<table>
+  <thead><tr><th>出てくるもの</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td>✅ 押し ○ 回 / 矢印 ○ 回</td>
+        <td>解けます。<b>押し</b>は荷物を押した回数、<b>矢印</b>はそのときの矢印キーの回数。
+        <b>押しが多いほど頭を使い、矢印が多いほど歩き回ります</b></td></tr>
+    <tr><td>❌ 解けません</td>
+        <td>どう動かしてもゴールに全部は乗りません。<b>作り直しです</b></td></tr>
+    <tr><td>⚠ 荷物 ○ 個 / ゴール ○ 個</td>
+        <td>数が合っていません。<code>$</code> か <code>O</code> の打ち間違いです</td></tr>
+    <tr><td>⚠ ○ 通りまで調べても…</td>
+        <td>盤面が広すぎるか、荷物が多すぎます。少し小さくしてください</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>手ごたえのめやす</b>
+  「押し」の回数が、だいたいの難しさです。<b>2〜6 がやさしい／10 前後がふつう／
+  18 以上は歯ごたえあり</b>、という感じで並べました。<br>
+  一方「矢印」は<b>歩く量</b>です。ここが 100 を超えると、
+  難しいというより<b>ただ長い</b>ステージになりがちです。
+  10 面が「押し 20・矢印 57」と短いのは、<b>考えどころは深いのに、手は短い</b>という形だからです。
+</div>
+
+<div class="warn">
+  <b>いまの地図で書けないこと</b>
+  <code>load_stage()</code> は、<b>ゴールの上に荷物や主人公が最初から乗っている状態を読めません</b>。
+  ふつうの倉庫番では <code>*</code>（ゴールの上の荷物）や <code>+</code>（ゴールの上の主人公）という
+  文字を使いますが、いまは対応していないので<b>使わずに作ってください</b>。<br>
+  <b>もう一歩：</b>対応させるのは簡単です。<code>load_stage()</code> の <code>if</code> に
+  2 つ足して、<code>mark = "O"</code> を残すようにするだけです。
+</div>
+
+<h2>8. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>R</code> を押すと 1 面に戻ってしまう</td>
+      <td><code>self.load_stage(STAGE1)</code> のままです。
+      <code>STAGES[self.stage_no]</code> に書き換えてください</td>
+    </tr>
+    <tr>
+      <td>クリアしても <code>Enter</code> で進まない</td>
+      <td><code>if self.cleared:</code> のブロックを書いていないか、
+      <code>update()</code> の<b>いちばん下</b>に置いています。
+      歩きの処理より<b>前</b>です</td>
+    </tr>
+    <tr>
+      <td><code>Enter</code> を 1 回押したら 2〜3 面まとめて進む</td>
+      <td><code>btn</code> になっています。<b><code>btnp</code></b> です</td>
+    </tr>
+    <tr>
+      <td>10 面を解いても <code>ALL CLEAR!</code> にならない</td>
+      <td><code>next_stage()</code> の <code>if</code> が
+      <code>&lt;=</code> になっていませんか。<code>&lt;</code> です。
+      <code>stage_no + 1 &lt; len(STAGES)</code></td>
+    </tr>
+    <tr>
+      <td><code>IndexError: list index out of range</code></td>
+      <td>同じ原因です。<code>STAGES[10]</code> を読もうとしています（番号は 0〜9）</td>
+    </tr>
+    <tr>
+      <td>2 面に進むと、盤面が画面からはみ出す／ずれる</td>
+      <td><code>load_stage()</code> の <code>ox</code> / <code>oy</code> の計算を消していませんか。
+      毎回そこで計算しているから、大きさが変わっても真ん中に来ます</td>
+    </tr>
+    <tr>
+      <td><code>IndexError</code> が、ある面だけで出る</td>
+      <td>その地図の<b>行の長さがそろっていません</b>。
+      短い行があると、<code>tiles[y][x]</code> でその行だけはみ出します</td>
+    </tr>
+    <tr>
+      <td>ある面が、どうしても解けない</td>
+      <td>写し間違いかもしれません。<code>python .todo/solve.py</code> で確かめてください
+      （<a href="#solver">7-2</a>）</td>
+    </tr>
+    <tr>
+      <td>左上の表示が <code>STAGE 0/10</code> から始まる</td>
+      <td><code>self.stage_no + 1</code> の <code>+ 1</code> を書いていません</td>
+    </tr>
+    <tr>
+      <td>ステージが変わっても表示が変わらない</td>
+      <td><code>f"..."</code> の <code>f</code> を書き忘れていませんか。
+      <code>f</code> がないと、<code>{}</code> がそのまま文字として出ます</td>
+    </tr>
+    <tr>
+      <td>全クリアのあと <code>Enter</code> を押しても何も起きない</td>
+      <td><code>self.all_cleared = False</code> に戻していません。
+      <code>True</code> のままなので、ずっと全クリア画面です</td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'draw_center' is not defined</code></td>
+      <td><code>def draw_center(...)</code> を <code>class App:</code> の<b>中</b>に書いています。
+      外（手前）です</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>9. 次のフェーズ</h2>
+
+<p>
+これで<b>ゲームとして遊べるものが完成しました</b>。10 面あって、解けて、やり直せて、
+全部クリアできます。
+</p>
+
+<p>
+残り 5 つのフェーズは、<b>遊びやすさと仕上げ</b>です。
+次は<b>タイトル画面とステージ選択</b>——起動していきなり 1 面が始まるのではなく、
+<b>どの面から遊ぶかを選べる</b>ようにします。
+</p>
+
+<div class="note">
+  <b>次に出てくる考え方</b>
+  <b>画面遷移</b>は step1 のフェーズ 7 でやりました。<code>self.scene</code> に
+  「いまどの画面か」を入れて、<code>update()</code> と <code>draw()</code> で振り分けます。
+  <b>今回はその復習</b>です。<br>
+  新しいのは<b>カーソル</b>です。ステージ選択の画面で、
+  どの面を指しているかを矢印キーで動かします。
+  <b><code>stage_no</code> をそのまま動かせばよい</b>ので、じつは
+  <b>もう半分できています</b>。<br>
+  あわせて、step1 の宿題だった
+  「<b>クリアした面だけ選べるようにするか、いつでも全部選べるようにするか</b>」も決めます。
+</div>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
