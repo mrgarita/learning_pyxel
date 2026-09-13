@@ -286,7 +286,7 @@ step1 フェーズ 1 と同じで、<b>イメージバンクのどこに描く�
   <text x="310" y="248" fill="#9aa4c4" font-size="10">荷物は何個でもよいので、リストで持つ</text>
 
   <!-- ④ 画面 -->
-  <text x="500" y="182" fill="#e8f0ff" font-size="12">④ 重ねて描く</text>
+  <text x="512" y="182" fill="#e8f0ff" font-size="12">④ 重ねて描く</text>
   <g>
     <rect x="500" y="192" width="112" height="60" fill="#10121c" stroke="#3b4166"/>
     <g fill="#232840">
@@ -674,6 +674,14 @@ pyxel.blt(..., 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)  # 荷物：黒�
 <b>黒い四角ごと貼りつく</b>ことになります。
 <code>pyxel.COLOR_BLACK</code>（色番号 0）を透明として指定します。
 </p>
+
+<div class="note">
+  <b>透過色は、黒でなくてもかまいません</b>
+  <code>blt()</code> を<b>呼ぶたびに</b>指定するものなので、<b>絵によって違う色を抜けます</b>。
+  実際にこのあと、<b>主人公の目を黒く描くために、主人公だけ透過色をグレーに変えました</b>
+  （<a href="phase5.html#colkey">フェーズ 5</a> ／ <a href="../memo/#colkey">備忘録</a>）。
+  透過色に選ぶのは、<b>その絵の中で背景以外に 1 ドットも使っていない色</b>です。
+</div>
 
 <h3>6-5. 大文字の名前と、<code>self.</code> が付く名前</h3>
 

@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ5：クリア判定と、やり直し ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 5 </span>クリア判定と、やり直し</h1>
+  <p>解けたことを知らせる。詰んだら、いつでも最初から</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 5</p>
+
+<h2>ゴール</h2>
+
+<p>
+いまは荷物をゴールに乗せても<b>何も起こりません</b>。壁ぎわに押しつけて詰んだら、
+ウィンドウを閉じるしかありません。ここで<b>ゲームとして成立させます</b>。
+<b>すべての荷物がゴールに乗ったらクリア</b>、<b><code>R</code> キーでいつでも最初から</b>——の 2 つです。
+フェーズ 4 のコードに <b>26 行</b>ほど書き足して、できあがりは <b>218 行</b>になります。
+</p>
+
+<div class="term">
+  <b>先に絵を 1 枚描きます</b>
+  <b>ゴールに乗った荷物</b>の絵です（<a href="#draw-on-goal">3-1</a>）。
+  乗っているかどうかが一目で分かると、遊びやすさが一段変わります。
+</div>
+
+<div class="note">
+  <b>今回は「フェーズ 1 の設計が効く」回です</b>
+  フェーズ 1 で、地図を<b>地形（<code>tiles</code>）・主人公・荷物（<code>boxes</code>）の 3 つに
+  分けて持つ</b>と決めました。あのとき「荷物がゴールから出たとき、床に戻し忘れる不具合を
+  構造で避けるため」と書いたのを覚えているでしょうか。
+  <b>クリア判定は、その決定のおかげで 1 行で書けます。</b>
+</div>
+
+<h2 id="colkey">その前に：主人公の透過色を変えました</h2>
+
+<p>
+フェーズ 4 を動かしたあと、<b>主人公の目を黒くしたい</b>という話になりました。
+ところが<b>黒は描いても出てきません</b>。透過色（<code>colkey</code>）に黒を指定していたからです。
+</p>
+
+<p>
+<code>pyxel.blt()</code> の最後の引数は「<b>この 1 色だけは描かない</b>」という指定です。
+主人公の絵は背景を黒で塗っていたので、<b>黒＝背景</b>として抜いていました。
+目も同じ黒で描いたので、<b>目も背景と区別されずに抜けてしまう</b>わけです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 322" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="透過色を黒からグレーに変えた図。黒を抜いていたころは目のドットも抜けて床が見えていたが、グレーを抜くようにすると目が黒く出る">
+
+  <text x="20" y="24" fill="#e8f0ff" font-size="13">同じ「下向き・コマ A」の絵を、透過色だけ変えて見たもの</text>
+
+  <!-- 左：以前 -->
+  <text x="20" y="52" fill="#ff6b97" font-size="12">以前（絵の背景＝黒 ／ 抜く色＝黒）</text>
+  <text x="52" y="76" fill="#9aa4c4" font-size="11" text-anchor="middle">エディタの絵</text>
+  <rect x="20" y="84" width="64" height="64" fill="#10121c"/>
+  <rect x="20" y="84" width="16" height="8" fill="#000000"/>
+  <rect x="36" y="84" width="32" height="8" fill="#E9C35B"/>
+  <rect x="68" y="84" width="16" height="8" fill="#000000"/>
+  <rect x="20" y="92" width="8" height="8" fill="#000000"/>
+  <rect x="28" y="92" width="48" height="8" fill="#E9C35B"/>
+  <rect x="76" y="92" width="8" height="8" fill="#000000"/>
+  <rect x="20" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="28" y="100" width="48" height="8" fill="#E9C35B"/>
+  <rect x="76" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="20" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="28" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="36" y="108" width="8" height="8" fill="#000000"/>
+  <rect x="44" y="108" width="16" height="8" fill="#E9C35B"/>
+  <rect x="60" y="108" width="8" height="8" fill="#000000"/>
+  <rect x="68" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="76" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="20" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="28" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="44" y="116" width="16" height="8" fill="#EEEEEE"/>
+  <rect x="60" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="76" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="20" y="124" width="16" height="8" fill="#000000"/>
+  <rect x="36" y="124" width="32" height="8" fill="#E9C35B"/>
+  <rect x="68" y="124" width="16" height="8" fill="#000000"/>
+  <rect x="20" y="132" width="8" height="8" fill="#000000"/>
+  <rect x="28" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="36" y="132" width="32" height="8" fill="#000000"/>
+  <rect x="68" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="76" y="132" width="8" height="8" fill="#000000"/>
+  <rect x="20" y="140" width="8" height="8" fill="#000000"/>
+  <rect x="28" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="36" y="140" width="32" height="8" fill="#000000"/>
+  <rect x="68" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="76" y="140" width="8" height="8" fill="#000000"/>
+  <rect x="20" y="84" width="64" height="64" fill="none" stroke="#3b4166"/>
+  <text x="52" y="164" fill="#9aa4c4" font-size="10" text-anchor="middle">目も背景も、同じ黒</text>
+
+  <path d="M96 116 l24 0 M114 111 l6 5 -6 5" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+
+  <text x="164" y="76" fill="#9aa4c4" font-size="11" text-anchor="middle">床に置いた画面</text>
+  <rect x="132" y="84" width="64" height="64" fill="#10121c"/>
+  <rect x="132" y="84" width="16" height="8" fill="#2B335F"/>
+  <rect x="148" y="84" width="32" height="8" fill="#E9C35B"/>
+  <rect x="180" y="84" width="16" height="8" fill="#2B335F"/>
+  <rect x="132" y="92" width="8" height="8" fill="#2B335F"/>
+  <rect x="140" y="92" width="48" height="8" fill="#E9C35B"/>
+  <rect x="188" y="92" width="8" height="8" fill="#2B335F"/>
+  <rect x="132" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="140" y="100" width="48" height="8" fill="#E9C35B"/>
+  <rect x="188" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="132" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="140" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="148" y="108" width="8" height="8" fill="#2B335F"/>
+  <rect x="156" y="108" width="16" height="8" fill="#E9C35B"/>
+  <rect x="172" y="108" width="8" height="8" fill="#2B335F"/>
+  <rect x="180" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="188" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="132" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="140" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="156" y="116" width="16" height="8" fill="#EEEEEE"/>
+  <rect x="172" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="188" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="132" y="124" width="16" height="8" fill="#2B335F"/>
+  <rect x="148" y="124" width="32" height="8" fill="#E9C35B"/>
+  <rect x="180" y="124" width="16" height="8" fill="#2B335F"/>
+  <rect x="132" y="132" width="8" height="8" fill="#2B335F"/>
+  <rect x="140" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="148" y="132" width="32" height="8" fill="#2B335F"/>
+  <rect x="180" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="188" y="132" width="8" height="8" fill="#2B335F"/>
+  <rect x="132" y="140" width="8" height="8" fill="#2B335F"/>
+  <rect x="140" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="148" y="140" width="32" height="8" fill="#2B335F"/>
+  <rect x="180" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="188" y="140" width="8" height="8" fill="#2B335F"/>
+  <rect x="132" y="84" width="64" height="64" fill="none" stroke="#3b4166"/>
+  <text x="164" y="164" fill="#ff6b97" font-size="10" text-anchor="middle">目が抜けて、床が見える</text>
+
+  <line x1="310" y1="44" x2="310" y2="172" stroke="#3b4166" stroke-dasharray="3 3"/>
+
+  <!-- 右：いま -->
+  <text x="338" y="52" fill="#2ee6a8" font-size="12">いま（絵の背景＝グレー ／ 抜く色＝グレー）</text>
+  <text x="370" y="76" fill="#9aa4c4" font-size="11" text-anchor="middle">エディタの絵</text>
+  <rect x="338" y="84" width="64" height="64" fill="#10121c"/>
+  <rect x="338" y="84" width="16" height="8" fill="#A3A3A3"/>
+  <rect x="354" y="84" width="32" height="8" fill="#E9C35B"/>
+  <rect x="386" y="84" width="16" height="8" fill="#A3A3A3"/>
+  <rect x="338" y="92" width="8" height="8" fill="#A3A3A3"/>
+  <rect x="346" y="92" width="48" height="8" fill="#E9C35B"/>
+  <rect x="394" y="92" width="8" height="8" fill="#A3A3A3"/>
+  <rect x="338" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="346" y="100" width="48" height="8" fill="#E9C35B"/>
+  <rect x="394" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="338" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="346" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="354" y="108" width="8" height="8" fill="#000000"/>
+  <rect x="362" y="108" width="16" height="8" fill="#E9C35B"/>
+  <rect x="378" y="108" width="8" height="8" fill="#000000"/>
+  <rect x="386" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="394" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="338" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="346" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="362" y="116" width="16" height="8" fill="#EEEEEE"/>
+  <rect x="378" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="394" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="338" y="124" width="16" height="8" fill="#A3A3A3"/>
+  <rect x="354" y="124" width="32" height="8" fill="#E9C35B"/>
+  <rect x="386" y="124" width="16" height="8" fill="#A3A3A3"/>
+  <rect x="338" y="132" width="8" height="8" fill="#A3A3A3"/>
+  <rect x="346" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="354" y="132" width="32" height="8" fill="#A3A3A3"/>
+  <rect x="386" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="394" y="132" width="8" height="8" fill="#A3A3A3"/>
+  <rect x="338" y="140" width="8" height="8" fill="#A3A3A3"/>
+  <rect x="346" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="354" y="140" width="32" height="8" fill="#A3A3A3"/>
+  <rect x="386" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="394" y="140" width="8" height="8" fill="#A3A3A3"/>
+  <rect x="338" y="84" width="64" height="64" fill="none" stroke="#3b4166"/>
+  <text x="370" y="164" fill="#9aa4c4" font-size="10" text-anchor="middle">背景だけ塗り替えた</text>
+
+  <path d="M414 116 l24 0 M432 111 l6 5 -6 5" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+
+  <text x="482" y="76" fill="#9aa4c4" font-size="11" text-anchor="middle">床に置いた画面</text>
+  <rect x="450" y="84" width="64" height="64" fill="#10121c"/>
+  <rect x="450" y="84" width="16" height="8" fill="#2B335F"/>
+  <rect x="466" y="84" width="32" height="8" fill="#E9C35B"/>
+  <rect x="498" y="84" width="16" height="8" fill="#2B335F"/>
+  <rect x="450" y="92" width="8" height="8" fill="#2B335F"/>
+  <rect x="458" y="92" width="48" height="8" fill="#E9C35B"/>
+  <rect x="506" y="92" width="8" height="8" fill="#2B335F"/>
+  <rect x="450" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="458" y="100" width="48" height="8" fill="#E9C35B"/>
+  <rect x="506" y="100" width="8" height="8" fill="#D38441"/>
+  <rect x="450" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="458" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="466" y="108" width="8" height="8" fill="#000000"/>
+  <rect x="474" y="108" width="16" height="8" fill="#E9C35B"/>
+  <rect x="490" y="108" width="8" height="8" fill="#000000"/>
+  <rect x="498" y="108" width="8" height="8" fill="#E9C35B"/>
+  <rect x="506" y="108" width="8" height="8" fill="#D38441"/>
+  <rect x="450" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="458" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="474" y="116" width="16" height="8" fill="#EEEEEE"/>
+  <rect x="490" y="116" width="16" height="8" fill="#E9C35B"/>
+  <rect x="506" y="116" width="8" height="8" fill="#D38441"/>
+  <rect x="450" y="124" width="16" height="8" fill="#2B335F"/>
+  <rect x="466" y="124" width="32" height="8" fill="#E9C35B"/>
+  <rect x="498" y="124" width="16" height="8" fill="#2B335F"/>
+  <rect x="450" y="132" width="8" height="8" fill="#2B335F"/>
+  <rect x="458" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="466" y="132" width="32" height="8" fill="#2B335F"/>
+  <rect x="498" y="132" width="8" height="8" fill="#E9C35B"/>
+  <rect x="506" y="132" width="8" height="8" fill="#2B335F"/>
+  <rect x="450" y="140" width="8" height="8" fill="#2B335F"/>
+  <rect x="458" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="466" y="140" width="32" height="8" fill="#2B335F"/>
+  <rect x="498" y="140" width="8" height="8" fill="#E9C35B"/>
+  <rect x="506" y="140" width="8" height="8" fill="#2B335F"/>
+  <rect x="450" y="84" width="64" height="64" fill="none" stroke="#3b4166"/>
+  <text x="482" y="164" fill="#2ee6a8" font-size="10" text-anchor="middle">目が黒く出る</text>
+
+  <!-- 下段 -->
+  <rect x="20" y="186" width="600" height="124" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="36" y="208" fill="#e8f0ff" font-size="12">colkey は「この 1 色だけ描かない」という指定です</text>
+  <g font-size="11">
+    <rect x="36" y="220" width="12" height="12" fill="#000000" stroke="#3b4166"/>
+    <text x="56" y="230" fill="#9aa4c4">黒（0）＝目。<tspan fill="#e8f0ff">描いてほしい色</tspan></text>
+    <rect x="234" y="220" width="12" height="12" fill="#A3A3A3"/>
+    <text x="254" y="230" fill="#9aa4c4">グレー（13）＝背景。<tspan fill="#e8f0ff">抜いてほしい色</tspan></text>
+    <rect x="470" y="220" width="12" height="12" fill="#E9C35B"/>
+    <rect x="486" y="220" width="12" height="12" fill="#D38441"/>
+    <rect x="502" y="220" width="12" height="12" fill="#EEEEEE"/>
+    <text x="522" y="230" fill="#9aa4c4">体・ふち・口</text>
+  </g>
+  <text x="36" y="256" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" xml:space="preserve">pyxel.blt(px, py, 0, u, v, 8, 8, pyxel.COLOR_GRAY)   # 主人公はグレーを抜く</text>
+  <text x="36" y="276" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" xml:space="preserve">pyxel.blt(bx, by, 0, u, v, 8, 8, pyxel.COLOR_BLACK)  # リンゴは黒のまま</text>
+  <text x="36" y="300" fill="#9aa4c4" font-size="11">1 回の blt ごとに指定するので、<tspan fill="#e8f0ff">絵によって背景の色を変えてかまいません</tspan></text>
+</svg>
+</div>
+<figcaption>実際の <code>sokoban.pyxres</code> のドットです。<b>背景だった黒だけ</b>をグレーに塗り替え、目の黒はそのまま残しました</figcaption>
+</figure>
+
+<p>
+直し方は 2 段階です。<b>リソースエディタで、絵の背景をグレー（色番号 13）に塗り替える</b>。
+そして<b>コード側の <code>pyxel.COLOR_BLACK</code> を <code>pyxel.COLOR_GRAY</code> に変える</b>——
+主人公を描いている <code>blt</code> の 1 か所だけです。
+</p>
+
+<pre><code>        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)</code></pre>
+
+<div class="warn">
+  <b>透過色に選ぶ色は、絵の中で 1 度も使っていない色にします</b>
+  もし犬の体にグレーを使っていたら、<b>そこに穴があきます</b>。
+  今回の絵は体が黄色・ふちがオレンジ・口が白・目が黒なので、グレーは背景だけに使われています。
+  だから安全に抜けます。<br>
+  <b>迷ったら、絵に使っていない色を 1 色決めて「これは背景色」と割り切る</b>のが確実です。
+  Pyxel の 16 色のうち、紫（2）や緑（3）のような使いどころの少ない色を
+  背景専用にしてしまう作り方もよく見かけます。
+</div>
+
+<div class="note">
+  <b>リンゴ（荷物）は黒のままでよいのです</b>
+  透過色は <b><code>blt</code> を呼ぶたびに指定する</b>ものなので、
+  <b>絵ごとに違う色を指定してかまいません</b>。
+  リンゴには黒を使っていないので、背景も黒のまま・指定も <code>COLOR_BLACK</code> のままで困りません。
+  タイル（床・壁・ゴール）は<b>そもそも透過色を渡していません</b>——
+  8×8 をまるごと敷き詰めるので、抜く必要がないからです。
+</div>
+
+<div class="term">
+  <b>上向きだけ、目のドットが 0 個</b>
+  4 方向の絵のうち、<b>上向き（後ろ姿）には目がありません</b>。
+  言われないと気づきませんが、こういう 1 ドットの判断が「ちゃんと後ろを向いている」感じを作ります。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-clear">1-1. クリアとは「荷物の下が、ぜんぶゴールだった」こと</h3>
+
+<p>
+<b>ゴールの位置は <code>tiles</code> に残っています。</b>
+地図の <code>O</code> は、荷物や主人公とちがって<b>どこへも動きません</b>。
+だから調べることは 1 つだけです。
+</p>
+
+<p>
+<b>荷物のいるマスの地形が <code>"O"</code> かどうか。</b>
+これを荷物 1 つずつについて調べて、<b>全部そろっていればクリア</b>です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 274" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="クリア判定の図。荷物それぞれについて、そのマスの地形が O かどうかを調べ、全部そろったときだけクリアになる">
+
+  <text x="20" y="24" fill="#e8f0ff" font-size="13">荷物 1 つずつ「下の地形が O か」を調べ、<tspan font-weight="bold">全部そろったときだけ</tspan>クリア</text>
+
+  <!-- 盤面（8 列 × 6 行、1 マス 22。左に行ラベルの場所を空けるため x=40 から） -->
+  <g>
+    <rect x="40" y="42" width="176" height="132" fill="#10121c"/>
+    <g fill="#232840">
+      <rect x="40" y="42" width="176" height="22"/>
+      <rect x="40" y="152" width="176" height="22"/>
+      <rect x="40" y="42" width="22" height="132"/>
+      <rect x="194" y="42" width="22" height="132"/>
+    </g>
+    <path d="M62 42 v132 M84 42 v132 M106 42 v132 M128 42 v132 M150 42 v132 M172 42 v132 M194 42 v132
+             M40 64 h176 M40 86 h176 M40 108 h176 M40 130 h176 M40 152 h176"
+          stroke="#1b1f33" fill="none"/>
+    <rect x="40" y="42" width="176" height="132" fill="none" stroke="#3b4166"/>
+
+    <!-- ゴール 2 つ（y=2 の行、x=3 と x=5） -->
+    <g fill="none" stroke="#ffcc44" stroke-width="2">
+      <path d="M117 91 l6 6 -6 6 -6 -6 z"/>
+      <path d="M161 91 l6 6 -6 6 -6 -6 z"/>
+    </g>
+
+    <!-- 荷物：x=3,y=2 は乗っている（緑）／x=5,y=3 は乗っていない（青） -->
+    <rect x="113" y="89" width="18" height="18" rx="2" fill="#2ee6a8" stroke="#10121c"/>
+    <rect x="157" y="111" width="18" height="18" rx="2" fill="#45b0e8" stroke="#10121c"/>
+
+    <!-- 主人公 -->
+    <rect x="159" y="135" width="14" height="14" rx="2" fill="#f0c98a"/>
+    <rect x="162" y="139" width="2" height="2" fill="#10121c"/>
+    <rect x="168" y="139" width="2" height="2" fill="#10121c"/>
+  </g>
+
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="10" text-anchor="middle">
+    <text x="117" y="38">x=3</text>
+    <text x="161" y="38">x=5</text>
+  </g>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="10" text-anchor="end">
+    <text x="36" y="101">y=2</text>
+    <text x="36" y="123">y=3</text>
+  </g>
+
+  <!-- 判定の内訳 -->
+  <text x="230" y="58" fill="#e8f0ff" font-size="12">いまの盤面を、1 つずつ調べると</text>
+
+  <g font-family="Consolas, monospace" font-size="12">
+    <text x="230" y="84" fill="#2ee6a8">boxes[0] = [3, 2]</text>
+    <text x="392" y="84" fill="#9aa4c4">tiles[2][3] = "O"</text>
+    <text x="556" y="84" fill="#2ee6a8">True</text>
+    <text x="230" y="110" fill="#45b0e8">boxes[1] = [5, 3]</text>
+    <text x="392" y="110" fill="#9aa4c4">tiles[3][5] = "."</text>
+    <text x="556" y="110" fill="#ff6b97">False</text>
+  </g>
+  <text x="230" y="130" fill="#9aa4c4" font-size="10">縦（y）が先、横（x）があと。<tspan font-family="Consolas, monospace">tiles[box[1]][box[0]]</tspan> です</text>
+
+  <!-- all -->
+  <rect x="230" y="146" width="390" height="110" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="246" y="168" fill="#e8f0ff" font-size="12">「全部そろったか」は <tspan font-family="Consolas, monospace" fill="#ffcc44">all()</tspan> ひとことで足ります</text>
+  <text x="246" y="194" fill="#ffcc44" font-family="Consolas, monospace" font-size="11">all([True, False])</text>
+  <text x="400" y="194" fill="#ff6b97" font-family="Consolas, monospace" font-size="11">False</text>
+  <text x="452" y="194" fill="#9aa4c4" font-size="11">まだクリアでない</text>
+  <text x="246" y="218" fill="#ffcc44" font-family="Consolas, monospace" font-size="11">all([True, True])</text>
+  <text x="400" y="218" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11">True</text>
+  <text x="452" y="218" fill="#2ee6a8" font-size="11">クリア！</text>
+  <text x="246" y="244" fill="#9aa4c4" font-size="11">1 つでも False があれば False。<tspan fill="#e8f0ff">「かつ」を荷物の数だけ並べたもの</tspan>です</text>
+</svg>
+</div>
+<figcaption><code>boxes</code> と <code>tiles</code> を別々に持っているから、<b>荷物の下の地形がいつでも分かります</b></figcaption>
+</figure>
+
+<div class="term">
+  <b>もし地図を 1 つの表で持っていたら</b>
+  荷物をゴールへ動かした瞬間に、<b>そのマスの <code>O</code> を <code>$</code> で上書き</b>してしまいます。
+  すると「もとがゴールだったマス」が分からなくなり、
+  <b>ゴールから押し出したときに床に戻せません</b>。<br>
+  それを避けるために「<code>O</code> は地形」「<code>$</code> は別のリスト」と分けました。
+  <b>設計の良さは、こういう先の場面で効いてきます。</b>
+</div>
+
+<h3 id="idea-when">1-2. どこでクリアを調べるか——見た目が変わります</h3>
+
+<p>
+調べる中身は決まりました。次は<b>いつ調べるか</b>です。これで<b>画面の印象が変わります</b>。
+候補は 2 つあります。
+</p>
+
+<table>
+  <thead><tr><th>調べる場所</th><th>どうなるか</th></tr></thead>
+  <tbody>
+    <tr><td><code>try_move()</code> の中<br>（キーを押した瞬間）</td>
+        <td>盤面の上ではもう乗っているので、<b><code>STAGE CLEAR!</code> が先に出ます</b>。
+        リンゴがまだ 8 フレームかけてすべっている途中に文字が出て、<b>気が早い感じ</b>になります</td></tr>
+    <tr><td><code>update()</code> の「着いた」ところ<br>（すべり終わった瞬間）</td>
+        <td>リンゴがゴールに<b>収まったのと同時に</b>文字が出ます。<b>こちらを選びます</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+フェーズ 4 で作った「<b>盤面の位置</b>」と「<b>見た目の位置</b>」の差が、そのまま出てくる話です。
+<b>盤面の判定はキーを押した瞬間、見せ方は着いた瞬間</b>——この使い分けを覚えておいてください。
+</p>
+
+<div class="note">
+  <b>荷物の絵だけは、押した瞬間に切り替えます</b>
+  <b>乗った荷物の絵（光っているリンゴ）は、すべっている途中から光ります。</b>
+  文字とちがって、こちらは<b>早いほうが気持ちいい</b>からです。
+  キーを押した手ごたえがすぐ返り、<b>滑り込みながら光って、着いたところで文字が出る</b>——
+  という流れになります。<br>
+  <b>「判定はいつでも正しい。見せ方だけは、その都度いちばん気持ちいいほうを選ぶ」</b>
+  と考えると迷いません。
+</div>
+
+<h3 id="idea-retry">1-3. やり直しは「控えを戻す」より「作り直す」</h3>
+
+<p>
+<code>R</code> でステージの最初に戻したい。まず思いつくのは、
+<b>始めの状態を控えておいて、それを戻す</b>やり方です。
+</p>
+
+<pre><code># 最初に控えを取っておいて……
+self.backup = self.boxes
+
+# R が押されたら、戻す
+self.boxes = self.backup</code></pre>
+
+<p>
+ところが、<b>これは 1 文字も動きません</b>。<br>
+フェーズ 3 の <a href="phase3.html#list-share">6-2「リストは中身が共有される」</a>で見た話が、
+今度は<b>困る側</b>で出てきます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 420" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="リストのコピーの図。代入では同じリストを指すだけ、スライスでは外側だけ新しくなり中身は共有される、地図から作り直せば完全に別物になる">
+
+  <!-- A：代入 -->
+  <rect x="20" y="20" width="600" height="106" rx="6" fill="#1b1f33" stroke="#ff6b97"/>
+  <text x="36" y="42" fill="#ff6b97" font-family="Consolas, monospace" font-size="12">backup = self.boxes</text>
+  <text x="36" y="60" fill="#ff6b97" font-size="11">名札が 1 枚増えるだけ。控えになっていない</text>
+
+  <g font-family="Consolas, monospace" font-size="11" fill="#9aa4c4" text-anchor="end">
+    <text x="250" y="86">self.boxes</text>
+    <text x="250" y="110">backup</text>
+  </g>
+  <g stroke="#ff6b97" stroke-width="1.5" fill="none">
+    <path d="M256 82 L286 93"/>
+    <path d="M256 106 L286 99"/>
+  </g>
+  <path d="M284 89 l10 7 -11 4 z" fill="#ff6b97"/>
+
+  <rect x="300" y="74" width="150" height="44" rx="4" fill="#232840" stroke="#3b4166"/>
+  <rect x="310" y="84" width="60" height="24" rx="3" fill="#10121c" stroke="#45b0e8"/>
+  <text x="340" y="100" fill="#45b0e8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">[3, 3]</text>
+  <rect x="378" y="84" width="60" height="24" rx="3" fill="#10121c" stroke="#45b0e8"/>
+  <text x="408" y="100" fill="#45b0e8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">[5, 3]</text>
+
+  <text x="470" y="92" fill="#e8f0ff" font-size="11">リストは 1 つだけ</text>
+  <text x="470" y="110" fill="#ff6b97" font-size="11">押せば、両方とも変わる</text>
+
+  <!-- B：スライス（浅いコピー） -->
+  <rect x="20" y="140" width="600" height="124" rx="6" fill="#1b1f33" stroke="#ffcc44"/>
+  <text x="36" y="162" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">backup = self.boxes[:]</text>
+  <text x="36" y="180" fill="#ffcc44" font-size="11">外側は新しくなる。でも中の [x, y] は同じもの（浅いコピー）</text>
+
+  <text x="150" y="210" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">self.boxes</text>
+  <rect x="158" y="194" width="124" height="24" rx="4" fill="#232840" stroke="#3b4166"/>
+  <rect x="166" y="200" width="50" height="12" rx="2" fill="#10121c" stroke="#3b4166"/>
+  <rect x="224" y="200" width="50" height="12" rx="2" fill="#10121c" stroke="#3b4166"/>
+
+  <text x="150" y="252" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">backup</text>
+  <rect x="158" y="236" width="124" height="24" rx="4" fill="#232840" stroke="#3b4166"/>
+  <rect x="166" y="242" width="50" height="12" rx="2" fill="#10121c" stroke="#3b4166"/>
+  <rect x="224" y="242" width="50" height="12" rx="2" fill="#10121c" stroke="#3b4166"/>
+
+  <g stroke="#ffcc44" stroke-width="1.5" fill="none">
+    <path d="M276 206 L324 223"/>
+    <path d="M276 248 L324 233"/>
+  </g>
+  <rect x="330" y="214" width="64" height="28" rx="3" fill="#10121c" stroke="#45b0e8"/>
+  <text x="362" y="232" fill="#45b0e8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">[5, 3]</text>
+
+  <text x="412" y="224" fill="#e8f0ff" font-size="11">中の [5, 3] は 1 つだけ</text>
+  <text x="412" y="242" fill="#ffcc44" font-size="11">1 つめの [3, 3] も同じ</text>
+
+  <!-- C：作り直す -->
+  <rect x="20" y="278" width="600" height="128" rx="6" fill="#1b1f33" stroke="#2ee6a8"/>
+  <text x="36" y="300" fill="#2ee6a8" font-family="Consolas, monospace" font-size="12">self.load_stage(STAGE1)</text>
+  <text x="36" y="318" fill="#2ee6a8" font-size="11">文字の地図から、まるごと作り直す。これを選びます</text>
+
+  <text x="111" y="340" fill="#9aa4c4" font-size="10" text-anchor="middle">STAGE1（文字列）</text>
+  <rect x="36" y="346" width="150" height="52" rx="4" fill="#232840" stroke="#3b4166"/>
+  <g font-family="Consolas, monospace" font-size="10" fill="#9aa4c4">
+    <text x="46" y="362">"########"</text>
+    <text x="46" y="375">"#..O.O.#"</text>
+    <text x="46" y="388">"#..$.$.#"</text>
+  </g>
+
+  <text x="216" y="362" fill="#2ee6a8" font-size="10" text-anchor="middle">読む</text>
+  <path d="M196 372 l32 0 M221 367 l7 5 -7 5" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+
+  <text x="321" y="340" fill="#9aa4c4" font-size="10" text-anchor="middle">まっさらな中身</text>
+  <rect x="246" y="346" width="150" height="52" rx="4" fill="#232840" stroke="#2ee6a8"/>
+  <text x="321" y="368" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">tiles</text>
+  <text x="321" y="386" fill="#2ee6a8" font-family="Consolas, monospace" font-size="11" text-anchor="middle">boxes</text>
+
+  <text x="416" y="366" fill="#e8f0ff" font-size="11">文字列は書き換えられない</text>
+  <text x="416" y="384" fill="#e8f0ff" font-size="11">ので、何度読んでも同じ</text>
+</svg>
+</div>
+<figcaption>A も B も、押した結果が控えに<b>そのまま写ります</b>。C は<b>そもそも控えを持ちません</b></figcaption>
+</figure>
+
+<div class="term">
+  <b>ずるいようで、これがいちばん正しい</b>
+  「控えを取らずに作り直す」のは手抜きに見えるかもしれません。でも逆です。<br>
+  <b>控えを持つと、控えを壊さない義務が増えます。</b>
+  持たなければ、その義務は生まれません。
+  <b><code>load_stage()</code> は最初から「文字の地図 → 遊べる状態」を作る係</b>なので、
+  もう一度呼ぶだけで済みます。<br>
+  しかも<b>フェーズ 6 で 10 ステージにするとき、この形がそのまま使えます</b>。
+  「次のステージへ」は <code>load_stage(STAGES[n])</code> を呼ぶだけになります。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>all(…)</code></td>
+        <td><b>ぜんぶ <code>True</code> か</b>を調べる Python の関数。1 つでも <code>False</code> があれば <code>False</code></td></tr>
+    <tr><td><code>… for … in …</code><br>（ジェネレータ式）</td>
+        <td><code>for</code> を<b>後ろに書く</b>書き方。「リストの全員について、この値」をひとことで表す</td></tr>
+    <tr><td><code>not</code></td>
+        <td><code>True</code> と <code>False</code> をひっくり返す。<code>not self.cleared</code> ＝「まだクリアしていない」</td></tr>
+    <tr><td><code>pyxel.btnp(pyxel.KEY_R)</code></td>
+        <td><code>R</code> キーを<b>押した瞬間だけ</b>。矢印キーの <code>btn</code> と使い分ける</td></tr>
+    <tr><td><code>pyxel.text(x, y, 文字, 色)</code></td>
+        <td>文字を描く。step1 のスコア表示と同じもの</td></tr>
+    <tr><td><code>return</code>（値を返さない）</td>
+        <td><code>update()</code> を<b>途中で切り上げる</b>。step1 フェーズ 6 で出てきた使い方</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+<b>6 段階</b>です。3-2 から 3-6 は続きものなので、<b>最後まで書いてから実行</b>してください。
+</p>
+
+<h3 id="draw-on-goal">3-1. 「ゴールに乗った荷物」の絵を 1 枚描く</h3>
+
+<p>
+リソースエディタ（<code>pyxel edit sokoban.pyxres</code>）を開き、
+イメージバンク 0 の <b><code>u = 32</code>, <code>v = 0</code></b> に 1 枚描きます。
+場所は <a href="phase1.html#sheet">フェーズ 1 の配置図</a>のとおり、タイルの段のいちばん右です。
+</p>
+
+<table>
+  <thead><tr><th>位置</th><th>描くもの</th></tr></thead>
+  <tbody>
+    <tr><td><code>u = 24</code>, <code>v = 0</code></td><td>ふつうのリンゴ（もうある）</td></tr>
+    <tr><td><code>u = 32</code>, <code>v = 0</code></td><td><b>ゴールに乗ったリンゴ</b>（これを描く）</td></tr>
+  </tbody>
+</table>
+
+<div class="term">
+  <b>「ちょっと違う」で十分です</b>
+  <code>u = 24</code> のリンゴをコピーして右に貼り付け、<b>少し明るくする</b>のが手軽です。
+  ふちを白でひと巻きする、上にキラッと 2 ドット足す、実の色を 1 段明るい色に置き換える——
+  どれでも伝わります。<br>
+  <b>形は変えないほうがよい</b>です。同じ荷物が「乗った状態」になっただけ、と分かるほうが
+  盤面が読みやすくなります。<b>色や明るさで差をつける</b>のがコツです。<br>
+  背景は<b>黒のまま</b>にしてください（リンゴの透過色は <code>COLOR_BLACK</code> のままです）。
+</div>
+
+<h3>3-2. 定数を 1 つ足す</h3>
+
+<pre><code>U_FLOOR = 0
+U_WALL = 8
+U_GOAL = 16
+U_BOX = 24
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物      ← 足す</code></pre>
+
+<h3>3-3. <code>load_stage()</code> に、クリアの旗を足す</h3>
+
+<p>
+<code>self.pushing = False</code> のうしろに 1 行です。
+</p>
+
+<pre><code>        self.walk_timer = 0             # 0 なら止まっている。1〜8 は歩いている途中
+        self.pushing = False            # いまの一歩で、荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか      ← 足す</code></pre>
+
+<div class="warn">
+  <b><code>__init__()</code> ではなく <code>load_stage()</code> に書きます</b>
+  <code>self.cleared = False</code> を <code>__init__()</code> に書くと、
+  <b>起動したときの 1 回しか初期化されません</b>。
+  やり直すたびに <code>False</code> に戻ってほしいので、<code>load_stage()</code> の中です。<br>
+  step1 フェーズ 7 で「<b>1 回だけやること</b>と<b>毎回やること</b>を分ける」話をしました。
+  ここでも同じ基準です。<code>load_stage()</code> は<b>毎回やること</b>の置き場です。
+</div>
+
+<h3>3-4. 調べるメソッドを 2 つ足す</h3>
+
+<p>
+<code>move_box()</code> と <code>try_move()</code> のあいだに書きます。
+どちらも<b>調べて答えるだけ</b>で、盤面を変えません。
+</p>
+
+<pre><code>    def on_goal(self, box):
+        """その荷物が、ゴールのマスに乗っているか"""
+        return self.tiles[box[1]][box[0]] == "O"
+
+    def is_cleared(self):
+        """すべての荷物がゴールに乗ったか"""
+        return all(self.on_goal(box) for box in self.boxes)</code></pre>
+
+<div class="note">
+  <b>なぜ 2 つに分けるのか</b>
+  <code>on_goal()</code> は<b>クリア判定だけのものではありません</b>。
+  <code>draw()</code> でも「この荷物は光っている絵にするか」を決めるのに使います（3-6）。
+  <b>2 か所から呼ばれるので、名前をつけて独立させる価値があります</b>。<br>
+  <code>is_cleared()</code> のほうは <code>on_goal()</code> を<b>荷物の数だけ並べた</b>もの、
+  という関係です。
+</div>
+
+<h3>3-5. <code>update()</code> を書き換える</h3>
+
+<p>
+<b>先頭に 4 行</b>、<b>到着したところに 2 行</b>、そして<b>最後の <code>if</code> の条件</b>を書き換えます。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる      ← 足す
+            self.load_stage(STAGE1)
+            return
+
+        if self.walk_timer &gt; 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる      ← 足す
+                    self.cleared = True
+
+        # 止まっていて、まだクリアしていないときだけ、キーを見る      ← 条件を足す
+        if self.walk_timer == 0 and not self.cleared:
+            self.handle_key()</code></pre>
+
+<div class="warn">
+  <b><code>and not self.cleared</code> を忘れないでください</b>
+  フェーズ 4 の <a href="phase4.html#why-not-else">6-1</a> で、
+  「<b>着いたその同じフレームで、次の一歩に入れる</b>」のがなめらかさの決め手だと書きました。
+  ここではそれが<b>裏目に出ます</b>。<br>
+  最後の一歩を<b>キーを押しっぱなしで</b>決めると、
+  <code>cleared</code> を立てたその同じフレームに <code>handle_key()</code> が呼ばれ、
+  <b>もう一歩進んでしまいます</b>。せっかく乗せたリンゴを、そのまま押し出してしまうのです。
+  くわしくは <a href="#same-frame">6-2</a> を見てください。
+</div>
+
+<h3>3-6. <code>draw()</code> を 2 か所書き換える</h3>
+
+<p>
+荷物の <code>blt</code> を <b>3 行ぶん</b>ふくらませ、<code>draw()</code> のいちばん下に <b>5 行</b>足します。
+</p>
+
+<pre><code>            u = U_BOX
+            if self.on_goal(box):               # ゴールに乗っているあいだは別の絵      ← 足す
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)</code></pre>
+
+<p>
+<code>U_BOX</code> と直接書いていたところが <code>u</code> に変わっている点に注意してください。
+そして、いちばん下です。
+</p>
+
+<pre><code>        # クリアしたら、画面の上に知らせる
+        if self.cleared:
+            msg = "STAGE CLEAR!"
+            x = (SCREEN_WIDTH - len(msg) * 4) // 2
+            pyxel.text(x, 3, msg, pyxel.COLOR_YELLOW)</code></pre>
+
+<div class="note">
+  <b><code>y = 3</code> は、空けておいた場所です</b>
+  フェーズ 1 で <code>HUD_HEIGHT = 12</code> と決め、<b>画面の上 12 ドットを盤面に使わずに空けて</b>ありました。
+  そこへ書いています。だから<b>盤面に文字がかぶりません</b>。<br>
+  <b>中央ぞろえの式</b> <code>(SCREEN_WIDTH - len(msg) * 4) // 2</code> は step1 と同じです。
+  Pyxel の標準フォントは<b>1 文字 4 ドット送り</b>なので、文字数 × 4 が文字列の幅になります。
+  <code>"STAGE CLEAR!"</code> は 12 文字 ＝ 48 ドット、<code>x = 56</code> です。
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+書き足したのは定数 1 つ、<code>load_stage()</code> の 1 行、<code>update()</code> の 6 行、
+新しい <code>on_goal()</code> と <code>is_cleared()</code>、そして <code>draw()</code> の 2 か所です。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ5：クリア判定と、やり直し
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER_A = 8          # 主人公の段（コマ A）
+V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
+U_FLOOR = 0
+U_WALL = 8
+U_GOAL = 16
+U_BOX = 24
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物
+
+# 向き。この番号がそのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),         # 下
+    (0, -1),        # 上
+    (-1, 0),        # 左
+    (1, 0),         # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [
+    "########",
+    "#......#",
+    "#..O.O.#",
+    "#..$.$.#",
+    "#..@...#",
+    "########",
+]
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.load_stage(STAGE1)
+        pyxel.run(self.update, self.draw)
+
+    def load_stage(self, rows):
+        """文字の地図を読んで、壁・主人公・荷物に分ける"""
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        self.walk_timer = 0             # 0 なら止まっている。1〜8 は歩いている途中
+        self.pushing = False            # いまの一歩で、荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
+
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == "@":
+                    self.player_x = x
+                    self.player_y = y
+                    mark = "."          # 主人公の足元は床
+                elif mark == "$":
+                    self.boxes.append([x, y])
+                    mark = "."          # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        self.from_x = self.player_x     # 見た目の出発マス
+        self.from_y = self.player_y
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
+            self.load_stage(STAGE1)
+            return
+
+        if self.walk_timer &gt; 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
+
+        # 止まっていて、まだクリアしていないときだけ、キーを見る
+        if self.walk_timer == 0 and not self.cleared:
+            self.handle_key()
+
+    def handle_key(self):
+        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btn(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btn(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btn(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def has_box(self, x, y):
+        """そのマスに荷物があるかどうかを答える"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        """(x, y) にある荷物を、(dx, dy) だけ動かす"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
+    def on_goal(self, box):
+        """その荷物が、ゴールのマスに乗っているか"""
+        return self.tiles[box[1]][box[0]] == "O"
+
+    def is_cleared(self):
+        """すべての荷物がゴールに乗ったか"""
+        return all(self.on_goal(box) for box in self.boxes)
+
+    def try_move(self, direction):
+        """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == "#":   # 行き先が壁なら
+            return                              # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):        # 行き先に荷物があるなら
+            far_x = next_x + dx                 # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == "#": # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+            self.pushing = True                 # この一歩は、荷物を押している
+
+        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+
+    def slide_pos(self, origin, from_cell, to_cell):
+        """出発マスから到着マスへ、いまどこまで来たかをドットで返す"""
+        moved = (to_cell - from_cell) * TILE * self.walk_timer // MOVE_FRAMES
+        return origin + from_cell * TILE + moved
+
+    def draw(self):
+        """描画処理"""
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        # 壁を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == "#":
+                    u = U_WALL
+                elif mark == "O":
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                            0, u, V_TILE, TILE, TILE)
+
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる
+        dx, dy = MOVES[self.player_dir]
+        push_x = self.player_x + dx             # 押した荷物は、主人公の目の前にいる
+        push_y = self.player_y + dy
+        for box in self.boxes:
+            if self.pushing and box[0] == push_x and box[1] == push_y:
+                bx = self.slide_pos(self.ox, box[0] - dx, box[0])
+                by = self.slide_pos(self.oy, box[1] - dy, box[1])
+            else:
+                bx = self.ox + box[0] * TILE
+                by = self.oy + box[1] * TILE
+            u = U_BOX
+            if self.on_goal(box):               # ゴールに乗っているあいだは別の絵
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公
+        px = self.slide_pos(self.ox, self.from_x, self.player_x)
+        py = self.slide_pos(self.oy, self.from_y, self.player_y)
+        v = V_PLAYER_A
+        if self.walk_timer &gt;= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+
+        # クリアしたら、画面の上に知らせる
+        if self.cleared:
+            msg = "STAGE CLEAR!"
+            x = (SCREEN_WIDTH - len(msg) * 4) // 2
+            pyxel.text(x, 3, msg, pyxel.COLOR_YELLOW)
+
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<table>
+  <thead><tr><th>やってみること</th><th>こうなれば成功</th></tr></thead>
+  <tbody>
+    <tr><td>リンゴ 1 個をゴールに乗せる</td>
+        <td>そのリンゴが<b>光っている絵に変わる</b>。まだ <code>STAGE CLEAR!</code> は出ない</td></tr>
+    <tr><td>乗せたリンゴを、もう一度押して外す</td>
+        <td><b>ふつうのリンゴの絵に戻る</b>。ゴールの目印も消えていない</td></tr>
+    <tr><td>2 個ともゴールに乗せる</td>
+        <td>リンゴが収まった<b>その瞬間に</b>画面の上に <code>STAGE CLEAR!</code> が出る</td></tr>
+    <tr><td>最後の一歩を、キーを<b>押しっぱなし</b>で決める</td>
+        <td>クリアした<b>ところで止まる</b>。そのまま先へ歩いていかない</td></tr>
+    <tr><td>クリアしたあと、矢印キーを押す</td>
+        <td><b>もう動かない</b>（向きも変わらない）</td></tr>
+    <tr><td><code>R</code> を押す</td>
+        <td>リンゴと主人公が<b>最初の位置に戻る</b>。<code>STAGE CLEAR!</code> も消える</td></tr>
+    <tr><td>歩いている途中で <code>R</code> を押す</td>
+        <td><b>すべりが止まって</b>、すぐ初期状態になる</td></tr>
+    <tr><td><code>R</code> を押しっぱなしにする</td>
+        <td><b>1 回だけ</b>やり直る。押し続けても連続でリセットされない</td></tr>
+    <tr><td>リンゴを壁ぎわに押しつけて詰ませる</td>
+        <td><code>R</code> で立て直せる。<b>ウィンドウを閉じなくてよくなった</b></td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>もう一歩：クリアの見せ方を足してみる</b>
+  本格的なクリア演出は<b>フェーズ 8</b>でやりますが、1 行ずつで試せるものを挙げておきます。
+  <b>実際に指で触って、気持ちいいほうを選んでください。</b>
+  <ul>
+    <li><b>文字を点滅させる</b>：<code>if self.cleared and pyxel.frame_count % 30 &lt; 20:</code>
+      とすると、0.67 秒ついて 0.33 秒消えます（step1 フェーズ 7 と同じ手です）</li>
+    <li><b>やり直しの案内も出す</b>：クリアしていないときも
+      <code>pyxel.text(2, 3, "R:RETRY", pyxel.COLOR_GRAY)</code> のように左上に小さく出すと、
+      <code>R</code> があることが遊ぶ人に伝わります</li>
+    <li><b>乗っている数を出す</b>：
+      <code>sum(1 for box in self.boxes if self.on_goal(box))</code> で乗っている個数が出ます。
+      <code>f"{乗った数} / {len(self.boxes)}"</code> と表示すると、あと何個かが分かります
+      （<code>sum</code> は <code>all</code> と同じ「<code>for</code> を後ろに書く」形です）</li>
+  </ul>
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3 id="all-explained">6-1. <code>all()</code> と、<code>for</code> を後ろに書く書き方</h3>
+
+<pre><code>        return all(self.on_goal(box) for box in self.boxes)</code></pre>
+
+<p>
+はじめて見ると、<b><code>for</code> が後ろにある</b>のが不思議に見えると思います。
+これは「<b>リストの全員について、この値を出す</b>」を 1 行で書く書き方です。
+いつもの <code>for</code> で書くと、こうなります。
+</p>
+
+<pre><code># ぜんぶ書き出した版（同じ意味）
+    def is_cleared(self):
+        for box in self.boxes:
+            if not self.on_goal(box):
+                return False        # 1 つでも乗っていなければ、その場でおしまい
+        return True                 # 最後まで来たなら、ぜんぶ乗っていた</code></pre>
+
+<p>
+<b>どちらでも正しく動きます。</b>
+今回 <code>all()</code> を選んだのは、<b>読んだとおりの意味になる</b>からです。
+「<code>all</code>（すべて）が <code>on_goal</code>（ゴールに乗っている）」と、
+英語の文のように読めます。
+</p>
+
+<div class="term">
+  <b>かっこがいらない理由</b>
+  <code>all([self.on_goal(box) for box in self.boxes])</code> と
+  <b>角かっこをつけても動きます</b>。こちらは「リスト内包表記」といって、
+  <b>先に <code>True</code>／<code>False</code> のリストを作ってから</b> <code>all()</code> に渡します。<br>
+  かっこなしの書き方（ジェネレータ式）は、リストを作らずに<b>1 つずつ手渡します</b>。
+  だから <b><code>False</code> が出た時点で、残りを調べずに打ち切ります</b>。
+  荷物 2 個では差は出ませんが、<b>短く書けて、しかも無駄がない</b>のでこちらを使います。
+</div>
+
+<div class="warn">
+  <b><code>all()</code> は、空っぽのとき <code>True</code> です</b>
+  <code>all([])</code> は <code>True</code> を返します（実測で確認しました）。
+  「反例が 1 つもない」＝「すべて成り立つ」という決まりです。<br>
+  つまり<b>荷物を 1 つも置いていない地図を作ると、起動した瞬間にクリアになります</b>。
+  <code>$</code> を書き忘れたときに、これで気づけます。
+</div>
+
+<h3 id="same-frame">6-2. クリアした同じフレームに、もう一歩進んでしまう話</h3>
+
+<p>
+<code>and not self.cleared</code> を書かないと何が起きるか、
+<b>実際に走らせて 1 フレームずつ記録しました</b>。
+最後の一歩を <b>↑ を押しっぱなしで</b>決めたときの動きです。
+</p>
+
+<table>
+  <thead><tr><th>フレーム</th><th><code>boxes</code></th><th>主人公</th><th><code>walk_timer</code></th><th><code>cleared</code></th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>[3,2] <b>[5,2]</b></td><td>(5, 3)</td><td>1</td><td>False</td></tr>
+    <tr><td>2 〜 7</td><td>[3,2] [5,2]</td><td>(5, 3)</td><td>2 〜 7</td><td>False</td></tr>
+    <tr><td>8</td><td>[3,2] [5,2]</td><td>(5, 3)</td><td>8</td><td>False</td></tr>
+    <tr><td><b>9</b></td><td>[3,2] <b>[5,1]</b></td><td>(5, 2)</td><td><b>1</b></td><td><b>True</b></td></tr>
+  </tbody>
+</table>
+
+<p>
+9 フレーム目を見てください。<b><code>cleared</code> が <code>True</code> になった、その同じフレームで
+リンゴが <code>[5,2]</code> から <code>[5,1]</code> へ動いています</b>。
+ゴールから押し出してしまったのです。結果はこうなります。
+</p>
+
+<pre><code>STAGE CLEAR! と出ているのに、リンゴはゴールの上にない
+（is_cleared() は False なのに、cleared は True のまま）</code></pre>
+
+<p>
+理由は、フェーズ 4 で<b>わざとそう作った</b>ところにあります。
+<code>update()</code> の 2 つの <code>if</code> は <code>else</code> ではないので、
+<b>「着いた」と「次のキーを見る」が同じフレームに起きます</b>。
+なめらかに歩かせるための仕組みが、そのままここへ効いてきます。
+</p>
+
+<pre><code>        if self.walk_timer &gt; 0:
+            ...
+                self.walk_timer = 0            # ← 0 になる
+                if self.is_cleared():
+                    self.cleared = True        # ← 同じフレームで True になる
+
+        if self.walk_timer == 0 and not self.cleared:   # ← だからここで止める
+            self.handle_key()</code></pre>
+
+<div class="term">
+  <b>旗を 1 つ足すと、見る場所も 1 つ増えます</b>
+  <code>self.pushing</code>（フェーズ 4）でも同じ話をしました。
+  <b>旗は、立てる場所・下ろす場所・見る場所の 3 つをセットで考える</b>ものです。<br>
+  <code>self.cleared</code> は——立てるのが <code>update()</code> の到着のところ、
+  下ろすのが <code>load_stage()</code>、見るのが <code>update()</code> の入力と <code>draw()</code> の表示。
+  <b>この 4 か所がそろって、はじめて正しく動きます。</b>
+</div>
+
+<div class="note">
+  <b>そもそも旗を持たない手もあります</b>
+  <code>self.cleared</code> をやめて、<b>必要なときに毎回 <code>is_cleared()</code> を呼ぶ</b>
+  作りにもできます（<code>if self.walk_timer == 0 and not self.is_cleared():</code>）。
+  1 フレームに 2 回ほど余分に数えるだけなので、速さは問題になりません。<br>
+  それでも旗を持ったのは 2 つの理由です。<b>①</b> <code>is_cleared()</code> は<b>盤面の位置</b>で答えるので、
+  リンゴがすべり終わるのを待たずに <code>True</code> になり、<b>文字が早く出てしまいます</b>。
+  <b>②</b> フェーズ 8 で「クリアした瞬間から何フレーム経ったか」を使って演出を作ります。
+  そのとき<b>「瞬間」を捉えられる形</b>にしておきたいからです。
+</div>
+
+<h3 id="list-copy">6-3. リストのコピーは、どこまでが「別もの」か</h3>
+
+<p>
+1-3 の図を、実際に動かして確かめた結果です。<b>すべて実測です。</b>
+</p>
+
+<pre><code>&gt;&gt;&gt; boxes = [[3, 3], [5, 3]]
+&gt;&gt;&gt; backup = boxes          # 名札を増やすだけ
+&gt;&gt;&gt; backup is boxes
+True
+&gt;&gt;&gt; boxes[0][1] -= 1        # リンゴを 1 マス押した
+&gt;&gt;&gt; backup
+[[3, 2], [5, 3]]            # 控えも動いている</code></pre>
+
+<pre><code>&gt;&gt;&gt; boxes = [[3, 3], [5, 3]]
+&gt;&gt;&gt; backup = boxes[:]       # 外側だけ新しく作る（浅いコピー）
+&gt;&gt;&gt; backup is boxes
+False                       # 外側は別もの
+&gt;&gt;&gt; backup[0] is boxes[0]
+True                        # でも中身は同じもの
+&gt;&gt;&gt; boxes[0][1] -= 1
+&gt;&gt;&gt; backup
+[[3, 2], [5, 3]]            # やはり控えも動いている</code></pre>
+
+<p>
+<code>boxes[:]</code> のほかに <code>list(boxes)</code> と <code>boxes.copy()</code> も
+ありますが、<b>3 つとも同じ「浅いコピー」</b>です。中の <code>[x, y]</code> は共有されます。
+</p>
+
+<p>
+ちゃんと控えを取るなら、<b>中身まで作り直します</b>。
+</p>
+
+<pre><code>&gt;&gt;&gt; boxes = [[3, 3], [5, 3]]
+&gt;&gt;&gt; backup = [box[:] for box in boxes]    # 1 つずつコピーして、新しいリストに
+&gt;&gt;&gt; backup[0] is boxes[0]
+False                                    # 中身も別もの
+&gt;&gt;&gt; boxes[0][1] -= 1
+&gt;&gt;&gt; backup
+[[3, 3], [5, 3]]                         # 控えは無事</code></pre>
+
+<p>
+<code>import copy</code> して <code>copy.deepcopy(boxes)</code> と書く方法もあり、結果は同じです。
+</p>
+
+<div class="term">
+  <b>なぜ文字の地図は壊れないのか</b>
+  <code>STAGE1</code> は<b>文字列のリスト</b>です。文字列は<b>1 文字も書き換えられません</b>。
+  <pre><code>&gt;&gt;&gt; STAGE1[1][3] = "."
+TypeError: 'str' object does not support item assignment</code></pre>
+  だから <code>load_stage(STAGE1)</code> を何度呼んでも、
+  <b>いつも同じ初期状態が出てきます</b>。<br>
+  <b>「書き換えられないもの」を原本にしておくと、控えの心配がいらなくなる</b>——
+  これは覚えておくと、この先ずっと役に立つ考え方です。
+</div>
+
+<div class="warn">
+  <b><code>tiles</code> も同じ注意がいります</b>
+  <code>self.tiles</code> は<b>リストのリスト</b>なので、
+  <code>self.tiles[:]</code> では行が共有されます。
+  いまは <code>tiles</code> を書き換えていないので問題になりませんが、
+  <b>「二次元リストの控えは、浅いコピーでは取れない」</b>と頭に入れておいてください。
+</div>
+
+<h3 id="r-btnp">6-4. <code>R</code> だけ <code>btnp</code> にする理由</h3>
+
+<p>
+フェーズ 4 で矢印キーを <code>btnp</code> から <code>btn</code> に変えました。
+なのに <code>R</code> は <code>btnp</code> です。<b>これは矛盾ではありません</b>。
+</p>
+
+<table>
+  <thead><tr><th>キー</th><th>使うもの</th><th>なぜ</th></tr></thead>
+  <tbody>
+    <tr><td>矢印</td><td><code>btn</code></td>
+        <td><b>押しっぱなしで歩き続けてほしい</b>。歩いている間は見に行かないので暴走しない</td></tr>
+    <tr><td><code>R</code></td><td><code>btnp</code></td>
+        <td><b>1 回で足りる</b>。押しっぱなしのあいだ毎フレーム作り直しても、無駄なだけ</td></tr>
+  </tbody>
+</table>
+
+<p>
+もし <code>R</code> を <code>btn</code> にすると、<b>押しているあいだずっと初期状態に戻され続けます</b>。
+<code>R</code> を押しながら矢印を押しても<b>1 歩も進めません</b>——毎フレーム <code>return</code> で
+引き返してしまうからです。<code>btnp</code> なら 1 フレーム目だけ効き、
+<b>2 フレーム目からは矢印が通ります</b>（これも実測で確認しました）。
+</p>
+
+<div class="note">
+  <b><code>R</code> の判定を <code>update()</code> のいちばん上に置く理由</b>
+  <b>歩いている途中でも効かせたい</b>からです。
+  もし下に置くと、<code>if self.walk_timer == 0 …</code> の中に入ってしまい、
+  <b>すべっているあいだは <code>R</code> が無視されます</b>。<br>
+  <code>return</code> でその下をぜんぶ飛ばしているので、
+  <b>作り直した直後の状態に、同じフレームで歩きの処理が割り込むこともありません</b>。
+  <b>「例外的な操作は、いちばん上で片づけて <code>return</code>」</b>——覚えやすい型です。
+</div>
+
+<h3 id="redraw">6-5. 荷物の絵は、毎フレーム選び直しています</h3>
+
+<pre><code>            u = U_BOX
+            if self.on_goal(box):
+                u = U_BOX_ON_GOAL</code></pre>
+
+<p>
+ここで大事なのは、<b>「乗った」「外した」を覚えていない</b>ことです。
+毎フレーム、<b>いまの位置を見て、その場で絵を決めています</b>。
+</p>
+
+<p>
+だから<b>ゴールから押し出したときに「絵を戻す」処理がいりません</b>。
+覚えていないものは、戻し忘れることもありません。
+<b>これはフェーズ 1 で「地形と荷物を分けて持つ」と決めたことの、そのままの成果です。</b>
+</p>
+
+<div class="term">
+  <b>「状態を覚える」か「毎回計算する」か</b>
+  ゲームを作っていると、いつもこの二択に出会います。
+  <ul>
+    <li><b>毎回計算する</b>（<code>u</code> の選び方・<code>slide_pos()</code> の位置）……
+      ずれようがない。忘れる心配がない</li>
+    <li><b>覚えておく</b>（<code>walk_timer</code>・<code>pushing</code>・<code>cleared</code>）……
+      <b>計算では出せないこと</b>だけ。「いつ始まったか」「どっちを押したか」など</li>
+  </ul>
+  <b>まず「毎回計算できないか」を考え、できないときだけ覚える。</b>
+  この順番にすると、<b>状態の数が増えず、不具合が減ります</b>。
+</div>
+
+<h2>7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>起動した瞬間から <code>STAGE CLEAR!</code> が出ている</td>
+      <td>地図に <code>$</code>（荷物）がありません。<code>all([])</code> は <code>True</code> なので、
+      荷物 0 個は「ぜんぶ乗っている」と判定されます（<a href="#all-explained">6-1</a>）</td>
+    </tr>
+    <tr>
+      <td>荷物を乗せても <code>STAGE CLEAR!</code> が出ない</td>
+      <td>地図の <code>O</code> の数と <code>$</code> の数が合っていませんか。
+      荷物のほうが多いと、<b>永久にクリアできません</b></td>
+    </tr>
+    <tr>
+      <td><code>STAGE CLEAR!</code> が出ているのに、リンゴがゴールに乗っていない</td>
+      <td><code>and not self.cleared</code> を書いていません。
+      クリアした同じフレームに、もう一歩進んでいます（<a href="#same-frame">6-2</a>）</td>
+    </tr>
+    <tr>
+      <td>クリアしたあとも歩けてしまう</td>
+      <td>同じ原因です。<code>if self.walk_timer == 0 and not self.cleared:</code> を確かめてください</td>
+    </tr>
+    <tr>
+      <td>クリアの文字が、リンゴが着く前に出る</td>
+      <td><code>if self.is_cleared():</code> を <code>try_move()</code> の中に書いています。
+      <code>update()</code> の<b>到着したところ</b>に移してください（<a href="#idea-when">1-2</a>）</td>
+    </tr>
+    <tr>
+      <td>乗せた荷物の絵が変わらない</td>
+      <td><code>u = U_BOX</code> のままで、<code>blt</code> の引数が
+      <code>U_BOX</code> と直接書かれていませんか。<b><code>u</code> を渡します</b></td>
+    </tr>
+    <tr>
+      <td>乗せた荷物が<b>消える</b></td>
+      <td><code>u = 32</code>, <code>v = 0</code> に絵を描いていません。
+      何もない場所を切り出すと、黒（透過色）だけが並びます。3-1 に戻ってください</td>
+    </tr>
+    <tr>
+      <td><code>R</code> を押しても何も起きない</td>
+      <td><code>pyxel.KEY_R</code> の綴りを確かめてください。
+      また、<code>update()</code> の<b>いちばん上</b>にありますか</td>
+    </tr>
+    <tr>
+      <td><code>R</code> を押すと、矢印キーが効かなくなる</td>
+      <td><code>btn(pyxel.KEY_R)</code> になっています。<b><code>btnp</code></b> です
+      （<a href="#r-btnp">6-4</a>）</td>
+    </tr>
+    <tr>
+      <td><code>R</code> でやり直しても、クリアの文字が消えない</td>
+      <td><code>self.cleared = False</code> を <code>load_stage()</code> ではなく
+      <code>__init__()</code> に書いています</td>
+    </tr>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'cleared'</code></td>
+      <td><code>self.cleared = False</code> を書いていません。
+      <code>load_stage()</code> の中、<code>self.pushing = False</code> のうしろです</td>
+    </tr>
+    <tr>
+      <td><code>TypeError: 'bool' object is not iterable</code></td>
+      <td><code>all(self.on_goal(box))</code> のように、<b><code>for</code> の部分を書き忘れて</b>います。
+      <code>all(self.on_goal(box) for box in self.boxes)</code> です</td>
+    </tr>
+    <tr>
+      <td><code>IndexError: list index out of range</code></td>
+      <td><code>on_goal()</code> で <code>self.tiles[box[0]][box[1]]</code> と、
+      <b>x と y を逆に</b>していませんか。<code>tiles[box[1]][box[0]]</code> です</td>
+    </tr>
+    <tr>
+      <td>文字が画面からはみ出す／左に寄る</td>
+      <td>中央ぞろえの式が <code>(SCREEN_WIDTH - len(msg)) // 2</code> になっていませんか。
+      <b><code>* 4</code></b> が必要です（1 文字 4 ドット）</td>
+    </tr>
+    <tr>
+      <td>主人公の目が黒くならない／体に穴があく</td>
+      <td>透過色の指定を見直してください。絵の背景をグレーにしたら、
+      <code>blt</code> の最後も <code>pyxel.COLOR_GRAY</code> です（<a href="#colkey">この節</a>）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+これで<b>1 ステージぶんのゲームが完成しました</b>。解ける、勝てる、やり直せる——
+ゲームとして必要なものは、ぜんぶそろっています。
+</p>
+
+<p>
+次は<b>ステージを 10 個にします</b>。
+ここでうれしいのは、<b>ほとんど書き足すものがない</b>ことです。
+<code>load_stage()</code> が「文字の地図をもらって、遊べる状態を作る」形になっているので、
+<b>地図を並べたリストを用意して、番号で渡すだけ</b>です。
+</p>
+
+<div class="note">
+  <b>次に出てくる考え方</b>
+  <b>データを増やして、コードは増やさない</b>：これが step2 の柱です（<a href="./#topics">概要の 3</a>）。
+  <code>STAGES = [STAGE1, STAGE2, …]</code> と並べ、<code>self.stage_no</code> で
+  何番目かを覚えます。<br>
+  <b>10 ステージぶんの地図を、自分で考えます。</b>
+  これがけっこう楽しく、そして難しいところです。
+  <b>解けるかどうかを自分で確かめながら作る</b>ことになります。
+  盤面の大きさはステージごとに変えてかまいません——
+  中央ぞろえは <code>load_stage()</code> が毎回計算しているので、<b>何マスでも勝手に真ん中に来ます</b>。
+</div>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
