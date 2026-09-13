@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ4：歩くアニメを入れる
+# step2 フェーズ5：クリア判定と、やり直し
 
 import pyxel
 
@@ -13,10 +13,11 @@ MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレー
 V_TILE = 0              # タイルの段
 V_PLAYER_A = 8          # 主人公の段（コマ A）
 V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
-U_FLOOR = 0
-U_WALL = 8
-U_GOAL = 16
-U_BOX = 24
+U_FLOOR = 0             # 床（歩ける）
+U_WALL = 8              # 壁（歩けない）
+U_GOAL = 16             # ゴール
+U_BOX = 24              # 荷物
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物
 
 # 向き。この番号がそのまま主人公の絵の切り出し位置になる
 DIR_DOWN = 0
@@ -58,6 +59,7 @@ class App:
         self.player_dir = DIR_DOWN      # はじめは下を向いている
         self.walk_timer = 0             # 0 なら止まっている。1～8は歩いている途中
         self.pushing = False            # いまの一歩で荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
 
         for y in range(len(rows)):
             line = []
@@ -84,6 +86,10 @@ class App:
 
     def update(self):
         """フレーム毎の更新処理"""
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
+            self.load_stage(STAGE1)
+            return
+        
         if self.walk_timer > 0:                 # 歩いている途中
             self.walk_timer += 1
             if self.walk_timer > MOVE_FRAMES:   # 隣のマスに着いた
@@ -91,8 +97,11 @@ class App:
                 self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
                 self.from_y = self.player_y
                 self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
 
-        if self.walk_timer == 0:                # 止まっているときだけ、キーを見る
+        # 止まっていて、まだクリアしていないときだけ、キーを見る    
+        if self.walk_timer == 0 and not self.cleared:
             self.handle_key()
 
     def handle_key(self):
@@ -121,6 +130,14 @@ class App:
                 box[1] += dy
                 return
 
+    def on_goal(self, box):
+        """その荷物が、ゴールのマスに乗っているか"""
+        return self.tiles[box[1]][box[0]] == "O"
+
+    def is_cleared(self):
+        """すべての荷物がゴールに乗ったか"""
+        return all(self.on_goal(box) for box in self.boxes)
+    
     def try_move(self, direction):
         """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
         self.player_dir = direction     # 動けなくても、向きだけは変える
@@ -179,7 +196,10 @@ class App:
             else:
                 bx = self.ox + box[0] * TILE
                 by = self.oy + box[1] * TILE
-            pyxel.blt(bx, by, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+            u = U_BOX
+            if self.on_goal(box):       # ゴールに乗っているあいだは別の絵
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
 
         # 主人公
         px = self.slide_pos(self.ox, self.from_x, self.player_x)
@@ -188,5 +208,11 @@ class App:
         if self.walk_timer >= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
             v = V_PLAYER_B
         pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+
+        # クリアしたら、画面の上に知らせる
+        if self.cleared:
+            msg = "STAGE CLEAR!"
+            x = (SCREEN_WIDTH - len(msg) * 4) // 2
+            pyxel.text(x, 3, msg, pyxel.COLOR_YELLOW)
 
 App()
