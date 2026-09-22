@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ5：クリア判定と、やり直し
+# step2 フェーズ6：ステージを 10 個にする
 
 import pyxel
 
@@ -44,12 +44,126 @@ STAGE1 = [
     "########",
 ]
 
+STAGE2 = [          # 横にも押せる
+    "########",
+    "#......#",
+    "#.$..O.#",
+    "#.@....#",
+    "#.$..O.#",
+    "#......#",
+    "########",
+]
+
+STAGE3 = [          # 縦と横を組み合わせる
+    "#########",
+    "#.O...O.#",
+    "#.......#",
+    "#..$....#",
+    "#....$..#",
+    "#..@....#",
+    "#.......#",
+    "#########",
+]
+
+STAGE4 = [          # 壁があるので、押す側へ回り込む
+    "##########",
+    "#........#",
+    "#.O.##.O.#",
+    "#...##...#",
+    "#..$..$..#",
+    "#........#",
+    "#...@....#",
+    "##########",
+]
+
+STAGE5 = [          # 段が仕切られていて、行き来に回り道がいる
+    "##########",
+    "#........#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE6 = [          # どれから動かすか、順番を考える
+    "##########",
+    "#........#",
+    "#.O.O.O..#",
+    "#........#",
+    "#.$......#",
+    "#..$.....#",
+    "#...$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE7 = [          # 細い通路。押せる向きが決まってしまう
+    "##########",
+    "#....#...#",
+    "#.$..#.O.#",
+    "#....#...#",
+    "#.$......#",
+    "#....#...#",
+    "#.@..#.O.#",
+    "#....#...#",
+    "##########",
+]
+
+STAGE8 = [          # 真ん中のゴールへ、四方から運ぶ
+    "############",
+    "#..........#",
+    "#.$......$.#",
+    "#....##....#",
+    "#...OOOO...#",
+    "#....##....#",
+    "#.$......$.#",
+    "#.....@....#",
+    "############",
+]
+
+STAGE9 = [          # 中央の壁を大きく回る
+    "###########",
+    "#.........#",
+    "#.OO..$$..#",
+    "#.........#",
+    "#...###...#",
+    "#.........#",
+    "#.OO..$$..#",
+    "#....@....#",
+    "###########",
+]
+
+STAGE10 = [         # 仕上げ。四隅へ運ぶ
+    "###########",
+    "#O.......O#",
+    "#.........#",
+    "#...$.$...#",
+    "#..#...#..#",
+    "#...$.$...#",
+    "#.........#",
+    "#O...@...O#",
+    "###########",
+]
+
+STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
+          STAGE6, STAGE7, STAGE8, STAGE9, STAGE10]
+
+def draw_center(text, y, color):
+    """文字を、画面の横まんなかに描く"""
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)
+
 class App:
     def __init__(self):
         """起動時の設定"""
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
         pyxel.load("sokoban.pyxres")
-        self.load_stage(STAGE1)
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.all_cleared = False        # 10 個ぜんぶ終わったか
+        self.load_stage(STAGES[self.stage_no])
         pyxel.run(self.update, self.draw)
 
     def load_stage(self, rows):
@@ -86,8 +200,20 @@ class App:
 
     def update(self):
         """フレーム毎の更新処理"""
+        if self.all_cleared:                    # ぜんぶおわった。Enter で 1 面から
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.load_stage(STAGES[self.stage_no])
+            return
+        
         if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
-            self.load_stage(STAGE1)
+            self.load_stage(STAGES[self.stage_no])
+            return
+
+        if self.cleared:                        # クリアした。Enter で次のステージへ
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.next_stage()
             return
         
         if self.walk_timer > 0:                 # 歩いている途中
@@ -137,7 +263,15 @@ class App:
     def is_cleared(self):
         """すべての荷物がゴールに乗ったか"""
         return all(self.on_goal(box) for box in self.boxes)
-    
+
+    def next_stage(self):
+        """次のステージへ進む。最後だったら全クリア"""
+        if self.stage_no + 1 < len(STAGES):
+            self.stage_no += 1
+            self.load_stage(STAGES[self.stage_no])
+        else:
+            self.all_cleared = True
+
     def try_move(self, direction):
         """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
         self.player_dir = direction     # 動けなくても、向きだけは変える
@@ -209,10 +343,12 @@ class App:
             v = V_PLAYER_B
         pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
 
-        # クリアしたら、画面の上に知らせる
-        if self.cleared:
-            msg = "STAGE CLEAR!"
-            x = (SCREEN_WIDTH - len(msg) * 4) // 2
-            pyxel.text(x, 3, msg, pyxel.COLOR_YELLOW)
-
+        # 画面の上の表示
+        if self.all_cleared:
+            draw_center("ALL CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
+        else:
+            pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
+                       pyxel.COLOR_GRAY)
+            if self.cleared:
+                draw_center("CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
 App()
