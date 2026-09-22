@@ -143,9 +143,10 @@
 
 <div class="note">
   <b>作品の規模感</b>
-  最終的なコードはおよそ <b>280〜330 行</b>です。step1（150〜200 行）より増えますが、
-  <b>そのうち 3 割ほどは「ステージの地図」そのもの</b>で、考えて書くコードの量は
-  step1 と大きくは変わりません。<b>11 のフェーズ</b>に分けて進めます。
+  最終的なコードは <b>500 行前後</b>になりそうです（フェーズ 7 の時点で <b>404 行</b>）。
+  step1（150〜200 行）より増えますが、<b>そのうち 115 行は「ステージの地図」そのもの</b>で、
+  考えて書くコードの量は step1 と大きくは変わりません。
+  <b>12 のフェーズ</b>に分けて進めます。
 </div>
 
 <div class="note">
@@ -194,21 +195,28 @@
         ステージの作り方と、解けるかどうかを調べる検算ツールも</td>
         <td>ステージ一覧の持ち方、進行状態の管理、<code>len()</code>、<b>早い <code>return</code></b></td></tr>
     <tr><td class="phase-no">7</td>
-        <td><b>タイトル画面とステージ選択</b></td>
-        <td>画面遷移（step1 の復習）、カーソルの移動</td></tr>
+        <td><a href="phase7.html"><b>タイトル画面と、画面の振り分け</b></a><br>
+        起動したらタイトル画面。<code>update()</code> と <code>draw()</code> を「振り分け係」に作り替え、
+        全クリアでタイトルへ戻る</td>
+        <td>画面遷移（step1 の復習）、<b>メソッドの分け方</b>、
+        <code>frame_count</code> の余りで点滅</td></tr>
     <tr><td class="phase-no">8</td>
+        <td><b>ステージ選択</b><br>
+        クリアした面だけ選べるようにする。カーソルは <code>stage_no</code> をそのまま動かす</td>
+        <td>カーソルの移動、<b>クリア記録の持ち方</b></td></tr>
+    <tr><td class="phase-no">9</td>
         <td><b>手数の表示とクリア演出</b><br>
         ステージ番号・手数を出し、クリアの瞬間に間をつくる</td>
         <td>HUD、<code>frame_count</code> による演出</td></tr>
-    <tr><td class="phase-no">9</td>
+    <tr><td class="phase-no">10</td>
         <td><b>効果音と BGM をつける</b></td>
         <td><code>play</code> / <code>playm</code>（step1 の復習）</td></tr>
-    <tr><td class="phase-no">10</td>
+    <tr><td class="phase-no">11</td>
         <td><b>スマホで遊べるようにする</b>（step2 で追加した内容）<br>
         仮想ゲームパッドの十字キーとボタンも受け付ける。
         試しにパッケージして、自分のスマホで実際に動かして確かめる</td>
         <td><code>GAMEPAD1_BUTTON_*</code>、<b>入力の判定を自分の関数にまとめる</b></td></tr>
-    <tr><td class="phase-no">11</td>
+    <tr><td class="phase-no">12</td>
         <td><b>パッケージ化して Web で公開する</b></td>
         <td><code>pyxel package</code> / <code>app2html</code>（step1 の復習）</td></tr>
   </tbody>
@@ -253,15 +261,16 @@ step1 が「ゲームとして成立させるための仕組み」だったの�
     <tr><td rowspan="2">状態の管理</td>
         <td>すべての荷物がゴールに乗ったかを調べる</td><td>5</td></tr>
     <tr><td><b>初期状態を保存しておき、いつでも戻す</b></td><td>5</td></tr>
-    <tr><td rowspan="2">ゲーム進行</td>
+    <tr><td rowspan="3">ゲーム進行</td>
         <td>ステージを順に進める／全クリア</td><td>6</td></tr>
-    <tr><td>タイトルとステージ選択（step1 の画面遷移の応用）</td><td>7</td></tr>
-    <tr><td>画面表示</td><td>ステージ番号・手数の表示、クリア演出</td><td>8</td></tr>
-    <tr><td>サウンド</td><td>押す音・ゴールに乗った音・クリア音（step1 の復習）</td><td>9</td></tr>
+    <tr><td>タイトル画面と、画面の振り分け（step1 の画面遷移の応用）</td><td>7</td></tr>
+    <tr><td>ステージ選択（クリアした面だけ選べる）</td><td>8</td></tr>
+    <tr><td>画面表示</td><td>ステージ番号・手数の表示、クリア演出</td><td>9</td></tr>
+    <tr><td>サウンド</td><td>押す音・ゴールに乗った音・クリア音（step1 の復習）</td><td>10</td></tr>
     <tr><td rowspan="2">スマホ対応</td>
-        <td><b>仮想ゲームパッドのボタンを受け取る</b>（<code>GAMEPAD1_BUTTON_*</code>）</td><td>10</td></tr>
-    <tr><td>キーとボタンの判定を<b>自分の関数にまとめる</b></td><td>10</td></tr>
-    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）</td><td>11</td></tr>
+        <td><b>仮想ゲームパッドのボタンを受け取る</b>（<code>GAMEPAD1_BUTTON_*</code>）</td><td>11</td></tr>
+    <tr><td>キーとボタンの判定を<b>自分の関数にまとめる</b></td><td>11</td></tr>
+    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）</td><td>12</td></tr>
   </tbody>
 </table>
 

@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ7：タイトル画面と、画面の振り分け ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 7 </span>タイトル画面と、画面の振り分け</h1>
+  <p>update() と draw() を「振り分け係」にする</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 7</p>
+
+<div class="warn">
+  <b>その前に：フェーズ 7 を 2 つに分けました</b>
+  <a href="./#phases">概要のフェーズ分割</a>では、フェーズ 7 を
+  「<b>タイトル画面とステージ選択</b>」の 1 つにしていました。
+  ところが書き出してみると<b>新しく足す行が 100 行を超えた</b>ので、2 つに分けます。
+  <table>
+    <thead><tr><th>　</th><th>やること</th><th>新しく足す行</th></tr></thead>
+    <tbody>
+      <tr><td><b>フェーズ 7</b><br>（このページ）</td>
+          <td><b>タイトル画面</b>と、<code>update()</code> / <code>draw()</code> の<b>振り分け</b>。
+          <code>Enter</code> でゲームが始まる（まだ 1 面から）</td>
+          <td>57 行足して 7 行消す<br>（<b>354 行 → 404 行</b>）</td></tr>
+      <tr><td><b>フェーズ 8</b><br>（次回）</td>
+          <td><b>ステージ選択</b>。クリアした面だけ選べるようにする</td>
+          <td>50 行ほど</td></tr>
+    </tbody>
+  </table>
+  以降のフェーズ番号は<b>1 つずつ後ろにずれます</b>（もとの 8 → 9、…、もとの 11 → 12。
+  ぜんぶで <b>12 フェーズ</b>になります）。
+  <b>フェーズ 6 までのページは直していません。</b>
+  フェーズ 6 の末尾に「残り 5 つ」と書いてありますが、いまは「残り 6 つ」です。
+</div>
+
+<h2>ゴール</h2>
+
+<p>
+起動したらいきなり 1 面が始まる——のをやめて、<b>タイトル画面</b>を出します。
+<code>Enter</code> を押すとゲームが始まり、10 面ぜんぶ終わったら<b>タイトルに戻ってくる</b>。
+これで「<b>始まりと終わりがある</b>」形になります。
+</p>
+
+<p>
+ただ、このフェーズの本題はタイトル画面そのものではありません。
+<b><code>update()</code> と <code>draw()</code> を「振り分け係」に作り替える</b>ことです。
+ここを先にやっておくと、次のフェーズで<b>ステージ選択の画面を足すのが「1 本ぶん増やすだけ」</b>になります。
+</p>
+
+<div class="note">
+  <b>step1 フェーズ 7 の復習です</b>
+  <a href="../step1/phase7.html">step1 の「タイトルとゲームオーバー」</a>で、
+  <code>self.scene</code> に「いまどの画面か」を入れて振り分けました。
+  <b>考え方はまったく同じ</b>です。<br>
+  ちがうのは 1 つだけ。step1 は<b>あそぶ画面から作って、あとでタイトルを足した</b>ので、
+  <code>SCENE_PLAY = 0</code> / <code>SCENE_GAMEOVER = 1</code> /
+  <code>SCENE_TITLE = 2</code> と、<b>足した順の番号</b>になっていました。
+  今回も同じで、<b>あとから足すほど番号が大きくなります</b>。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-scene">1-1. 「いまどの画面か」を数ひとつで覚える</h3>
+
+<p>
+画面が 2 つになると、キーの意味が変わります。
+タイトルでの <code>Enter</code> は「<b>始める</b>」、ゲーム中の <code>Enter</code> は「<b>次の面へ</b>」。
+<b>同じキーなのに、やることがちがう</b>のです。
+</p>
+
+<p>
+これを <code>if</code> の山で書くと、すぐに読めなくなります。そこで、
+<b><code>self.scene</code> に「いまどの画面か」を入れておき、
+<code>update()</code> は中身を書かずに、担当のメソッドへ渡すだけ</b>にします。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="self.scene の値を見て、update() が update_title() か update_game() へ、draw() が draw_title() か draw_game() へ処理を渡す図">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">「いまどの画面か」を<tspan font-weight="bold">数ひとつ</tspan>で覚えて、<tspan font-family="Consolas, monospace" font-weight="bold">update()</tspan> と <tspan font-family="Consolas, monospace" font-weight="bold">draw()</tspan> が<tspan font-weight="bold">担当へ渡します</tspan></text>
+
+  <!-- self.scene パネル -->
+  <rect x="20" y="44" width="172" height="80" rx="6" fill="#232840" stroke="#3b4166"/>
+  <text x="34" y="66" fill="#45b0e8" font-family="Consolas, monospace" font-size="12">self.scene</text>
+  <rect x="34" y="78" width="70" height="30" fill="#ffcc44" opacity=".16"/>
+  <rect x="34" y="78" width="70" height="30" fill="none" stroke="#ffcc44" stroke-width="2"/>
+  <text x="69" y="97" fill="#ffcc44" font-family="Consolas, monospace" font-size="10" text-anchor="middle">0 TITLE</text>
+  <rect x="112" y="78" width="66" height="30" fill="#10121c" stroke="#2ee6a8"/>
+  <text x="145" y="97" fill="#2ee6a8" font-family="Consolas, monospace" font-size="10" text-anchor="middle">1 GAME</text>
+
+  <!-- 分配 -->
+  <path d="M192 84 H214 M214 84 V62 H228 M214 84 V178 H228" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+  <path d="M228 62 l-7 -4 v8 z" fill="#3b4166"/>
+  <path d="M228 178 l-7 -4 v8 z" fill="#3b4166"/>
+
+  <!-- update() -->
+  <rect x="234" y="44" width="122" height="36" rx="5" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="295" y="67" fill="#e8f0ff" font-family="Consolas, monospace" font-size="13" text-anchor="middle">update()</text>
+  <path d="M356 62 H378 V44 H392 M378 62 V92 H392" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+  <path d="M392 44 l-7 -4 v8 z" fill="#ffcc44"/>
+  <path d="M392 92 l-7 -4 v8 z" fill="#2ee6a8"/>
+  <rect x="398" y="28" width="218" height="32" rx="5" fill="#ffcc44" opacity=".12"/>
+  <rect x="398" y="28" width="218" height="32" rx="5" fill="none" stroke="#ffcc44"/>
+  <text x="412" y="49" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">self.update_title()</text>
+  <rect x="398" y="76" width="218" height="32" rx="5" fill="#2ee6a8" opacity=".12"/>
+  <rect x="398" y="76" width="218" height="32" rx="5" fill="none" stroke="#2ee6a8"/>
+  <text x="412" y="97" fill="#2ee6a8" font-family="Consolas, monospace" font-size="12">self.update_game()</text>
+
+  <!-- draw() -->
+  <rect x="234" y="160" width="122" height="36" rx="5" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="295" y="183" fill="#e8f0ff" font-family="Consolas, monospace" font-size="13" text-anchor="middle">draw()</text>
+  <path d="M356 178 H378 V160 H392 M378 178 V208 H392" stroke="#3b4166" stroke-width="1.5" fill="none"/>
+  <path d="M392 160 l-7 -4 v8 z" fill="#ffcc44"/>
+  <path d="M392 208 l-7 -4 v8 z" fill="#2ee6a8"/>
+  <rect x="398" y="144" width="218" height="32" rx="5" fill="#ffcc44" opacity=".12"/>
+  <rect x="398" y="144" width="218" height="32" rx="5" fill="none" stroke="#ffcc44"/>
+  <text x="412" y="165" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">self.draw_title()</text>
+  <rect x="398" y="192" width="218" height="32" rx="5" fill="#2ee6a8" opacity=".12"/>
+  <rect x="398" y="192" width="218" height="32" rx="5" fill="none" stroke="#2ee6a8"/>
+  <text x="412" y="213" fill="#2ee6a8" font-family="Consolas, monospace" font-size="12">self.draw_game()</text>
+
+  <!-- 下段 -->
+  <rect x="20" y="244" width="596" height="44" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="36" y="264" fill="#2ee6a8" font-size="11">緑の 2 つは、<tspan font-family="Consolas, monospace" fill="#e8f0ff">いまの update() / draw() の名前を変えるだけ</tspan>です</text>
+  <text x="36" y="280" fill="#9aa4c4" font-size="11">中身は 1 行も動かしません。だから<tspan fill="#e8f0ff">動いていたものが壊れません</tspan></text>
+</svg>
+</div>
+<figcaption><code>update()</code> と <code>draw()</code> は<b>交通整理だけ</b>。あそぶ処理はぜんぶ <code>_game</code> のほうに残ります</figcaption>
+</figure>
+
+<div class="term">
+  <b><code>SCENE_TITLE = 0</code> と名前をつける理由</b>
+  <code>self.scene</code> に入るのは <code>0</code> か <code>1</code> です。
+  なら <code>if self.scene == 0:</code> と書いてもいいはずですが、
+  <b>半年後の自分が読んで <code>0</code> が何かわかりません</b>。<br>
+  <code>SCENE_TITLE = 0</code> と<b>名前をつけておく</b>と、
+  <code>if self.scene == SCENE_TITLE:</code> がそのまま日本語として読めます。
+  こういう「<b>意味のある名前をつけた数</b>」を<b>定数</b>と呼びます。
+  <code>DIR_DOWN</code>、<code>U_WALL</code> も同じ仲間です。
+</div>
+
+<h3 id="idea-start">1-2. 盤面は、ゲームを始めるときに作る</h3>
+
+<p>
+いまは <code>__init__()</code> の中で <code>load_stage()</code> を呼んでいます。
+つまり<b>起動した瞬間に盤面ができている</b>わけです。
+</p>
+
+<p>
+でもタイトル画面では、盤面はまだ要りません。そこで
+<code>load_stage()</code> の呼び出しを <code>__init__()</code> から取り出して、
+<b><code>start_game()</code> という新しいメソッド</b>に移します。
+</p>
+
+<pre><code>    def start_game(self):
+        """いまの stage_no のステージを読んで、ゲームを始める"""
+        self.load_stage(STAGES[self.stage_no])
+        self.scene = SCENE_GAME</code></pre>
+
+<p>
+たった 2 行ですが、これが次のフェーズで効きます。
+ステージ選択の画面で面を選んだあとにやることは、<b>この <code>start_game()</code> を呼ぶだけ</b>。
+「<b>いまの <code>stage_no</code> から始める</b>」という係を 1 つ作っておくと、
+<b>誰が呼んでも同じように始まります</b>。
+</p>
+
+<div class="note">
+  <b>「係を作る」は、このプロジェクトで何度も出てきました</b>
+  <code>load_stage()</code>（地図をもらって遊べる状態を作る係）、
+  <code>draw_center()</code>（文字を中央に描く係）、
+  <code>is_cleared()</code>（クリアしたか答える係）。<br>
+  <b>やることに名前をつけて外に出しておくと、あとから呼ぶ人が増えても困りません。</b>
+  <code>start_game()</code> はいま <b>1 か所</b>（タイトルの <code>Enter</code>）からしか呼ばれませんが、
+  次のフェーズで <b>2 か所</b>になります。
+</div>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>self.scene</code></td>
+        <td>いまどの画面かを覚えておく数。<b>step1 フェーズ 7 と同じ</b></td></tr>
+    <tr><td><b>メソッドを分ける</b></td>
+        <td><code>update()</code> / <code>draw()</code> を<b>振り分けだけ</b>にして、
+        中身は <code>update_title()</code> などへ移す</td></tr>
+    <tr><td><code>pyxel.frame_count</code></td>
+        <td>起動してからのフレーム数。ずっと増えつづける数</td></tr>
+    <tr><td><code>%</code>（余り）</td>
+        <td><code>frame_count % 30</code> は <b>0〜29 をくり返す</b>。点滅に使う。
+        <code>//</code>（切り捨て割り算）とセットで覚える</td></tr>
+    <tr><td><code>pyxel.blt</code> の透過色</td>
+        <td>タイトルの絵も、ゲームと<b>同じ透過色</b>を渡す。
+        ワンコは <code>COLOR_GRAY</code>、リンゴは <code>COLOR_BLACK</code></td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+<b>6 段階</b>です。<b>3-4 と 3-5 は「名前を変える」だけ</b>なので、見た目より短く済みます。
+</p>
+
+<h3 id="step-const">3-1. 定数を 4 つ足す</h3>
+
+<p><code>MOVE_FRAMES</code> の<b>すぐ下</b>に足します。</p>
+
+<pre><code>MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
+
+SCENE_TITLE = 0         # タイトル画面
+SCENE_GAME = 1          # あそんでいる画面
+
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数</code></pre>
+
+<h3 id="step-blink">3-2. <code>is_blink_on()</code> を足す</h3>
+
+<p>
+<code>draw_center()</code> の<b>すぐ下</b>、<code>class App:</code> の<b>手前</b>です。
+<code>self</code> を使わないので <code>class</code> の外に置きます。
+</p>
+
+<pre><code>def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON</code></pre>
+
+<div class="note">
+  <b>step1 とまったく同じ関数です</b>
+  <a href="../step1/phase7.html">step1 フェーズ 7</a> で書いたものを、そのまま持ってきました。
+  <b>1 度書いたものを持ってくるのは、手抜きではありません。</b>
+  同じ考え方が別のゲームでも通じる、ということです。
+</div>
+
+<h3 id="step-init">3-3. <code>__init__()</code> を直して、<code>start_game()</code> を足す</h3>
+
+<p>
+<code>self.scene</code> を<b>足し</b>、<code>load_stage()</code> の行を
+<b>消して</b> <code>start_game()</code> へ<b>移します</b>。
+</p>
+
+<pre><code>    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面   ← 足す
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.all_cleared = False        # 10 個ぜんぶ終わったか
+        pyxel.run(self.update, self.draw)
+                                        ← self.load_stage(...) の行を消す
+
+    def start_game(self):                                           ← ここから足す
+        """いまの stage_no のステージを読んで、ゲームを始める"""
+        self.load_stage(STAGES[self.stage_no])
+        self.scene = SCENE_GAME</code></pre>
+
+<div class="warn">
+  <b><code>pyxel.run()</code> より後ろには書けません</b>
+  <code>pyxel.run()</code> を呼ぶと、そこで<b>ゲームが回りはじめ、戻ってきません</b>。
+  <code>self.scene = SCENE_TITLE</code> は、必ず <code>pyxel.run()</code> の<b>手前</b>に書いてください。
+</div>
+
+<h3 id="step-update">3-4. <code>update()</code> を振り分けにする</h3>
+
+<p><b>やることは 3 つです。</b></p>
+
+<ol>
+  <li>いまの <code>def update(self):</code> の行を、<b><code>def update_game(self):</code> に書き換える</b>
+      （<b>中身は 1 行も動かしません</b>）</li>
+  <li>その<b>手前</b>に、新しい <code>update()</code> と <code>update_title()</code> を足す</li>
+  <li><code>update_game()</code> の中の<b>全クリアの行き先</b>を、タイトルに変える</li>
+</ol>
+
+<pre><code>    def update(self):                                               ← ここから足す
+        """フレーム毎の更新処理。いまの画面の担当へ渡す"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        else:
+            self.update_game()
+
+    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()
+                                                                    ← ここまで足す
+    def update_game(self):                  ← もとの update() の名前を変えただけ
+        """あそんでいる間の更新"""
+        if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.scene = SCENE_TITLE        ← load_stage(...) から書き換え
+            return
+
+        # ↓ ここから下は、いままでとまったく同じ
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
+            self.load_stage(STAGES[self.stage_no])
+            return</code></pre>
+
+<div class="term">
+  <b>ここが今回いちばん大事なところです</b>
+  <code>update_game()</code> の中身は、<b>全クリアの 1 行を除いてまったく同じ</b>です。
+  歩く処理、押す処理、クリア判定——ぜんぶそのまま。<br>
+  <b>「動いているものを、動かさない」</b>。これが安全な書き換えのコツです。
+  <code>def</code> の行 1 本を書き換えただけなので、
+  <b>もし動かなくなったら、原因は必ず新しく足した側にあります</b>。
+</div>
+
+<h3 id="step-draw">3-5. <code>draw()</code> を振り分けにして、<code>draw_title()</code> を足す</h3>
+
+<p><code>update()</code> とまったく同じ手順です。ただし <b><code>pyxel.cls()</code> の置き場所に注意</b>。</p>
+
+<ol>
+  <li>いまの <code>def draw(self):</code> の行を <b><code>def draw_game(self):</code></b> に書き換える</li>
+  <li><code>draw_game()</code> の先頭から <code>pyxel.cls(pyxel.COLOR_BLACK)</code> を<b>消す</b></li>
+  <li>手前に、新しい <code>draw()</code> と <code>draw_title()</code> を足す</li>
+</ol>
+
+<pre><code>    def draw(self):                                                 ← ここから足す
+        """フレーム毎の描画処理。画面を消してから、担当へ渡す"""
+        pyxel.cls(pyxel.COLOR_BLACK)        # 両方の画面で使うので、ここに 1 回だけ
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+        else:
+            self.draw_game()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("SOKOBAN", 30, pyxel.COLOR_YELLOW)
+        draw_center("PUSH THE APPLES", 44, pyxel.COLOR_WHITE)
+
+        # ワンコが、リンゴをゴールへ押していく絵
+        x = SCREEN_WIDTH // 2 - TILE * 2
+        pyxel.blt(x, 66, 0, DIR_RIGHT * TILE, V_PLAYER_A, TILE, TILE, pyxel.COLOR_GRAY)
+        pyxel.blt(x + TILE, 66, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+        pyxel.blt(x + TILE * 3, 66, 0, U_GOAL, V_TILE, TILE, TILE)
+
+        if is_blink_on():                       # 1 秒のうち 20 フレームだけ見える
+            draw_center("PRESS ENTER", 92, pyxel.COLOR_WHITE)
+
+        draw_center("ARROW: MOVE    R: RETRY", 108, pyxel.COLOR_GRAY)
+                                                                    ← ここまで足す
+    def draw_game(self):                    ← もとの draw() の名前を変えただけ
+        """あそんでいる画面を描く"""
+                                            ← pyxel.cls(...) の行を消す
+        # 壁を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):</code></pre>
+
+<p>
+タイトル画面のどこに何を置いているか、図にしました。
+<b>横の位置（<code>x</code>）は <code>draw_center()</code> が計算してくれる</b>ので、
+自分で決めるのは<b>縦の位置（<code>y</code>）だけ</b>です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="160×120 ドットのタイトル画面の中で、SOKOBAN が y=30、PUSH THE APPLES が y=44、絵が y=66、PRESS ENTER が y=92、操作説明が y=108 に置かれていることを示す図">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">タイトル画面の中身（<tspan font-family="Consolas, monospace">160 × 120</tspan> ドットを 3 倍に拡大）</text>
+
+  <!-- 画面 -->
+  <rect x="120" y="36" width="480" height="360" fill="#10121c" stroke="#3b4166" stroke-width="2"/>
+
+  <!-- y 目盛り -->
+  <g font-family="Consolas, monospace" font-size="11" fill="#9aa4c4" text-anchor="end">
+    <text x="108" y="130">y = 30</text>
+    <text x="108" y="172">y = 44</text>
+    <text x="108" y="238">y = 66</text>
+    <text x="108" y="316">y = 92</text>
+    <text x="108" y="364">y = 108</text>
+  </g>
+  <g stroke="#3b4166" stroke-dasharray="3 3">
+    <path d="M114 126 H600"/><path d="M114 168 H600"/><path d="M114 234 H600"/>
+    <path d="M114 312 H600"/><path d="M114 360 H600"/>
+  </g>
+
+  <!-- SOKOBAN -->
+  <text x="360" y="130" fill="#ffcc44" font-family="Consolas, monospace" font-size="21" text-anchor="middle" letter-spacing="2">SOKOBAN</text>
+  <!-- PUSH THE APPLES -->
+  <text x="360" y="172" fill="#e8f0ff" font-family="Consolas, monospace" font-size="14" text-anchor="middle" letter-spacing="1">PUSH THE APPLES</text>
+
+  <!-- 絵（ワンコ・リンゴ・ゴール）8 ドット = 24px -->
+  <rect x="276" y="210" width="24" height="24" fill="#45b0e8" opacity=".3"/>
+  <rect x="276" y="210" width="24" height="24" fill="none" stroke="#45b0e8"/>
+  <rect x="300" y="210" width="24" height="24" fill="#ff5565" opacity=".3"/>
+  <rect x="300" y="210" width="24" height="24" fill="none" stroke="#ff5565"/>
+  <rect x="348" y="210" width="24" height="24" fill="#2ee6a8" opacity=".25"/>
+  <rect x="348" y="210" width="24" height="24" fill="none" stroke="#2ee6a8" stroke-dasharray="3 2"/>
+  <g font-size="10" text-anchor="middle">
+    <text x="288" y="250" fill="#45b0e8">ワンコ</text>
+    <text x="312" y="250" fill="#ff5565">リンゴ</text>
+    <text x="360" y="250" fill="#2ee6a8">ゴール</text>
+  </g>
+  <path d="M330 222 h12 M337 218 l5 4 -5 4" stroke="#9aa4c4" stroke-width="1.2" fill="none"/>
+
+  <!-- PRESS ENTER -->
+  <text x="360" y="316" fill="#e8f0ff" font-family="Consolas, monospace" font-size="14" text-anchor="middle" letter-spacing="1">PRESS ENTER</text>
+  <text x="470" y="316" fill="#ffcc44" font-size="10">← ここだけ点滅する</text>
+
+  <!-- 操作説明 -->
+  <text x="360" y="364" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">ARROW: MOVE    R: RETRY</text>
+
+  <!-- 下段の説明 -->
+  <rect x="20" y="404" width="596" height="22" rx="4" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="34" y="419" fill="#9aa4c4" font-size="11">横の位置は <tspan font-family="Consolas, monospace" fill="#ffcc44">draw_center()</tspan> が <tspan font-family="Consolas, monospace" fill="#e8f0ff">(160 - 文字数 × 4) // 2</tspan> で計算します。絵だけは <tspan font-family="Consolas, monospace" fill="#e8f0ff">x</tspan> を自分で決めます</text>
+</svg>
+</div>
+<figcaption>絵の <code>x</code> は <code>SCREEN_WIDTH // 2 - TILE * 2</code>（= 64）。ワンコ・リンゴ・ゴールを並べて<b>ゲームの内容が 1 目でわかる</b>ようにしました</figcaption>
+</figure>
+
+<div class="term">
+  <b>ゴールのマスだけ、透過色を渡していません</b>
+  <code>pyxel.blt(x + TILE * 3, 66, 0, U_GOAL, V_TILE, TILE, TILE)</code> ——
+  最後の引数がありません。<b>ゴールのタイルは 8 × 8 ドットぜんぶが絵</b>なので、
+  <b>透かしたい色がない</b>のです。<br>
+  ワンコは背景を <code>COLOR_GRAY</code>、リンゴは <code>COLOR_BLACK</code> で描いてあるので、
+  <code>draw_game()</code> と<b>同じ色を渡します</b>。
+  ここを間違えると、<b>絵のまわりに四角い枠が出ます</b>。
+</div>
+
+<h3 id="step-allclear">3-6. ALL CLEAR の文字を書き換える</h3>
+
+<p>
+<code>Enter</code> の行き先がタイトルに変わったので、<b>文字もそう書きます</b>。
+<code>draw_game()</code> のいちばん下です。
+</p>
+
+<pre><code>        # 画面の上の表示
+        if self.all_cleared:
+            draw_center("ALL CLEAR!  ENTER=TITLE", 3, pyxel.COLOR_YELLOW)</code></pre>
+
+<div class="note">
+  <b>押せるキーは、画面に書いておく</b>
+  <code>R</code> でやり直せることは、フェーズ 5 から<b>どこにも書いていませんでした</b>。
+  自分で作ったゲームなので覚えていますが、<b>人に渡したらぜったいに気づきません</b>。<br>
+  今回タイトルに <code>ARROW: MOVE    R: RETRY</code> を出したのは、そのためです。
+  <b>遊び方は、遊ぶ人が見える場所に置く。</b>
+</div>
+
+<h2>4. できあがりのコード</h2>
+
+<p>
+<code>step2/sokoban.py</code> の全文です（<b>404 行</b>）。
+<b>新しく足すのは 57 行、消すのは 7 行</b>。
+地図（38〜152 行）は<b>まったく触りません</b>。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ7：タイトル画面と、画面の振り分け
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
+
+SCENE_TITLE = 0         # タイトル画面
+SCENE_GAME = 1          # あそんでいる画面
+
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER_A = 8          # 主人公の段（コマ A）
+V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
+U_FLOOR = 0             # 床（歩ける）
+U_WALL = 8              # 壁（歩けない）
+U_GOAL = 16             # ゴール
+U_BOX = 24              # 荷物
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物
+
+# 向き。この番号がそのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),         # 下
+    (0, -1),        # 上
+    (-1, 0),        # 左
+    (1, 0),         # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [
+    &quot;########&quot;,
+    &quot;#......#&quot;,
+    &quot;#..O.O.#&quot;,
+    &quot;#..$.$.#&quot;,
+    &quot;#..@...#&quot;,
+    &quot;########&quot;,
+]
+
+STAGE2 = [          # 横にも押せる
+    &quot;########&quot;,
+    &quot;#......#&quot;,
+    &quot;#.$..O.#&quot;,
+    &quot;#.@....#&quot;,
+    &quot;#.$..O.#&quot;,
+    &quot;#......#&quot;,
+    &quot;########&quot;,
+]
+
+STAGE3 = [          # 縦と横を組み合わせる
+    &quot;#########&quot;,
+    &quot;#.O...O.#&quot;,
+    &quot;#.......#&quot;,
+    &quot;#..$....#&quot;,
+    &quot;#....$..#&quot;,
+    &quot;#..@....#&quot;,
+    &quot;#.......#&quot;,
+    &quot;#########&quot;,
+]
+
+STAGE4 = [          # 壁があるので、押す側へ回り込む
+    &quot;##########&quot;,
+    &quot;#........#&quot;,
+    &quot;#.O.##.O.#&quot;,
+    &quot;#...##...#&quot;,
+    &quot;#..$..$..#&quot;,
+    &quot;#........#&quot;,
+    &quot;#...@....#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE5 = [          # 段が仕切られていて、行き来に回り道がいる
+    &quot;##########&quot;,
+    &quot;#........#&quot;,
+    &quot;#O..$....#&quot;,
+    &quot;#...##...#&quot;,
+    &quot;#O..$....#&quot;,
+    &quot;#...##...#&quot;,
+    &quot;#O..$....#&quot;,
+    &quot;#....@...#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE6 = [          # どれから動かすか、順番を考える
+    &quot;##########&quot;,
+    &quot;#........#&quot;,
+    &quot;#.O.O.O..#&quot;,
+    &quot;#........#&quot;,
+    &quot;#.$......#&quot;,
+    &quot;#..$.....#&quot;,
+    &quot;#...$....#&quot;,
+    &quot;#....@...#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE7 = [          # 細い通路。押せる向きが決まってしまう
+    &quot;##########&quot;,
+    &quot;#....#...#&quot;,
+    &quot;#.$..#.O.#&quot;,
+    &quot;#....#...#&quot;,
+    &quot;#.$......#&quot;,
+    &quot;#....#...#&quot;,
+    &quot;#.@..#.O.#&quot;,
+    &quot;#....#...#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE8 = [          # 真ん中のゴールへ、四方から運ぶ
+    &quot;############&quot;,
+    &quot;#..........#&quot;,
+    &quot;#.$......$.#&quot;,
+    &quot;#....##....#&quot;,
+    &quot;#...OOOO...#&quot;,
+    &quot;#....##....#&quot;,
+    &quot;#.$......$.#&quot;,
+    &quot;#.....@....#&quot;,
+    &quot;############&quot;,
+]
+
+STAGE9 = [          # 中央の壁を大きく回る
+    &quot;###########&quot;,
+    &quot;#.........#&quot;,
+    &quot;#.OO..$$..#&quot;,
+    &quot;#.........#&quot;,
+    &quot;#...###...#&quot;,
+    &quot;#.........#&quot;,
+    &quot;#.OO..$$..#&quot;,
+    &quot;#....@....#&quot;,
+    &quot;###########&quot;,
+]
+
+STAGE10 = [         # 仕上げ。四隅へ運ぶ
+    &quot;###########&quot;,
+    &quot;#O.......O#&quot;,
+    &quot;#.........#&quot;,
+    &quot;#...$.$...#&quot;,
+    &quot;#..#...#..#&quot;,
+    &quot;#...$.$...#&quot;,
+    &quot;#.........#&quot;,
+    &quot;#O...@...O#&quot;,
+    &quot;###########&quot;,
+]
+
+STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
+          STAGE6, STAGE7, STAGE8, STAGE9, STAGE10]
+
+def draw_center(text, y, color):
+    &quot;&quot;&quot;文字を、画面の横まんなかに描く&quot;&quot;&quot;
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)
+
+def is_blink_on():
+    &quot;&quot;&quot;点滅の「見えている」タイミングなら True を返す&quot;&quot;&quot;
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+class App:
+    def __init__(self):
+        &quot;&quot;&quot;起動時の設定&quot;&quot;&quot;
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title=&quot;Sokoban&quot;)
+        pyxel.load(&quot;sokoban.pyxres&quot;)
+        self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.all_cleared = False        # 10 個ぜんぶ終わったか
+        pyxel.run(self.update, self.draw)
+
+    def start_game(self):
+        &quot;&quot;&quot;いまの stage_no のステージを読んで、ゲームを始める&quot;&quot;&quot;
+        self.load_stage(STAGES[self.stage_no])
+        self.scene = SCENE_GAME
+
+    def load_stage(self, rows):
+        &quot;&quot;&quot;文字の地図を読んで、壁・主人公・荷物に分ける&quot;&quot;&quot;
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        self.walk_timer = 0             # 0 なら止まっている。1～8は歩いている途中
+        self.pushing = False            # いまの一歩で荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
+
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == &quot;@&quot;:
+                    self.player_x = x
+                    self.player_y = y
+                    mark = &quot;.&quot;          # 主人公の足元は床
+                elif mark == &quot;$&quot;:
+                    self.boxes.append([x, y])
+                    mark = &quot;.&quot;          # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        self.from_x = self.player_x     # 見た目の出発マス
+        self.from_y = self.player_y
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        &quot;&quot;&quot;フレーム毎の更新処理。いまの画面の担当へ渡す&quot;&quot;&quot;
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        else:
+            self.update_game()
+
+    def update_title(self):
+        &quot;&quot;&quot;タイトル画面。Enter でゲームを始める&quot;&quot;&quot;
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()
+
+    def update_game(self):
+        &quot;&quot;&quot;あそんでいる間の更新&quot;&quot;&quot;
+        if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.scene = SCENE_TITLE
+            return
+        
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
+            self.load_stage(STAGES[self.stage_no])
+            return
+
+        if self.cleared:                        # クリアした。Enter で次のステージへ
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.next_stage()
+            return
+        
+        if self.walk_timer &gt; 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
+
+        # 止まっていて、まだクリアしていないときだけ、キーを見る    
+        if self.walk_timer == 0 and not self.cleared:
+            self.handle_key()
+
+    def handle_key(self):
+        &quot;&quot;&quot;矢印キーを見て、押された向きへ 1 歩進もうとする&quot;&quot;&quot;
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btn(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btn(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btn(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def has_box(self, x, y):
+        &quot;&quot;&quot;そのマスに荷物があるかどうかを答える&quot;&quot;&quot;
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        &quot;&quot;&quot;(x, y) にある荷物を、(dx, dy) だけ動かす&quot;&quot;&quot;
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
+    def on_goal(self, box):
+        &quot;&quot;&quot;その荷物が、ゴールのマスに乗っているか&quot;&quot;&quot;
+        return self.tiles[box[1]][box[0]] == &quot;O&quot;
+
+    def is_cleared(self):
+        &quot;&quot;&quot;すべての荷物がゴールに乗ったか&quot;&quot;&quot;
+        return all(self.on_goal(box) for box in self.boxes)
+
+    def next_stage(self):
+        &quot;&quot;&quot;次のステージへ進む。最後だったら全クリア&quot;&quot;&quot;
+        if self.stage_no + 1 &lt; len(STAGES):
+            self.stage_no += 1
+            self.load_stage(STAGES[self.stage_no])
+        else:
+            self.all_cleared = True
+
+    def try_move(self, direction):
+        &quot;&quot;&quot;その向きへ動けるか調べて、動けるときだけ 1 マス進む&quot;&quot;&quot;
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == &quot;#&quot;:   # 行き先が壁なら
+            return                              # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):        # 行き先に荷物があるなら
+            far_x = next_x + dx                 # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == &quot;#&quot;: # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+            self.pushing = True                 # この一歩は、荷物を押している
+
+        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+
+    def slide_pos(self, origin, from_cell, to_cell):
+        &quot;&quot;&quot;出発マスから到着マスへ、いまどこまで来たかをドットで返す&quot;&quot;&quot;
+        moved = (to_cell - from_cell) * TILE * self.walk_timer // MOVE_FRAMES
+        return origin + from_cell * TILE + moved
+
+    def draw(self):
+        &quot;&quot;&quot;フレーム毎の描画処理。画面を消してから、担当へ渡す&quot;&quot;&quot;
+        pyxel.cls(pyxel.COLOR_BLACK)
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+        else:
+            self.draw_game()
+
+    def draw_title(self):
+        &quot;&quot;&quot;タイトル画面を描く&quot;&quot;&quot;
+        draw_center(&quot;SOKOBAN&quot;, 30, pyxel.COLOR_YELLOW)
+        draw_center(&quot;PUSH THE APPLES&quot;, 44, pyxel.COLOR_WHITE)
+
+        # ワンコが、リンゴをゴールへ押していく絵
+        x = SCREEN_WIDTH // 2 - TILE * 2
+        pyxel.blt(x, 66, 0, DIR_RIGHT * TILE, V_PLAYER_A, TILE, TILE, pyxel.COLOR_GRAY)
+        pyxel.blt(x + TILE, 66, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+        pyxel.blt(x + TILE * 3, 66, 0, U_GOAL, V_TILE, TILE, TILE)
+
+        if is_blink_on():                       # 1 秒のうち 20 フレームだけ見える
+            draw_center(&quot;PRESS ENTER&quot;, 92, pyxel.COLOR_WHITE)
+
+        draw_center(&quot;ARROW: MOVE    R: RETRY&quot;, 108, pyxel.COLOR_GRAY)
+
+    def draw_game(self):
+        &quot;&quot;&quot;あそんでいる画面を描く&quot;&quot;&quot;
+        # 壁を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == &quot;#&quot;:
+                    u = U_WALL
+                elif mark == &quot;O&quot;:
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                            0, u, V_TILE, TILE, TILE)
+
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる
+        dx, dy = MOVES[self.player_dir]
+        push_x = self.player_x + dx             # 押した荷物は主人公の目の前にいる
+        push_y = self.player_y + dy
+        for box in self.boxes:
+            if self.pushing and box[0] == push_x and box[1] == push_y:
+                bx = self.slide_pos(self.ox, box[0] - dx, box[0])
+                by = self.slide_pos(self.oy, box[1] - dy, box[1])
+            else:
+                bx = self.ox + box[0] * TILE
+                by = self.oy + box[1] * TILE
+            u = U_BOX
+            if self.on_goal(box):       # ゴールに乗っているあいだは別の絵
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公
+        px = self.slide_pos(self.ox, self.from_x, self.player_x)
+        py = self.slide_pos(self.oy, self.from_y, self.player_y)
+        v = V_PLAYER_A
+        if self.walk_timer &gt;= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+
+        # 画面の上の表示
+        if self.all_cleared:
+            draw_center(&quot;ALL CLEAR!  ENTER=TITLE&quot;, 3, pyxel.COLOR_YELLOW)
+        else:
+            pyxel.text(2, 3, f&quot;STAGE {self.stage_no + 1}/{len(STAGES)}&quot;,
+                       pyxel.COLOR_GRAY)
+            if self.cleared:
+                draw_center(&quot;CLEAR!  ENTER&quot;, 3, pyxel.COLOR_YELLOW)
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<p><b>次の 7 つを確かめてください。</b></p>
+
+<table>
+  <thead><tr><th>　</th><th>確かめること</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>起動すると<b>タイトル画面</b>が出る。盤面は出ない</td></tr>
+    <tr><td>2</td><td><code>PRESS ENTER</code> が<b>1 秒に 1 回、点滅する</b></td></tr>
+    <tr><td>3</td><td>ワンコ・リンゴ・ゴールの絵が出ていて、<b>まわりに四角い枠がない</b></td></tr>
+    <tr><td>4</td><td><code>Enter</code> で <b>STAGE 1 が始まる</b></td></tr>
+    <tr><td>5</td><td>ゲーム中の動きが<b>いままでとまったく同じ</b>（歩く・押す・<code>R</code>・<code>Enter</code> で次の面）</td></tr>
+    <tr><td>6</td><td>10 面ぜんぶ解くと <code>ALL CLEAR!  ENTER=TITLE</code> が出る</td></tr>
+    <tr><td>7</td><td>そこで <code>Enter</code> を押すと<b>タイトルに戻る</b>。もう一度 <code>Enter</code> で 1 面から</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <b>5 がいちばん大事です</b>
+  このフェーズは<b>「壊さないこと」が仕事</b>です。
+  タイトル画面はおまけで、本当にやったのは <code>update()</code> と <code>draw()</code> の作り替え。<br>
+  <b>ゲーム中の動きが 1 つでも変わっていたら、名前の変更に失敗しています。</b>
+  そのときは <a href="#trouble">7. うまくいかないときは</a> を見てください。
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3 id="rename-safe">6-1. 「名前を変えるだけ」が、いちばん安全な書き換え</h3>
+
+<p>今回やったことを、行数で分けるとこうなります。</p>
+
+<table>
+  <thead><tr><th>やったこと</th><th>行数</th><th>壊れる危険</th></tr></thead>
+  <tbody>
+    <tr><td><b>新しく書いた</b><br>（定数・<code>is_blink_on</code>・<code>start_game</code>・振り分け・<code>draw_title</code>）</td>
+        <td>約 50 行</td><td>ここにしかない</td></tr>
+    <tr><td><b>名前だけ変えた</b><br>（<code>update</code> → <code>update_game</code>、<code>draw</code> → <code>draw_game</code>）</td>
+        <td>2 行</td><td>ほぼない</td></tr>
+    <tr><td><b>中身を書き換えた</b><br>（全クリアの行き先、ALL CLEAR の文字、<code>cls</code> の移動）</td>
+        <td>3 行</td><td>小さい</td></tr>
+    <tr><td><b>そのまま残した</b><br>（歩く・押す・クリア判定・地図）</td>
+        <td>約 350 行</td><td>触っていない</td></tr>
+  </tbody>
+</table>
+
+<p>
+<b>350 行は触っていません。</b>だから、もし歩けなくなったら
+「歩く処理が壊れた」のではなく「<b>そこまでたどり着いていない</b>」のです。
+<b>原因をさがす場所が、最初から決まっている</b>——これが、この書き方のいちばんの得です。
+</p>
+
+<h3 id="cls-once">6-2. <code>pyxel.cls()</code> は、振り分けの手前に 1 回だけ</h3>
+
+<p>
+<code>pyxel.cls(pyxel.COLOR_BLACK)</code> は「<b>画面をぜんぶ黒でぬりつぶす</b>」命令です。
+Pyxel は<b>前のフレームの絵を消してくれません</b>。自分で消さないと、
+動いたものの<b>残像が残りつづけます</b>。
+</p>
+
+<p>
+消すのは<b>どの画面でも必ず必要</b>です。だったら
+<code>draw_title()</code> と <code>draw_game()</code> の両方に書くより、
+<b>振り分けの手前に 1 回だけ書く</b>ほうが短くて、書き忘れもありません。
+</p>
+
+<pre><code>    def draw(self):
+        pyxel.cls(pyxel.COLOR_BLACK)        # ← ここに 1 回だけ
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()               # cls は書かない
+        else:
+            self.draw_game()                # cls は書かない</code></pre>
+
+<div class="term">
+  <b>「共通のことは、分かれる前にやる」</b>
+  step1 の <code>draw()</code> もまったく同じ形でした。
+  <b>どの道を通っても必ずやることは、分かれ道の手前に置く。</b>
+  逆に、<b>片方でしかやらないこと</b>（タイトルの文字、盤面の描画）は、
+  分かれたあとに置きます。
+</div>
+
+<h3 id="no-tiles">6-3. タイトル画面では <code>self.tiles</code> がまだ無い</h3>
+
+<p>
+<code>__init__()</code> から <code>load_stage()</code> を消したので、
+<b>起動した直後は <code>self.tiles</code> も <code>self.boxes</code> も存在しません</b>。
+</p>
+
+<p>
+Python では、<code>self.○○ = ...</code> と<b>代入したその瞬間</b>に
+<code>self.○○</code> が生まれます。まだ代入していないものを読もうとすると、
+こうなります。
+</p>
+
+<pre><code>AttributeError: 'App' object has no attribute 'tiles'</code></pre>
+
+<p>
+これは<b>「盤面が要らない画面では、盤面を作らない」</b>という設計です。
+そのかわり、<b>タイトル画面で <code>draw_game()</code> を呼んでしまうと、
+かならずこのエラーで落ちます</b>。<br>
+じつはこれは<b>ありがたい</b>ことです。振り分けを書き間違えたとき、
+<b>だまって変な絵が出るのではなく、はっきりエラーで教えてくれる</b>のです。
+</p>
+
+<h3 id="blink">6-4. 余りで点滅する仕組み</h3>
+
+<p>
+<code>pyxel.frame_count</code> は、起動してからのフレーム数です。
+Pyxel は 1 秒に 30 フレーム進むので、10 秒たつと 300 になります。
+<b>ずっと増えつづける数</b>なので、そのままでは使えません。
+</p>
+
+<p>
+そこで <b><code>%</code>（余り）</b>を使って、<b>0〜29 をくり返す数</b>に変えます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="frame_count を 30 で割った余りが 0 から 29 をくり返し、そのうち 20 未満のときだけ文字を描く図">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13"><tspan font-family="Consolas, monospace" font-weight="bold">frame_count % 30</tspan> は <tspan font-family="Consolas, monospace">0</tspan> 〜 <tspan font-family="Consolas, monospace">29</tspan> を<tspan font-weight="bold">くり返します</tspan></text>
+
+  <!-- frame_count の帯 -->
+  <text x="20" y="54" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11">frame_count</text>
+  <g font-family="Consolas, monospace" font-size="10" fill="#9aa4c4">
+    <text x="120" y="54">28</text><text x="160" y="54">29</text>
+    <text x="200" y="54">30</text><text x="240" y="54">31</text>
+    <text x="300" y="54">…</text>
+    <text x="360" y="54">49</text><text x="400" y="54">50</text>
+    <text x="460" y="54">…</text>
+    <text x="520" y="54">59</text><text x="560" y="54">60</text>
+  </g>
+
+  <!-- 余りの帯 -->
+  <text x="20" y="92" fill="#45b0e8" font-family="Consolas, monospace" font-size="11">% 30</text>
+  <g font-family="Consolas, monospace" font-size="10" fill="#e8f0ff">
+    <text x="120" y="92">28</text><text x="160" y="92">29</text>
+    <text x="203" y="92" fill="#2ee6a8" font-weight="bold">0</text>
+    <text x="243" y="92" fill="#2ee6a8" font-weight="bold">1</text>
+    <text x="300" y="92">…</text>
+    <text x="360" y="92">19</text>
+    <text x="400" y="92" fill="#ff5565">20</text>
+    <text x="460" y="92">…</text>
+    <text x="520" y="92" fill="#ff5565">29</text>
+    <text x="563" y="92" fill="#2ee6a8" font-weight="bold">0</text>
+  </g>
+
+  <!-- 見える / 見えない -->
+  <rect x="110" y="108" width="300" height="30" fill="#2ee6a8" opacity=".16"/>
+  <rect x="110" y="108" width="300" height="30" fill="none" stroke="#2ee6a8"/>
+  <text x="260" y="128" fill="#2ee6a8" font-size="11" text-anchor="middle">余りが 0〜19 → <tspan font-family="Consolas, monospace">True</tspan>（見える）</text>
+  <rect x="410" y="108" width="150" height="30" fill="#ff5565" opacity=".14"/>
+  <rect x="410" y="108" width="150" height="30" fill="none" stroke="#ff5565"/>
+  <text x="485" y="128" fill="#ff5565" font-size="11" text-anchor="middle">20〜29 → <tspan font-family="Consolas, monospace">False</tspan></text>
+
+  <!-- 式 -->
+  <rect x="20" y="154" width="596" height="44" rx="6" fill="#1b1f33" stroke="#3b4166"/>
+  <text x="36" y="174" fill="#ffcc44" font-family="Consolas, monospace" font-size="12">return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON</text>
+  <text x="36" y="190" fill="#9aa4c4" font-size="11">= <tspan font-family="Consolas, monospace" fill="#e8f0ff">frame_count % 30 &lt; 20</tspan>　… 30 フレーム（1 秒）のうち <tspan fill="#2ee6a8">20 フレーム見えて</tspan>、<tspan fill="#ff5565">10 フレーム消える</tspan></text>
+</svg>
+</div>
+<figcaption><code>BLINK_ON</code> を大きくすると<b>消える時間が短く</b>なります。<code>BLINK_CYCLE</code> を小さくすると<b>速く点滅</b>します</figcaption>
+</figure>
+
+<div class="note">
+  <b>数字をいじってみてください</b>
+  <code>BLINK_CYCLE = 60</code> にすると<b>2 秒に 1 回</b>のゆっくりした点滅、
+  <code>BLINK_CYCLE = 10</code> にすると<b>せわしない点滅</b>になります。
+  <code>BLINK_ON</code> を <code>15</code> にすると、見える時間と消える時間が<b>同じ長さ</b>。<br>
+  <b>「見える時間を長め（20 : 10）にする」</b>のには意図があります。
+  半々だと点滅が強すぎて、<b>文字が読みにくくなる</b>のです。
+</div>
+
+<h3 id="else-now">6-5. いまは <code>else</code> で足りる。次のフェーズで <code>elif</code> になる</h3>
+
+<p>画面が 2 つなので、振り分けは <code>if</code> と <code>else</code> で足ります。</p>
+
+<pre><code>        if self.scene == SCENE_TITLE:
+            self.update_title()
+        else:                               # タイトルじゃないなら、ゲーム
+            self.update_game()</code></pre>
+
+<p>次のフェーズで<b>ステージ選択</b>が入って画面が 3 つになると、こうなります。</p>
+
+<pre><code>        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_SELECT:    # ← 1 本増えるだけ
+            self.update_select()
+        else:
+            self.update_game()</code></pre>
+
+<p>
+<b>増えるのは 2 行だけ</b>です。いま振り分けの形にしておいた理由が、ここにあります。
+もし <code>update()</code> の中にタイトルの処理を直接書いていたら、
+次のフェーズで<b>その中身をほどく作業から始めなければなりません</b>。
+</p>
+
+<h2 id="trouble">7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>AttributeError: 'App' object has no attribute 'tiles'</code></td>
+      <td><b>タイトル画面で <code>draw_game()</code> が呼ばれています。</b>
+      <code>draw()</code> の振り分けを見てください。
+      <code>if self.scene == SCENE_TITLE:</code> で
+      <code>self.draw_title()</code> を呼んでいますか（<a href="#no-tiles">6-3</a>）</td>
+    </tr>
+    <tr>
+      <td>起動するといきなりゲームが始まる</td>
+      <td><code>self.scene = SCENE_TITLE</code> を書いていません。
+      または <code>SCENE_TITLE</code> と <code>SCENE_GAME</code> の<b>数が逆</b>です
+      （<code>SCENE_TITLE = 0</code>、<code>SCENE_GAME = 1</code>）</td>
+    </tr>
+    <tr>
+      <td>タイトルで <code>Enter</code> を押しても始まらない</td>
+      <td><code>update()</code> の振り分けで <code>self.update_title()</code> を呼んでいますか。
+      あるいは <code>btn</code> と書いていませんか。<b><code>btnp</code></b> です</td>
+    </tr>
+    <tr>
+      <td>タイトルの文字が何も出ない</td>
+      <td><code>draw()</code> から <code>self.draw_title()</code> を呼んでいません。
+      <code>draw_title()</code> を書いただけでは、<b>誰も呼んでくれません</b></td>
+    </tr>
+    <tr>
+      <td><code>NameError: name 'is_blink_on' is not defined</code></td>
+      <td><code>def is_blink_on()</code> を <code>class App:</code> の<b>中</b>に書いています。
+      <b>外</b>（<code>draw_center()</code> の下、<code>class</code> の手前）です</td>
+    </tr>
+    <tr>
+      <td><code>PRESS ENTER</code> が点滅せず、ずっと出ている</td>
+      <td><code>if is_blink_on():</code> の <code>if</code> を書いていません。
+      または <code>BLINK_ON</code> が <code>BLINK_CYCLE</code> <b>以上</b>になっています</td>
+    </tr>
+    <tr>
+      <td><code>PRESS ENTER</code> が<b>まったく</b>出ない</td>
+      <td><code>is_blink_on()</code> の中の <code>&lt;</code> が <code>&gt;</code> になっていませんか。
+      <code>frame_count % 30 &gt; 20</code> だと、ほとんど <code>False</code> です</td>
+    </tr>
+    <tr>
+      <td>絵や文字が<b>前のフレームと重なる</b>／残像が出る</td>
+      <td><code>pyxel.cls(pyxel.COLOR_BLACK)</code> を<b>どこにも書いていません</b>。
+      <code>draw_game()</code> から消したなら、<code>draw()</code> に足してください（<a href="#cls-once">6-2</a>）</td>
+    </tr>
+    <tr>
+      <td>タイトルの絵のまわりに<b>四角い枠</b>が出る</td>
+      <td><code>blt</code> の<b>透過色</b>を渡していません。
+      ワンコは <code>pyxel.COLOR_GRAY</code>、リンゴは <code>pyxel.COLOR_BLACK</code>。
+      ゴールは<b>渡しません</b></td>
+    </tr>
+    <tr>
+      <td>タイトルの絵が、ちがう絵になる</td>
+      <td><code>blt</code> の切り出し位置です。ワンコは
+      <code>DIR_RIGHT * TILE</code>（右向き）と <code>V_PLAYER_A</code>、
+      リンゴは <code>U_BOX</code> と <code>V_TILE</code></td>
+    </tr>
+    <tr>
+      <td>全クリアのあと <code>Enter</code> で<b>1 面が始まってしまう</b></td>
+      <td><code>self.load_stage(...)</code> のままです。
+      <code>self.scene = SCENE_TITLE</code> に書き換えてください</td>
+    </tr>
+    <tr>
+      <td>タイトルに戻ったあと、<code>Enter</code> で何も起きない</td>
+      <td><code>self.all_cleared = False</code> に戻していません。
+      <code>True</code> のままだと、ゲームを始めた瞬間に全クリア画面へ行きます</td>
+    </tr>
+    <tr>
+      <td>ゲーム中に歩けなくなった／押せなくなった</td>
+      <td><b>名前の変更に失敗しています</b>（<a href="#rename-safe">6-1</a>）。
+      <code>update_game()</code> の中身は<b>1 行も動かしていないはず</b>です。
+      <code>def update_game(self):</code> より下の<b>字下げ</b>がずれていませんか</td>
+    </tr>
+    <tr>
+      <td><code>IndentationError</code></td>
+      <td>同じ原因です。新しいメソッドを足したとき、<code>def</code> は
+      <b>半角スペース 4 つ</b>、中身は <b>8 つ</b>で字下げします</td>
+    </tr>
+    <tr>
+      <td>タイトルに戻ると、また 1 面からしか始められない</td>
+      <td><b>いまはそれが正しい動きです。</b>
+      どの面から始めるかを選べるようにするのが、<b>次のフェーズ</b>です</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+次は<b>ステージ選択</b>です。タイトルで <code>Enter</code> を押したら、
+いきなり 1 面が始まるのではなく<b>「どの面から遊ぶか」を選ぶ画面</b>を出します。
+</p>
+
+<div class="note">
+  <b>次に出てくる考え方</b>
+  <b>クリアした面だけ選べる</b>ようにします。10 面ぜんぶ最初から選べると、
+  <b>順番に解いていく楽しみがなくなる</b>ので、<b>1 つ先までしか開かない</b>形にします。<br>
+  そのために覚えておくのは、やはり<b>数ひとつ</b>だけ。
+  <code>self.cleared_count</code>（<b>クリアした面の数</b>）です。
+  これが <code>3</code> なら「3 面まで解いた ＝ 4 面まで選べる」。<br>
+  カーソルの移動は、<b><code>stage_no</code> をそのまま動かすだけ</b>です。
+  選択画面で「4 面」を指しているというのは、<b><code>stage_no</code> が <code>3</code> だということ</b>。
+  <code>Enter</code> を押したら、あとは<b>今回作った <code>start_game()</code> を呼ぶだけ</b>で始まります。
+</div>
+
+<div class="warn">
+  <b>ひとつ、いまのうちに知っておいてください</b>
+  クリアした記録は <code>self.cleared_count</code> という<b>変数</b>に入れます。
+  変数はプログラムを<b>終了すると消えます</b>。
+  つまり<b>次に起動したときは、また 1 面からしか選べません</b>。<br>
+  記録をファイルに保存して、次に起動しても残るようにすることもできますが、
+  それは<b>別の話（ファイルの読み書き）</b>になります。
+  まずは<b>1 回のプレイの中で選べる</b>ところまで作ります。
+</div>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
