@@ -9,6 +9,12 @@ TILE = 8                # 1 マスの大きさ（ドット）
 HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
 MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
 
+SCENE_TITLE = 0         # タイトル画面
+SCENE_GAME = 1          # あそんでいる画面
+
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
 # イメージバンク 0 の、切り出し位置
 V_TILE = 0              # タイルの段
 V_PLAYER_A = 8          # 主人公の段（コマ A）
@@ -100,52 +106,60 @@ STAGE6 = [          # どれから動かすか、順番を考える
     "##########",
 ]
 
-STAGE7 = [          # 細い通路。押せる向きが決まってしまう
-    "##########",
-    "#....#...#",
-    "#.$..#.O.#",
-    "#....#...#",
-    "#.$......#",
-    "#....#...#",
-    "#.@..#.O.#",
-    "#....#...#",
-    "##########",
+STAGE7 = [          # 1 マスの通路。押す向きが決まってしまう
+    "#############",
+    "#...........#",
+    "#OO.........#",
+    "#..###.###..#",
+    "#.$###.###..#",
+    "#..###.###..#",
+    "#OO###.###..#",
+    "#.$###.###..#",
+    "#.@..$....$.#",
+    "#...........#",
+    "#############",
 ]
 
-STAGE8 = [          # 真ん中のゴールへ、四方から運ぶ
-    "############",
-    "#..........#",
-    "#.$......$.#",
-    "#....##....#",
-    "#...OOOO...#",
-    "#....##....#",
-    "#.$......$.#",
-    "#.....@....#",
-    "############",
+STAGE8 = [          # 荷物が固まって始まる。動かす順番をまちがえられない
+    "#############",
+    "#@$......OO.#",
+    "#.$$$....OO.#",
+    "#...........#",
+    "#.#########.#",
+    "#...........#",
+    "#.#########.#",
+    "#...........#",
+    "#...........#",
+    "#...........#",
+    "#############",
 ]
 
-STAGE9 = [          # 中央の壁を大きく回る
-    "###########",
-    "#.........#",
-    "#.OO..$$..#",
-    "#.........#",
-    "#...###...#",
-    "#.........#",
-    "#.OO..$$..#",
-    "#....@....#",
-    "###########",
+STAGE9 = [          # 中央の大きな壁を、大きく回って運ぶ
+    "#############",
+    "#...........#",
+    "#.OO........#",
+    "#...#####...#",
+    "#...#####...#",
+    "#..$#####...#",
+    "#.OO#####...#",
+    "#...#####.$.#",
+    "#........$$.#",
+    "#........@..#",
+    "#############",
 ]
 
-STAGE10 = [         # 仕上げ。四隅へ運ぶ
-    "###########",
-    "#O.......O#",
-    "#.........#",
-    "#...$.$...#",
-    "#..#...#..#",
-    "#...$.$...#",
-    "#.........#",
-    "#O...@...O#",
-    "###########",
+STAGE10 = [         # 仕上げ。遠回りと詰みの両方
+    "#############",
+    "#...........#",
+    "#...$@$.$.$.#",
+    "#...........#",
+    "#...#.#######",
+    "#O###.#O#...#",
+    "#...#.#..OO.#",
+    "#.#.#.#.$##.#",
+    "#.$.....$O#.#",
+    "#..#.....O#O#",
+    "#############",    
 ]
 
 STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
@@ -156,15 +170,24 @@ def draw_center(text, y, color):
     x = (SCREEN_WIDTH - len(text) * 4) // 2
     pyxel.text(x, y, text, color)
 
+def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE < BLINK_ON
+
 class App:
     def __init__(self):
         """起動時の設定"""
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
         pyxel.load("sokoban.pyxres")
+        self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面
         self.stage_no = 0               # いま何番目のステージか（0 から数える）
         self.all_cleared = False        # 10 個ぜんぶ終わったか
-        self.load_stage(STAGES[self.stage_no])
         pyxel.run(self.update, self.draw)
+
+    def start_game(self):
+        """いまの stage_no のステージを読み込んで、ゲームを始める"""
+        self.load_stage(STAGES[self.stage_no])
+        self.scene = SCENE_GAME
 
     def load_stage(self, rows):
         """文字の地図を読んで、壁・主人公・荷物に分ける"""
@@ -199,12 +222,24 @@ class App:
         self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
 
     def update(self):
-        """フレーム毎の更新処理"""
+        """フレーム毎の更新処理。いまの画面の担当へ渡す"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        else:
+            self.update_game()
+
+    def update_title(self):
+        """タイトル画面。Enter でゲームを始める"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()
+
+    def update_game(self):
+        """あそんでいる間の更新"""
         if self.all_cleared:                    # ぜんぶおわった。Enter で 1 面から
             if pyxel.btnp(pyxel.KEY_RETURN):
                 self.stage_no = 0
                 self.all_cleared = False
-                self.load_stage(STAGES[self.stage_no])
+                self.scene = SCENE_TITLE
             return
         
         if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
@@ -303,8 +338,32 @@ class App:
         return origin + from_cell * TILE + moved
 
     def draw(self):
-        """描画処理"""
-        pyxel.cls(pyxel.COLOR_BLACK)
+        """フレーム毎の描画処理。画面を消してから、担当へ渡す"""
+        pyxel.cls(pyxel.COLOR_BLACK)    # 各画面で使うので、ここに 1 回だけ
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+        else:
+            self.draw_game()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("SOKOBAN", 30, pyxel.COLOR_YELLOW)
+        draw_center("PUSH THE APPLES", 44, pyxel.COLOR_WHITE)
+
+        # ワンコが、リンゴをゴールへ押していく絵
+        x = SCREEN_WIDTH // 2 - TILE * 2
+        pyxel.blt(x, 66, 0, DIR_RIGHT * TILE, V_PLAYER_A, TILE, TILE, pyxel.COLOR_GRAY)
+        pyxel.blt(x + TILE, 66, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+        pyxel.blt(x + TILE * 3, 66, 0, U_GOAL, V_TILE, TILE, TILE)
+
+        if is_blink_on():               # 1 秒のうち 20 フレームだけ見える
+            draw_center("PRESS ENTER", 92, pyxel.COLOR_WHITE)
+
+        draw_center("ARROW: MOVE    R: RETRY", 108, pyxel.COLOR_GRAY)
+
+    def draw_game(self):
+        """あそんでいる画面を描く"""
 
         # 壁を、上の行から 1 マスずつ描く
         for y in range(len(self.tiles)):
@@ -345,7 +404,7 @@ class App:
 
         # 画面の上の表示
         if self.all_cleared:
-            draw_center("ALL CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
+            draw_center("ALL CLEAR!  ENTER=TITLE", 3, pyxel.COLOR_YELLOW)
         else:
             pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
                        pyxel.COLOR_GRAY)
