@@ -127,31 +127,38 @@
 
 <p>
 <code>.todo/solve.py</code> で全 10 面を解かせて、押し回数・矢印の回数・死にマスを出しました。
+<b>矢印は、押しが最小の解き方のうち、いちばん少ない回数</b>です。
 </p>
 
 <table>
   <thead><tr><th>面</th><th>壁率</th><th>押し</th><th>矢印</th><th>押し/荷物</th><th>死にマス</th></tr></thead>
   <tbody>
-    <tr><td>1</td><td>50%</td><td>7</td><td>1</td><td>1.0</td><td>16</td></tr>
+    <tr><td>1</td><td>50%</td><td>2</td><td>5</td><td>1.0</td><td>16</td></tr>
     <tr><td>2</td><td>46%</td><td>6</td><td>13</td><td>3.0</td><td>18</td></tr>
-    <tr><td>3</td><td>41%</td><td>7</td><td>20</td><td>3.5</td><td>17</td></tr>
-    <tr><td>4</td><td>45%</td><td>6</td><td>22</td><td>3.0</td><td>24</td></tr>
-    <tr><td>5</td><td>42%</td><td>9</td><td>40</td><td>3.0</td><td>21</td></tr>
-    <tr><td>6</td><td>37%</td><td>12</td><td>35</td><td>4.0</td><td>26</td></tr>
+    <tr><td>3</td><td>41%</td><td>7</td><td>16</td><td>3.5</td><td>17</td></tr>
+    <tr><td>4</td><td>45%</td><td>6</td><td>16</td><td>3.0</td><td>24</td></tr>
+    <tr><td>5</td><td>42%</td><td>9</td><td>24</td><td>3.0</td><td>21</td></tr>
+    <tr><td>6</td><td>37%</td><td>12</td><td>21</td><td>4.0</td><td>26</td></tr>
     <tr><td>7</td><td>44%</td><td>16</td><td>34</td><td><b>8.0</b></td><td>24</td></tr>
-    <tr><td>8</td><td>38%</td><td>18</td><td>76</td><td>4.5</td><td>30</td></tr>
-    <tr><td>9</td><td>39%</td><td>20</td><td><b>82</b></td><td>5.0</td><td>28</td></tr>
-    <tr><td>10</td><td>38%</td><td>20</td><td>57</td><td>5.0</td><td><b>0</b></td></tr>
+    <tr><td>8</td><td>38%</td><td>18</td><td>46</td><td>4.5</td><td>30</td></tr>
+    <tr><td>9</td><td>39%</td><td>20</td><td>43</td><td>5.0</td><td>28</td></tr>
+    <tr><td>10</td><td>38%</td><td>20</td><td>41</td><td>5.0</td><td><b>0</b></td></tr>
   </tbody>
 </table>
+
+<p>
+（矢印の回数は、2026-09-23 に検算ツールを作り直して<b>測り直しました</b>。
+前の版は「押し回数が同じ解き方のうち、最初に見つけたもの」を数えていたので、多めに出ていました）
+</p>
 
 <p><b>読み取れたことが 3 つあります。</b></p>
 
 <ol>
   <li><b><code>STAGE10</code> の死にマスが 0。</b>
       四隅がぜんぶゴールなので、どこへ押しても詰まない。<b>やり直しの必要がまったく起きない</b></li>
-  <li><b><code>STAGE9</code> が矢印 82 回で最多。</b>
-      「10 面より 9 面のほうが難しい」という感覚は、数字のうえでも正しい</li>
+  <li><b><code>STAGE9</code> と <code>STAGE10</code> は、押しも矢印もほぼ同じ。</b>
+      押しは 20 回と 20 回、矢印は 43 回と 41 回。<b>ちがうのは死にマスだけ</b>（28 と 0）。
+      「10 面より 9 面のほうが難しい」という感覚は、<b>失敗できるかどうかの差</b>から来ていた</li>
   <li><b>壁率が 37〜50% で、床が広い。</b>
       広い部屋では<b>いつでも荷物の裏へ回り込める</b>ので、押す順番を考えずに済む</li>
 </ol>
@@ -401,13 +408,13 @@ STAGE10 = [     # 仕上げ。遠回りと詰みの両方
          <tr><th>　</th><th>押し</th><th>矢印</th><th>死にマス</th><th>押し</th><th>矢印</th><th>死にマス</th></tr></thead>
   <tbody>
     <tr><td><b>7</b></td><td>16</td><td>34</td><td>24</td>
-        <td><b>24</b></td><td><b>97</b></td><td>29</td></tr>
-    <tr><td><b>8</b></td><td>18</td><td>76</td><td>30</td>
-        <td><b>28</b></td><td>72</td><td><b>63</b></td></tr>
-    <tr><td><b>9</b></td><td>20</td><td>82</td><td>28</td>
-        <td><b>36</b></td><td><b>97</b></td><td>36</td></tr>
-    <tr><td><b>10</b></td><td>20</td><td>57</td><td>0</td>
-        <td><b>44</b></td><td><b>151</b></td><td><b>44</b></td></tr>
+        <td><b>24</b></td><td>51</td><td>29</td></tr>
+    <tr><td><b>8</b></td><td>18</td><td>46</td><td>30</td>
+        <td><b>28</b></td><td>53</td><td><b>63</b></td></tr>
+    <tr><td><b>9</b></td><td>20</td><td>43</td><td>28</td>
+        <td><b>36</b></td><td>68</td><td>36</td></tr>
+    <tr><td><b>10</b></td><td>20</td><td>41</td><td>0</td>
+        <td><b>44</b></td><td>87</td><td><b>44</b></td></tr>
   </tbody>
 </table>
 
