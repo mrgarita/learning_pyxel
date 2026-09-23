@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ6：ステージを 10 個にする
+# step2 フェーズ7：タイトル画面と、画面の振り分け
 
 import pyxel
 
@@ -235,7 +235,7 @@ class App:
 
     def update_game(self):
         """あそんでいる間の更新"""
-        if self.all_cleared:                    # ぜんぶおわった。Enter で 1 面から
+        if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
             if pyxel.btnp(pyxel.KEY_RETURN):
                 self.stage_no = 0
                 self.all_cleared = False
