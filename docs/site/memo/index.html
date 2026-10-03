@@ -1635,6 +1635,11 @@ Pyxel の <code>play(ch, snd)</code> は、<b>そのチャンネルで鳴って�
 <code>requestFullscreen</code> に類する処理は 1 行もありませんでした。
 </p>
 
+<p>
+（このボタンはパソコン向けです。<b>スマホでは押しても反応しません</b>。理由は
+<a href="#virtual-gamepad">スマホでも遊べるようにしたい</a> の ⑥ にあります）
+</p>
+
 <h4>なぜ F11 が効かなくなるのか</h4>
 
 <p>
@@ -2950,6 +2955,289 @@ Pyxel は座標に小数を渡せる（<a href="#float-coord">#float-coord</a>�
   背景が黒い絵なら、<b>8×8 の黒い四角がそのまま乗る</b>ので、
   下に描いた床やゴールが<b>四角く消されます</b>。
   「キャラのまわりが四角く欠ける」症状はこれです。
+</div>
+
+<h3 id="virtual-gamepad">Q. Web に公開した作品を、スマホでも遊べるようにしたい</h3>
+
+<p>
+<b>A.</b> <b>スマホで開くと画面に出る「仮想パッド」を、ゲームパッドとして読みます。</b>
+仮想パッドは最初から HTML に入っているので、やることは Python 側だけです。
+キーボードの判定に <code>or</code> でゲームパッドの判定を足します。
+（step1 の Candy Hunt を<a target="_blank" href="../step1/candy_hunt_mobile.html">スマホ版</a>にしたときに、実際にやったことです）
+</p>
+
+<h4>① 仮想パッドは、最初から入っている</h4>
+
+<ul>
+  <li><code>pyxel app2html</code> が作る HTML には、はじめから <code>gamepad: "enabled"</code> と書いてあります</li>
+  <li>パッドが出るのは、<b>指で触る端末（スマホ・タブレット）で開いたときだけ</b>です。パソコンでは出ません</li>
+  <li>スマホでは、最初の画面の文字も <code>CLICK TO START</code> ではなく <code>TOUCH TO START</code> になります</li>
+</ul>
+
+<p>
+つまり <b>PC 版の <code>candy_hunt.html</code> も、スマホで開けばパッドは出ていました</b>。
+押しても何も起きなかったのは、Python のコードがキーボードしか見ていなかったからです。
+<b>パッドを出すのは HTML、押されたかを読むのは Python</b>、という分担です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 466" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="スマホを縦に持ったときの画面。上の 80% がゲームを映す枠で、ゲーム画面は横幅いっぱいに広がってその中の上下まん中に出る。下の左に十字キー、下の右にひし形に並んだ 4 つの丸（下が A、右が B、左が X、上が Y）、下のまん中に小さいボタンが 2 つ（左が BACK、右が START）">
+  <style>
+    .vp-hd { fill:#e8f0ff; font-size:13px; font-weight:bold; }
+    .vp-sb { fill:#9aa4c4; font-size:11px; }
+    .vp-cd { fill:#9aa4c4; font-family:Consolas,monospace; font-size:10px; }
+    .vp-pad { fill:#202226; stroke:#5b7cff; stroke-width:1.5; }
+    .vp-key { fill:#ffcc44; font-family:Consolas,monospace; font-size:12px; font-weight:bold; }
+  </style>
+
+  <!-- 左上の見出し -->
+  <text class="vp-hd" x="20" y="36">スマホを縦に持ったとき</text>
+  <text class="vp-sb" x="20" y="54">幅 390 × 高さ 844 の画面で実測</text>
+
+  <!-- 本体と画面 -->
+  <rect x="214" y="10" width="211" height="442" rx="18" fill="#0b0d14" stroke="#3b4166" stroke-width="2"/>
+  <rect x="222" y="20" width="195" height="422" fill="#202226"/>
+
+  <!-- ゲームを映す枠（canvas）の下の端 -->
+  <line x1="222" y1="357.5" x2="417" y2="357.5" stroke="#9aa4c4" stroke-dasharray="4 3"/>
+
+  <!-- ゲーム画面 -->
+  <rect x="222" y="115.5" width="195" height="146" fill="#000"/>
+  <text x="319.5" y="175" fill="#ffcc44" font-family="Consolas, monospace" font-size="11" text-anchor="middle">CANDY HUNT</text>
+  <text x="319.5" y="204" fill="#e8f0ff" font-family="Consolas, monospace" font-size="10" text-anchor="middle">PRESS BUTTON</text>
+
+  <!-- 十字キー -->
+  <path class="vp-pad" d="M255 346 H277.5 V367.5 H299 V390 H277.5 V411.5 H255 V390 H233.5 V367.5 H255 Z"/>
+
+  <!-- 4 つの丸（本物には文字がない。図では名前を書き入れた） -->
+  <circle class="vp-pad" cx="372.75" cy="354.6" r="14.66"/>
+  <circle class="vp-pad" cx="372.75" cy="402.9" r="14.66"/>
+  <circle class="vp-pad" cx="348.6" cy="378.75" r="14.66"/>
+  <circle class="vp-pad" cx="396.9" cy="378.75" r="14.66"/>
+  <text class="vp-key" x="372.75" y="358.8" text-anchor="middle">Y</text>
+  <text class="vp-key" x="372.75" y="407.1" text-anchor="middle">A</text>
+  <text class="vp-key" x="348.6" y="383" text-anchor="middle">X</text>
+  <text class="vp-key" x="396.9" y="383" text-anchor="middle">B</text>
+
+  <!-- 小さいボタン 2 つ -->
+  <rect class="vp-pad" x="281.5" y="424" width="35" height="10" rx="5"/>
+  <rect class="vp-pad" x="323" y="424" width="35" height="10" rx="5"/>
+
+  <!-- 左側の説明 -->
+  <line x1="204" y1="188" x2="228" y2="188" stroke="#2ee6a8" stroke-width="1.5"/>
+  <circle cx="228" cy="188" r="2.5" fill="#2ee6a8"/>
+  <text x="198" y="183" fill="#2ee6a8" font-size="12" font-weight="bold" text-anchor="end">ゲーム画面</text>
+  <text class="vp-sb" x="198" y="199" text-anchor="end">160×120 を横幅いっぱいに拡大</text>
+
+  <line x1="204" y1="378.75" x2="237" y2="378.75" stroke="#5b7cff" stroke-width="1.5"/>
+  <circle cx="237" cy="378.75" r="2.5" fill="#5b7cff"/>
+  <text x="198" y="374" fill="#45b0e8" font-size="12" font-weight="bold" text-anchor="end">十字キー</text>
+  <text class="vp-cd" x="198" y="390" text-anchor="end">DPAD_UP / DOWN / LEFT / RIGHT</text>
+
+  <!-- 右側の説明 -->
+  <g stroke="#9aa4c4" stroke-width="1.2">
+    <line x1="434" y1="20" x2="434" y2="357.5"/>
+    <line x1="429" y1="20" x2="439" y2="20"/>
+    <line x1="429" y1="357.5" x2="439" y2="357.5"/>
+  </g>
+  <text x="446" y="184" fill="#e8f0ff" font-size="12" font-weight="bold">上の 80%：ゲームを映す枠</text>
+  <text class="vp-sb" x="446" y="200">ゲームはこの中の上下まん中</text>
+
+  <line x1="411.5" y1="378.75" x2="440" y2="378.75" stroke="#ffcc44" stroke-width="1.5"/>
+  <circle cx="411.5" cy="378.75" r="2.5" fill="#ffcc44"/>
+  <text x="446" y="368" fill="#ffcc44" font-size="12" font-weight="bold">4 つの丸</text>
+  <text class="vp-sb" x="446" y="384">下 A・右 B・左 X・上 Y</text>
+  <text class="vp-sb" x="446" y="399">（本物の丸に文字はない）</text>
+
+  <line x1="358" y1="429" x2="440" y2="429" stroke="#9aa4c4" stroke-width="1.2"/>
+  <text x="446" y="427" fill="#e8f0ff" font-size="12" font-weight="bold">小さいボタン 2 つ</text>
+  <text class="vp-sb" x="446" y="443">左 BACK・右 START</text>
+</svg>
+</div>
+<figcaption>
+図 1　スマホで開いたときの配置（大きさは実測）。丸の A／B／X／Y は図で書き入れたもので、実際の画面には出ない
+</figcaption>
+</figure>
+
+<h4>② パッドのどこが、Python のどの名前か</h4>
+
+<table>
+  <thead><tr><th>画面のパッド</th><th>Python で読む名前</th></tr></thead>
+  <tbody>
+    <tr><td>十字キーの上・下・左・右</td>
+        <td><code>pyxel.GAMEPAD1_BUTTON_DPAD_UP</code> ／ <code>_DOWN</code> ／ <code>_LEFT</code> ／ <code>_RIGHT</code></td></tr>
+    <tr><td>4 つの丸の<b>下</b></td><td><code>pyxel.GAMEPAD1_BUTTON_A</code></td></tr>
+    <tr><td>4 つの丸の<b>右</b></td><td><code>pyxel.GAMEPAD1_BUTTON_B</code></td></tr>
+    <tr><td>4 つの丸の<b>左</b></td><td><code>pyxel.GAMEPAD1_BUTTON_X</code></td></tr>
+    <tr><td>4 つの丸の<b>上</b></td><td><code>pyxel.GAMEPAD1_BUTTON_Y</code></td></tr>
+    <tr><td>小さいボタンの左／右</td>
+        <td><code>pyxel.GAMEPAD1_BUTTON_BACK</code> ／ <code>pyxel.GAMEPAD1_BUTTON_START</code></td></tr>
+  </tbody>
+</table>
+
+<p>
+読み方は、キーボードと同じ <code>pyxel.btn()</code>（押しているあいだずっと）と
+<code>pyxel.btnp()</code>（押した瞬間だけ）です。
+USB のゲームパッドをパソコンにつないだときも、<b>同じ名前・同じ並び</b>で読めます。
+</p>
+
+<h4>③ コードの足し方</h4>
+
+<p>
+移動は、矢印キーの判定に <code>or</code> で十字キーを足すだけです。
+</p>
+
+<pre><code># 前（キーボードだけ）
+if pyxel.btn(pyxel.KEY_LEFT):
+    self.boy_x -= BOY_SPEED
+
+# 後（キーボード ＋ 十字キー）
+if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
+    self.boy_x -= BOY_SPEED</code></pre>
+
+<p>
+開始と再挑戦の <code>Enter</code> には、4 つの丸を全部足しました。
+</p>
+
+<pre><code>if pyxel.btnp(pyxel.KEY_RETURN) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_B) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_X) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_Y):</code></pre>
+
+<div class="term">
+  <b>丸に文字がないので、「どれを押しても進む」にした</b>
+  はじめは A だけにしていましたが、画面の丸には A や B と書いてありません。
+  遊ぶ人には、どれが A かわかりません。
+  そこで<b>どの丸を押しても始まる</b>ようにして、案内の文字も
+  <code>PRESS ENTER</code> → <code>PRESS BUTTON</code>、
+  <code>PRESS ENTER TO RETRY</code> → <code>PRESS BUTTON TO RETRY</code> に変えました。
+</div>
+
+<div class="note">
+  <b>キーボードもそのまま効く</b>
+  <code>or</code> でつないだので、キーボードの判定は消えていません。
+  パソコンで開けばパッドは出ず、これまでどおり矢印キーと <code>Enter</code> で遊べます。
+  <b>1 本のコードで、パソコンでもスマホでも遊べる</b>形です。
+</div>
+
+<h4>④ 押せる範囲は、絵より広い</h4>
+
+<p>
+<code>pyxel.js</code> を読むと、パッドの当たり判定は<b>絵の形ではなく、絵の四角にぴったり入る円</b>でした。
+円を扇形に分けて、指がどの扇に入ったかでボタンを決めています。
+絵はどれもこの円の中にすっぽり収まっていて、
+<b>十字キーのすきま（斜めのところ）や、丸と丸のあいだも押せます</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="左は十字キーの当たり判定。大きな円が 45 度ずつ 8 つの扇に分かれ、斜めの 4 つの扇は上と右のように 2 方向が同時に入る。右は 4 つの丸の当たり判定。大きな円が斜めの線で 4 つに分かれ、上が Y、右が B、下が A、左が X">
+  <style>
+    .hz-hd { fill:#e8f0ff; font-size:13px; font-weight:bold; }
+    .hz-sb { fill:#9aa4c4; font-size:11px; }
+    .hz-lb { fill:#e8f0ff; font-size:12px; }
+    .hz-dg { fill:#ff6b97; font-size:11px; }
+  </style>
+
+  <!-- 左：十字キー -->
+  <text class="hz-hd" x="160" y="26" text-anchor="middle">十字キー：8 つの扇</text>
+  <g fill="rgba(255,107,151,.18)">
+    <path d="M160 150 L257.0 109.8 A105 105 0 0 0 200.2 53.0 Z"/>
+    <path d="M160 150 L119.8 53.0 A105 105 0 0 0 63.0 109.8 Z"/>
+    <path d="M160 150 L63.0 190.2 A105 105 0 0 0 119.8 247.0 Z"/>
+    <path d="M160 150 L200.2 247.0 A105 105 0 0 0 257.0 190.2 Z"/>
+  </g>
+  <path d="M132.1 68.6 H187.9 V122.1 H241.4 V177.9 H187.9 V231.4 H132.1 V177.9 H78.6 V122.1 H132.1 Z"
+        fill="none" stroke="#5b7cff" stroke-width="1.5" opacity=".6"/>
+  <circle cx="160" cy="150" r="105" fill="none" stroke="#ffcc44" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <g stroke="#9aa4c4" stroke-width="1">
+    <line x1="160" y1="150" x2="257.0" y2="109.8"/>
+    <line x1="160" y1="150" x2="200.2" y2="53.0"/>
+    <line x1="160" y1="150" x2="119.8" y2="53.0"/>
+    <line x1="160" y1="150" x2="63.0" y2="109.8"/>
+    <line x1="160" y1="150" x2="63.0" y2="190.2"/>
+    <line x1="160" y1="150" x2="119.8" y2="247.0"/>
+    <line x1="160" y1="150" x2="200.2" y2="247.0"/>
+    <line x1="160" y1="150" x2="257.0" y2="190.2"/>
+  </g>
+  <text class="hz-lb" x="160" y="104" text-anchor="middle">上</text>
+  <text class="hz-lb" x="160" y="206" text-anchor="middle">下</text>
+  <text class="hz-lb" x="108" y="155" text-anchor="middle">左</text>
+  <text class="hz-lb" x="212" y="155" text-anchor="middle">右</text>
+  <text class="hz-dg" x="216" y="99" text-anchor="middle">上＋右</text>
+  <text class="hz-dg" x="104" y="99" text-anchor="middle">上＋左</text>
+  <text class="hz-dg" x="104" y="210" text-anchor="middle">下＋左</text>
+  <text class="hz-dg" x="216" y="210" text-anchor="middle">下＋右</text>
+  <text class="hz-sb" x="160" y="280" text-anchor="middle">桃色の扇は 2 方向が同時に入る</text>
+
+  <!-- 右：4 つの丸 -->
+  <text class="hz-hd" x="480" y="26" text-anchor="middle">4 つの丸：4 つの扇</text>
+  <circle cx="480" cy="150" r="105" fill="none" stroke="#ffcc44" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <g stroke="#9aa4c4" stroke-width="1">
+    <line x1="405.8" y1="75.8" x2="554.2" y2="224.2"/>
+    <line x1="554.2" y1="75.8" x2="405.8" y2="224.2"/>
+  </g>
+  <g fill="#1b1f33" stroke="#5b7cff" stroke-width="1.5">
+    <circle cx="480" cy="90" r="36.4"/>
+    <circle cx="480" cy="210" r="36.4"/>
+    <circle cx="420" cy="150" r="36.4"/>
+    <circle cx="540" cy="150" r="36.4"/>
+  </g>
+  <g fill="#ffcc44" font-family="Consolas, monospace" font-size="16" font-weight="bold" text-anchor="middle">
+    <text x="480" y="96">Y</text>
+    <text x="480" y="216">A</text>
+    <text x="420" y="156">X</text>
+    <text x="540" y="156">B</text>
+  </g>
+  <text class="hz-sb" x="480" y="280" text-anchor="middle">丸と丸のすきまを押しても、近いほうの丸になる</text>
+</svg>
+</div>
+<figcaption>
+図 2　当たり判定（黄色の点線の円が押せる範囲）。青い線が画面に出ている絵
+</figcaption>
+</figure>
+
+<ul>
+  <li><b>十字キーの斜めを押すと、2 つの向きが同時に入ります。</b>
+      Candy Hunt は上下左右の <code>if</code> が 4 本別々なので、
+      キーボードで矢印を 2 つ押したときと同じく、<b>斜めに動きます</b></li>
+  <li><b>指 2 本で、十字キーと丸を同時に押す</b>こともできます</li>
+</ul>
+
+<div class="note">
+  <b>マス目を 1 歩ずつ進むゲームでは、斜めに気をつける</b>
+  倉庫番（step2）のように 1 回押すごとに 1 マス進むゲームでは、
+  上と右が同時に来たとき<b>どちらに進むか</b>を決めておく必要があります。
+  step2 のフェーズ 10（スマホ対応）で扱います。
+</div>
+
+<h4>⑤ 操作のいらない作品は、パッドを出さない</h4>
+
+<p>
+時計の <code>fish_clock</code> のように操作がない作品だと、パッドは画面をせまくするだけです。
+HTML の 1 語を変えると出なくなります。
+</p>
+
+<pre><code>launchPyxel({ command: "play", name: "fish_clock.pyxapp", gamepad: "<b>disabled</b>", base64: "…" });</code></pre>
+
+<div class="warn">
+  <b><code>pyxel app2html</code> で作り直すと、<code>"enabled"</code> に戻る</b>
+  <code>app2html</code> は毎回 <code>gamepad: "enabled"</code> で書き出します。
+  全画面ボタンと同じで、<b>作り直したら手で直し直す</b>必要があります。
+</div>
+
+<h4>⑥ スマホでは、全画面ボタンが効かない</h4>
+
+<div class="warn">
+  <b>スマホ版には全画面ボタンを付けない</b>
+  <a href="#web-fullscreen">全画面ボタン</a>は、スマホで押しても反応しません。理由は 2 つあります。
+  <ul>
+    <li>仮想パッドが、<b>画面へのタッチをすべて自分で受け止めて、ブラウザのふつうの動きを止めて</b>います
+        （<code>preventDefault</code>）。そのためボタンに「クリックされた」が届きません</li>
+    <li>iPhone の Safari には、ページを全画面にする機能（<code>requestFullscreen</code>）がもともとありません</li>
+  </ul>
+  それに、ボタンを置く右下は 4 つの丸とちょうど重なります。
+  Candy Hunt のスマホ版には付けていません。
 </div>
 
 <h2>環境・ツールについて</h2>
