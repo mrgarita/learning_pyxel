@@ -143,7 +143,7 @@
 
 <div class="note">
   <b>作品の規模感</b>
-  最終的なコードは <b>500 行前後</b>になりそうです（フェーズ 8 の時点で <b>477 行</b>）。
+  最終的なコードは <b>530 行前後</b>になりそうです（フェーズ 9 の時点で <b>500 行</b>）。
   step1（150〜200 行）より増えますが、<b>そのうち 125 行ほどは「ステージの地図」そのもの</b>で、
   考えて書くコードの量は step1 と大きくは変わりません。
   <b>12 のフェーズ</b>に分けて進めます。
@@ -207,9 +207,11 @@
         <td>カーソルの移動、<b>クリア記録の持ち方</b>、<code>%</code> と <code>//</code> で並べる、
         <code>0 &lt;= n &lt; m</code></td></tr>
     <tr><td class="phase-no">9</td>
-        <td><b>手数の表示とクリア演出</b><br>
-        ステージ番号・手数を出し、クリアの瞬間に間をつくる</td>
-        <td>HUD、<code>frame_count</code> による演出</td></tr>
+        <td><a href="phase9.html"><b>手数の表示とクリア演出</b></a><br>
+        歩いた数を右上に出す。クリアの瞬間はリンゴから輪が広がり、
+        0.67 秒の間をおいてから <code>CLEAR!</code></td>
+        <td>右そろえの式、<b>数える場所の選び方</b>、<code>frame_count</code> の引き算（step1 の復習）、
+        <code>pyxel.circb</code>、<code>and</code> の順番</td></tr>
     <tr><td class="phase-no">10</td>
         <td><b>効果音と BGM をつける</b></td>
         <td><code>play</code> / <code>playm</code>（step1 の復習）</td></tr>

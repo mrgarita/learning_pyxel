@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ9：手数の表示とクリア演出 ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+<style>
+  /* 実機の画面キャプチャを、ぼかさずにドットのまま拡大する */
+  svg image.shot { image-rendering: pixelated; image-rendering: crisp-edges; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 9 </span>手数の表示とクリア演出</h1>
+  <p>何歩で解いたかを出し、クリアの瞬間に間をつくる</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 9</p>
+
+<h2>ゴール</h2>
+
+<p>
+遊んでいるあいだ、画面の右上に<b>何歩歩いたか（<code>STEPS</code>）</b>を出します。
+そして最後のリンゴがゴールに乗った瞬間、<b>リンゴから黄色い輪が広がり</b>、
+<b>0.67 秒の間をおいてから</b> <code>CLEAR!  ENTER</code> が出るようにします。
+</p>
+
+<p>
+いまは、最後の 1 歩を押し終えた<b>その瞬間に</b> <code>CLEAR!</code> が出ます。
+まちがいではないのですが、「解けた！」と感じる前に文字が出てしまい、<b>少しあっけない</b>。
+ほんの少しの「間」と、目に見える合図を足します。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="6 面をクリアした直後の 2 つの画面。左はクリアして 14 フレーム後で、3 つのリンゴのまわりに黄色い輪が広がり、上の帯には STAGE 6/10 と STEPS 21 だけが出ている。右は 20 フレーム後で、輪が消え、上の帯のまんなかに CLEAR! ENTER が出ている">
+
+  <text x="12" y="24" fill="#ffcc44" font-size="13" font-weight="bold">クリアして 14 フレーム後</text>
+  <text x="186" y="24" fill="#9aa4c4" font-size="12">輪が広がる。CLEAR! はまだ</text>
+  <image class="shot" x="12" y="36" width="320" height="240" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAIAAAD6wG44AAADIElEQVR42u3dsU/UYBjH8UpuhU2GI2EnLiZODISEhIRVFlguGv8CHBhddGThT9B0kQVWEhMSJycTF3U3wUETB1kZHGqa5m3f9u5C79rj8x2gffu05Z7n3vd3v7c9miQAgM6TpmmapvlCtpytNsZUHifYvfI4qExpebk+dbGcJ7GmoCrFn9FDRNrLf2X5aPe5ujVpry9B7GhBsZeyX6PRaJyaBXVq7MFpmo5Go+z4ylmmPu2VaayJr0z1UuPJijsEy5VlyxvzU2KKGhfTG6S9cpiMpXpQ7Kb19QgOHdtlnLFX7RvTXrlp0ngAAAAAAAAAAAAAAAAAAAD858G8Tnyyt398eX6yt1/etJDtx5fnc8nzkvc4YIieaohe+GG52G6IhgIDYJPul03qXIHf/l7udY95/vCGD25gZWOz1+2G6DoePXnW6x789fM7Ba7zwQswRPPBmB2Djv99Kxubf79/ylevTm+LW3eOBvONb2ynweNqcJb6IOOVjbOJp8F3aZOuTm9rslze2nY8m3SXBPn982IrCNg5GhSH1rbjE3PRLfngYg2KZZhXPB98BxocdK+z6+XdV48/vPmSJMnB2k05su343mnwoHs+OLrL2fVykiRZ9rPVoAYzjp/oddHgiRl+e92peBq8CPROj+c2RJeHrKylZi76YO0mG0Wz7rW1+7L+FG3Ex2Yz8vbY6+KDoz54nE83xZi24/vlg7s+VTl7z10zT0mDW9G5fJ4hpnNB95o6PpjNyFdj3ZcP7tNc9PunP1a3h0Hjr48/V7eH5qJndz248WrP1PGxAh9erCd9vh7cM5mZVBcXQ0cX2QfP7L6qw4v14N2wczQod9/e+WD3ZEU/fE10ldBc9Pg+uN9DYux1mYvunMDzwe6L5oPdF80Huy+aBoMPpsc0mAb7+qivj4IG011DNA3mg/lgGgw+mB7TYBrMB/PBoMF0lwbTYD6YD6bB4IP5YBpMg/lgPhg0mO7SYBrMB/PBNJgG88F8MA2mwXyw/5M1bYJ69GAsGgzA84M9P9gQDQUGaLDnByedfX4wAAAAAAAAAAAAAAAAusY/LdyI8sdnriAAAAAASUVORK5CYII="/>
+  <rect x="12" y="36" width="320" height="240" fill="none" stroke="#3b4166" stroke-width="2"/>
+
+  <text x="348" y="24" fill="#2ee6a8" font-size="13" font-weight="bold">20 フレーム後（0.67 秒）</text>
+  <text x="530" y="24" fill="#9aa4c4" font-size="12">輪が消えて CLEAR!</text>
+  <image class="shot" x="348" y="36" width="320" height="240" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAB4CAIAAAD6wG44AAADDElEQVR42u3dsWoUURTG8WvYNnYaiJBebAQri0UIBNKaxkAIik8Qi5Q2WqbJIyghYJqkDQgBSS3Y6AMIClGwSZvCYmC43Jm5O5vdNTPr71+EO3fP3N2cs3O+/XYmmRAAAB3lVjk6ODgIIWxvbxeDYlzMF4NMTEwZU25m1mn5Ki/Ot0IIS8PDi/OtpeFhPFnMF5vloJyM5/OLl+vHCybz1ZjJqU1pdZxPXVPO04jqZjGIf9bGZ+bLfWvXbF/dNuPqzySs5frVfTMxk1e3Ke35EjStFqc6hLBQfddkXkRSp9pdkpjirdT+YB2Li/OtTA2ut864zzUJ+bTXpjETX5vqhZFPFu+QjGvLlmsU02ZpeFi2yqRnNs2PXKdlzLRadCbtZfaStNe2yaZUD9qLYrJ00y5teu9Yta+Vxlq5TXZJtLmNxreMST4NTC7ALR8aNx4AAAAAAAAAAAAAAAAAAAAh/dOVf8ze+sbu6fHe+kb1obmc3z09vpE8L3iPA1r0tVr03LfleF6LhgIDYJP+L5vUuQK/+73Y6yPmxZ1LPngEt+8/7vW8Fp3jwaPnvT6Cv35+r8A5HzwHLZoPhgLTYxpMg9kkNqmHGvzn5bBT8TR4arob1yAuw03F88HT1+CjH4trrx9+fPslhPDs3uXI1WYdT4On6YOPfqQP5Wsw63g+eLYsf3vTqXgaPBM97kg8Hzw1DS4Pr+HaqzaaOtN4GswH37APHgREnO1flePVnQENnqvvn+Pqxpt88Dx8F/3h6fe7T5aTyV+ffm6erPRagwfd88H9bolNvxcfDD54lvObJyvJp6rVnUG1P/PBPT4ffLZ/Fdc42aTB0/LBvddg54M7SrVF02DXYfHBrslyPth10TQYfDA9psE02Plg10WDBtNdLZoG88F8MA0GH8wH02AazAfzwaDBdJcG02A+mA+mweCD+WAaTIP5YD4YNJju0mAazAfzwTSYBvPBfDANpsF8sP+Tda0E9ejGWDQYgPsHu3+wFg0FBmiw+weHzt4/GAAAAAAAAAAAAAAAAF3jL0LgQVqA0v0nAAAAAElFTkSuQmCC"/>
+  <rect x="348" y="36" width="320" height="240" fill="none" stroke="#3b4166" stroke-width="2"/>
+
+  <text x="340" y="294" fill="#9aa4c4" font-size="11" text-anchor="middle">どちらも実際のゲーム画面（2 倍に拡大）。右上の STEPS 21 は、この面を解くのに歩いた数です</text>
+</svg>
+</div>
+<figcaption>6 面を 21 歩で解いたところ。<b>輪が出ているあいだは、<code>Enter</code> を押しても次へ進みません</b></figcaption>
+</figure>
+
+<div class="note">
+  <b>step1 で作った「間」と同じしくみです</b>
+  <a href="../step1/phase7.html">step1 フェーズ 7</a> で、捕まってから 0.67 秒は <code>GAME OVER</code> を出さず、
+  <code>Enter</code> も受け付けないようにしました（<code>gameover_frame</code> と <code>GAMEOVER_WAIT</code>）。
+  今回はそれを<b>クリアの瞬間</b>に使います。<br>
+  新しく出てくるのは、<b>円を描く <code>pyxel.circb</code></b> と、<b>文字を右はしにそろえる式</b>くらいです。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-hud">1-1. 画面の上は「左・まんなか・右」の 3 か所</h3>
+
+<p>
+<a href="phase1.html">フェーズ 1</a> で、画面の上に <code>HUD_HEIGHT = 12</code> ドットの帯を空けておきました
+（コメントは「<b>手数などを出すために</b>空けておく高さ」）。いよいよ使います。
+いまこの帯には、左に <code>STAGE</code>、まんなかに <code>CLEAR!</code> が出ます。
+<b>空いている右はし</b>に <code>STEPS</code> を置きます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="画面の上の帯を 4 倍に拡大した図。左の STAGE 6/10 は x=2 から、まんなかの CLEAR! ENTER は draw_center で、右の STEPS 21 は draw_right で描く。下に右はしを 12 倍に拡大し、1 文字が 4 ドットの箱に入っていること、右に 2 ドット空けると書き始めが x=127 になることを示す">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">画面の上の帯（高さ 12 ドット）を 4 倍に拡大。実際のゲーム画面です</text>
+  <image class="shot" x="0" y="36" width="640" height="48" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAMCAIAAABqcyHvAAABBUlEQVR42u1WwQ3DMAikUXfINJkkynSRJ/E02aIPJIQwvuA6UvvgHhGmxyU6UghRIpFIJP4UL4nO8ySi4zg44JjzHACOhnDkCHSCT3nVnYjWrVx1X7eik5znowSS1HksLvpa0ORbzjxcS9sYW9fz3DLaIwf66vJBXmpdzXh3I3F7NbSgflsLOPPd7dmOW9BT01YT0dK+NeAhTJ/cEsPhVyn+Zx3CVXfQg+90Ru81A2y7ayPgu1YvtzfTBSZ224YGxdNYtyKj0szMXv5WJ8h5akQD28U9Y7s7JntWv+NL0Uj3SiKzd6j37mp0160pMbs5suODHPM1ML+Agz+N8hOJRCKRSPwMH0yjJYP0BeSQAAAAAElFTkSuQmCC"/>
+  <rect x="0" y="36" width="640" height="48" fill="none" stroke="#3b4166" stroke-width="2"/>
+
+  <!-- 3 か所の目印 -->
+  <path d="M8 90 V96 H164 V90" stroke="#9aa4c4" stroke-width="1.5" fill="none"/>
+  <text x="86" y="112" fill="#9aa4c4" font-size="12" text-anchor="middle">左：<tspan font-family="Consolas, monospace">x = 2</tspan> から</text>
+  <path d="M216 90 V96 H420 V90" stroke="#ffcc44" stroke-width="1.5" fill="none"/>
+  <text x="318" y="112" fill="#ffcc44" font-size="12" text-anchor="middle">まんなか：<tspan font-family="Consolas, monospace">draw_center()</tspan></text>
+  <path d="M508 90 V96 H632 V90" stroke="#2ee6a8" stroke-width="1.5" fill="none"/>
+  <text x="570" y="112" fill="#2ee6a8" font-size="12" text-anchor="middle">右：<tspan font-family="Consolas, monospace">draw_right()</tspan></text>
+
+  <!-- 右はしの拡大 -->
+  <text x="20" y="146" fill="#e8f0ff" font-size="12">右はし（x = 116〜159）を 12 倍に拡大</text>
+  <image class="shot" x="56" y="156" width="528" height="144" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAMCAIAAACWSshgAAAAYElEQVR42u1SQQrAMAxysG/6Oj+6Q6GErE3dbYd4KKYVI1Kg8SNcjkgSAJKD7DjJpF+azDEJzgneY7wfPJ61m6RadsgRQ0yvZLpb4GisHEUTRX9FowBu/0OYT1/1jcYCDz9mUrBCnhUBAAAAAElFTkSuQmCC"/>
+  <rect x="56" y="156" width="528" height="144" fill="none" stroke="#3b4166" stroke-width="2"/>
+  <!-- 文字の箱（8 文字）。x = 127 + 4i → 56 + (11 + 4i) * 12 -->
+  <g fill="none" stroke="#45b0e8" stroke-width="1.5" stroke-dasharray="4 3">
+    <rect x="188" y="186" width="48" height="72"/><rect x="236" y="186" width="48" height="72"/>
+    <rect x="284" y="186" width="48" height="72"/><rect x="332" y="186" width="48" height="72"/>
+    <rect x="380" y="186" width="48" height="72"/><rect x="428" y="186" width="48" height="72"/>
+    <rect x="476" y="186" width="48" height="72"/><rect x="524" y="186" width="48" height="72"/>
+  </g>
+  <!-- 右の 2 ドット -->
+  <rect x="560" y="156" width="24" height="144" fill="#2ee6a8" opacity=".28"/>
+  <text x="606" y="236" fill="#2ee6a8" font-size="11" text-anchor="middle">2 ドット</text>
+  <text x="606" y="250" fill="#2ee6a8" font-size="11" text-anchor="middle">空ける</text>
+  <!-- 書き始め -->
+  <path d="M188 172 V186" stroke="#ffcc44" stroke-width="2"/>
+  <text x="188" y="168" fill="#ffcc44" font-family="Consolas, monospace" font-size="12" text-anchor="middle">x = 127</text>
+  <text x="212" y="276" fill="#45b0e8" font-size="11" text-anchor="middle">1 文字 = 4 ドット</text>
+  <text x="212" y="290" fill="#45b0e8" font-size="10" text-anchor="middle">（字 3 ＋ すき間 1）</text>
+
+  <text x="320" y="328" fill="#e8f0ff" font-family="Consolas, monospace" font-size="13" text-anchor="middle">"STEPS 21" は 8 文字 → x = 160 - 8 * 4 - 1 = 127</text>
+</svg>
+</div>
+<figcaption>点線の箱 1 つが 1 文字ぶん（4 ドット）。<b>右はしの箱のすき間 1 ドット ＋ もう 1 ドット</b>で、右に 2 ドット空きます</figcaption>
+</figure>
+
+<p>
+左はしの <code>STAGE</code> は <code>x = 2</code> から書いているので、左に 2 ドット空いています。
+右はしもそろえて <b>2 ドット空けたい</b>。ところが右にそろえるときは、「書き始めの <code>x</code>」を
+<b>文字の長さから逆算</b>しなければなりません。
+</p>
+
+<p>
+Pyxel の文字は、<b>1 文字が幅 4 ドットの箱</b>に入っています（字が 3 ドット、右にすき間が 1 ドット）。
+<code>n</code> 文字なら、箱は <code>4n</code> ドットです。
+</p>
+
+<ul>
+  <li>箱を右はしにぴったりつけると <code>x = 160 - 4n</code>。いちばん右の 1 ドットは<b>箱のすき間</b>なので、
+      字の右は <b>1 ドットしか空きません</b></li>
+  <li>そこから<b>もう 1 ドット左へ</b>ずらすと <code>x = 160 - 4n - 1</code>。字の右に <b>2 ドット</b>空きます</li>
+</ul>
+
+<pre><code>    x = SCREEN_WIDTH - len(text) * 4 - 1</code></pre>
+
+<p>
+<code>STEPS 21</code> は 8 文字なので <code>x = 127</code>。
+歩数が 3 けたになって <code>STEPS 100</code>（9 文字）になると <code>x = 123</code>——
+<b>右はしは動かず、左へ伸びていきます</b>。
+</p>
+
+<div class="term">
+  <b><code>draw_center()</code> の兄弟です</b>
+  <code>draw_center()</code> は <code>(SCREEN_WIDTH - len(text) * 4) // 2</code> で、<b>左右の空きを半分ずつ</b>にしました。
+  <code>draw_right()</code> は<b>右の空きを 2 ドットに決めて、残りをぜんぶ左に回す</b>。
+  どちらも、<b>文字の幅 <code>len(text) * 4</code> から逆算する</b>のは同じです。<br>
+  <small>こまかい話：「1」の字だけは幅 2 ドットで、箱の左に寄っています。
+  そのため <code>STEPS 21</code> のように「1」で終わるときだけ、字の右はしが 1 ドット内側になります
+  （実際に描いて確かめました）。箱の位置はそろっているので、けたがずれることはありません。</small>
+</div>
+
+<h3 id="idea-steps">1-2. 数えるのは「矢印を押した回数」ではなく「動けた回数」</h3>
+
+<p>
+歩数を<b>どこで数えるか</b>を考えます。
+矢印キーを見ている <code>handle_key()</code> で数えると、<b>壁に向かって押した</b>ときも数えてしまいます。
+壁なら向きが変わるだけで、1 マスも進んでいません。
+</p>
+
+<p>
+数えたいのは<b>本当に 1 マス動いたとき</b>です。それが決まるのは <code>try_move()</code> の<b>いちばん最後</b>——
+壁や荷物の「関門」をぜんぶ通り抜けて、<code>walk_timer = 1</code> で歩き出す行のところです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 334" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="try_move の流れ。向きを変えたあと、行き先が壁なら return、荷物があってその先が壁か荷物なら return。ここを通り抜けたときだけ荷物を押して 1 マス進み、そこで steps を 1 増やす">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13"><tspan font-family="Consolas, monospace" font-weight="bold">try_move()</tspan> は「関門」を上から順に通ります</text>
+
+  <!-- 左の流れ -->
+  <g font-size="12">
+    <rect x="30" y="40" width="330" height="40" rx="5" fill="#232840" stroke="#3b4166"/>
+    <text x="44" y="58" fill="#e8f0ff">向きを変える（動けなくても）</text>
+    <text x="44" y="73" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11">self.player_dir = direction</text>
+
+    <rect x="30" y="102" width="330" height="40" rx="5" fill="#232840" stroke="#ff6b97"/>
+    <text x="44" y="120" fill="#ff6b97">関門 1：行き先が壁？</text>
+    <text x="44" y="135" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11">if self.tiles[next_y][next_x] == "#":</text>
+
+    <rect x="30" y="164" width="330" height="40" rx="5" fill="#232840" stroke="#ff6b97"/>
+    <text x="44" y="182" fill="#ff6b97">関門 2：荷物があって、その先が壁か荷物？</text>
+    <text x="44" y="197" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11">far_x, far_y を調べる（2 つの if）</text>
+
+    <rect x="30" y="226" width="330" height="40" rx="5" fill="#232840" stroke="#3b4166"/>
+    <text x="44" y="244" fill="#e8f0ff">（荷物があれば）押す</text>
+    <text x="44" y="259" fill="#9aa4c4" font-family="Consolas, monospace" font-size="11">self.move_box(…) / self.pushing = True</text>
+
+    <rect x="30" y="288" width="330" height="40" rx="5" fill="#ffcc44" opacity=".14"/>
+    <rect x="30" y="288" width="330" height="40" rx="5" fill="none" stroke="#ffcc44" stroke-width="2"/>
+    <text x="44" y="306" fill="#e8f0ff" font-family="Consolas, monospace" font-size="11">self.walk_timer = 1</text>
+    <text x="44" y="321" fill="#ffcc44" font-family="Consolas, monospace" font-size="12" font-weight="bold">self.steps += 1</text>
+  </g>
+
+  <!-- 下向きの矢印 -->
+  <g stroke="#9aa4c4" stroke-width="1.5">
+    <path d="M195 80 V96"/><path d="M195 142 V158"/><path d="M195 204 V220"/><path d="M195 266 V282"/>
+  </g>
+  <g fill="#9aa4c4">
+    <path d="M195 101 l-5 -8 h10 z"/><path d="M195 163 l-5 -8 h10 z"/><path d="M195 225 l-5 -8 h10 z"/><path d="M195 287 l-5 -8 h10 z"/>
+  </g>
+
+  <!-- return の出口 -->
+  <g stroke="#ff6b97" stroke-width="1.5" fill="none">
+    <path d="M360 122 H420"/><path d="M360 184 H420"/>
+  </g>
+  <g fill="#ff6b97"><path d="M428 122 l-9 -5 v10 z"/><path d="M428 184 l-9 -5 v10 z"/></g>
+  <g font-size="12">
+    <text x="436" y="118" fill="#ff6b97" font-family="Consolas, monospace">return</text>
+    <text x="436" y="134" fill="#9aa4c4">向きが変わっただけ → 数えない</text>
+    <text x="436" y="180" fill="#ff6b97" font-family="Consolas, monospace">return</text>
+    <text x="436" y="196" fill="#9aa4c4">押せない → 数えない</text>
+  </g>
+
+  <!-- ここで数える -->
+  <path d="M368 308 H420" stroke="#ffcc44" stroke-width="1.5"/>
+  <path d="M360 308 l9 -5 v10 z" fill="#ffcc44"/>
+  <text x="428" y="304" fill="#ffcc44" font-size="12" font-weight="bold">ここで数える</text>
+  <text x="428" y="320" fill="#9aa4c4" font-size="11">関門をぜんぶ通った ＝ 本当に動く</text>
+</svg>
+</div>
+<figcaption>荷物を押した 1 歩も、ここを通るので <b>1 歩</b>と数えます</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>こんなとき</th><th>数える？</th></tr></thead>
+  <tbody>
+    <tr><td>壁に向かって押した（向きだけ変わる）</td><td>数えない</td></tr>
+    <tr><td>押せない荷物に向かって押した</td><td>数えない</td></tr>
+    <tr><td>床へ 1 マス歩いた</td><td><b>1</b></td></tr>
+    <tr><td>荷物を押して 1 マス進んだ</td><td><b>1</b>（押しても 1 歩）</td></tr>
+  </tbody>
+</table>
+
+<p>
+矢印を押しっぱなしにしても、<b>歩いている 8 フレームのあいだはキーを見ていない</b>
+（<a href="phase4.html">フェーズ 4</a>）ので、<b>1 マスにつき 1 回</b>しか数えません。
+</p>
+
+<h3 id="idea-wait">1-3. クリアの「間」は、時刻を覚えて引き算</h3>
+
+<p>step1 フェーズ 7 と同じ手順です。</p>
+
+<ol>
+  <li>クリアした<b>瞬間の</b> <code>pyxel.frame_count</code> を、<code>self.clear_frame</code> に覚えておく</li>
+  <li>そのあとは毎フレーム、<code>pyxel.frame_count - self.clear_frame</code> で
+      <b>「クリアしてから何フレームたったか」</b>を出す</li>
+  <li>それが <code>CLEAR_WAIT</code>（<code>20</code>）より小さいあいだは、<b>輪を描き</b>、
+      <code>CLEAR!</code> は<b>出さず</b>、<code>Enter</code> も<b>受け付けない</b></li>
+</ol>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="クリアしてからの経過フレームの時間軸。0 から 19 フレームは輪が広がり Enter は効かない。20 フレームからは CLEAR! ENTER が出て Enter が効く。下に、経過 0・6・10・14・19・20 フレームの、3 つのリンゴのまわりの実際の画面を並べている">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">クリアしてからの経過（<tspan font-family="Consolas, monospace">pyxel.frame_count - self.clear_frame</tspan>）で切りかえる</text>
+
+  <!-- 時間軸：0 → x=40、1 フレーム = 20px -->
+  <rect x="40" y="48" width="400" height="22" fill="#ffcc44" opacity=".22"/>
+  <rect x="40" y="48" width="400" height="22" fill="none" stroke="#ffcc44"/>
+  <text x="240" y="64" fill="#ffcc44" font-size="12" text-anchor="middle">0〜19：輪が広がる（CLEAR! なし・Enter は効かない）</text>
+  <rect x="440" y="48" width="170" height="22" fill="#2ee6a8" opacity=".18"/>
+  <rect x="440" y="48" width="170" height="22" fill="none" stroke="#2ee6a8"/>
+  <text x="525" y="64" fill="#2ee6a8" font-size="12" text-anchor="middle">20〜：CLEAR!・Enter が効く</text>
+  <g stroke="#9aa4c4" stroke-width="1"><path d="M40 74 V82 M240 74 V82 M440 74 V82"/></g>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="40" y="95">0</text><text x="240" y="95">10</text><text x="440" y="95">20</text>
+  </g>
+  <text x="40" y="112" fill="#e8f0ff" font-size="11">↑ クリアした瞬間（<tspan font-family="Consolas, monospace">self.clear_frame = pyxel.frame_count</tspan>）</text>
+  <text x="440" y="112" fill="#2ee6a8" font-size="11" font-family="Consolas, monospace">↑ CLEAR_WAIT</text>
+
+  <!-- 実際の画面（3 倍） -->
+  <g>
+    <image class="shot" x="20" y="128" width="180" height="84" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAcCAIAAACyMksTAAAA70lEQVR42mNgGIKAsdsjCMIq3bEOzkYGg1Ac6ugFr3mHUEgzwVl8mpZYVQxCcUYIS9s4fgiFNAsseTAMyeQx5B09yNP3aJoebGn6XZItSebSVD3hchrZXGSjB0o9seX0yqe8rrUGu5svMDAwhEt/JhgStFZPuBpf+RRdCr+5tFZPTjktda1pwNWTVk7jAnRWT2yahgeDrWshMWmUpuqHZNOUZTA4Yt+EP3C2UwHLEGhPI7sYmTt429MrAh+J2UuhCb46+Cxivdxoe3q0PR2xXg4t5zkVsGCmjUHXnt434Q+yu9G4o2maegAzeQzPcQ8ADfqVTYlNWSUAAAAASUVORK5CYII="/>
+    <image class="shot" x="230" y="128" width="180" height="84" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAcCAIAAACyMksTAAAA+0lEQVR42mNgGIKAsdsjCMIq3bEOzkYGg1Ac6ugFr3mHUEgzwVl8mpZYVQxCcUYIS9s4fgiFNAsseTAMyeQx5B09yNP3aJoebGn6XZItSebSVD3hchrZXGSjB0o9seX0yqe8rrUGu5svMDAwiK5+71TAgt96WqsnXI2vfIouhd9cWqsnp5yWutY04OpJK6dxATqrJzZNw4Ph99VcYtIoTdUT2zTdN+EPhEHQRDqoZyEygoi0mzz1cBcPmfY0movh3MHbnl4R+EjMXgpN8NXBZxHr5Ubb06Pt6Yj1cmhZ1qmABTNtDLr29L4Jf5DdjcYdTdPUA5jJY3iOewAA7bmrA4AkUxUAAAAASUVORK5CYII="/>
+    <image class="shot" x="440" y="128" width="180" height="84" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAcCAIAAACyMksTAAABQUlEQVR42mNgGIKAsdsjCMIq3bEOzkYGg1Ac6ugFr3mHUEgzwVl8mpZYVQxCcUYIS9s4fgiFNAsseTAMyeQx5B09yNP38E3T+yb8QeY6FbDgN5TW6lkIemvfhD9OBSzvkmyF5h1GFhko9YTLaWT975Js3yXZQkJi34Q/A6KecDkNN3HlU17XWoPdzRcYGBjCpT/jCg9aq0eEdLdHENYqHg5WPuVlYGCAmAjnDqB6csppqWtNA66etHIaF6CzeqbSHetKd6xDU/Tp+nE4G57IIMFg61qIaSg91SPa07iaprhyw0CJE+Vo/LmeWurRahaC5TQLcrpBiwUICJhpu2/CYcwai1rqcfkZl/qBb0+vCHwkZi+FJvjq4LOI9XKj7enR9nTEejm0POdUwIKZNgZdexqtrCBYdIymaXIBZvIYnuMeANfqHwuNyzpnAAAAAElFTkSuQmCC"/>
+    <image class="shot" x="20" y="262" width="180" height="84" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAcCAIAAACyMksTAAABYUlEQVR42mNgGIKAsdsjCMIq3bEOzkYGg1Ac6ugFr3mHUEgzwVl8mpZYVQxCcUYIS9s4fgiFNAsseTAMyeQxlEIaV7r5dP04nLtvwh9kWacCloFVTyBNQ4xDMwWrIH3Uo5TTWIu8fRP+4NGJKUtr9YTTNJqed0m2aAqcCliQo5XW6kkrp5HNRTZ6oNTjLKfRgmHlU17XWoPdzRcYGBjCpT9jqqS1evSQ7vYIwlrFI5vIwMAAMRHOHUD15JTTUteaBlz90Khc0NI3U+mOdaU71uHRgJzIpK412boW4reAFuqRaxZ85TT+QhRTDa3VE67G6QyQy2OCPsFXTsPLdlzlJVowkK0erQaBc3EFM+H2NK3bEisCH4nZS6EJvjr4TMxeCk+QE2hPQ3QSbIWRrR6/OaQ1TUkygnL11OkE0K3/F7FeDs2HTgUsEevl8Jsz8H1EtAxHTFE42kckC2Amj+E57gEAjTExijGRLsEAAAAASUVORK5CYII="/>
+    <image class="shot" x="230" y="262" width="180" height="84" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAcCAIAAACyMksTAAABe0lEQVR42mNgGIKAsdsjCMIq3bEOzkYGg1Ac6ugFr3mHUEgzwVl8mpZYVQxCcUYIS9s4fgiFNAsseeBTtG/CH2SuUwELfkNprZ4o49BMwSpIH/UopQdaRuTTtNyQfhhTJ5+m5afrxzGNpoN6uDgDAwP2NL1vwh+CcYSsktbqyUnTg7fIw++5d0m2WPXjCjbqqie5nEY2F9nogVKPpZzGGgwrn/K61hrsbr7AwMAQLv2ZYBqlonqsrmLq9gjCWsUjm8jAwAAxEc4dQPXY0zR+IHWtacDVM5FU7w+W0qN0x7rSHevQRJFLcuREJnWtyda1EL+JtFaPvUYkvuQfKPUsgyG6kUtiYvyDpZxGK8/xt3fhRRjZ6tHqDjgXWT2aOYg0jZyOcaVvqouvCHyESxCPOTi7WwTbh2gKyFP/6uAzMXspNJWvDj6LWC+Hx0CcdkBUE9/eJU/9ikByMivO9jRy7BDsWdBZ/cD3EdEClZgCcbi0p+kMsKb1YTjuAQDwE3QpcSJaHgAAAABJRU5ErkJggg=="/>
+    <image class="shot" x="440" y="262" width="180" height="84" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAAcCAIAAACyMksTAAAA70lEQVR42mNgGIKAsdsjCMIq3bEOzkYGg1Ac6ugFr3mHUEgzwVl8mpZYVQxCcUYIS9s4fgiFNAsseTAMyeQx5B09yNP3aJoebGn6XZItSebSVD3hchrZXGSjB0o9seX0yqe8rrUGu5svMDAwhEt/JhgStFZPuBpf+RRdCr+5tFZPTjktda1pwNWTVk7jAnRWT2yahgeDrWshMWmUpuqHZNOUZTA4Yt+EP3C2UwHLEGhPI7sYmTt429MrAh+J2UuhCb46+Cxivdxoe3q0PR2xXg4t5zkVsGCmjUHXnt434Q+yu9G4o2maegAzeQzPcQ8ADfqVTYlNWSUAAAAASUVORK5CYII="/>
+  </g>
+  <g fill="none" stroke="#3b4166" stroke-width="1.5">
+    <rect x="20" y="128" width="180" height="84"/><rect x="230" y="128" width="180" height="84"/>
+    <rect x="440" y="128" width="180" height="84"/><rect x="20" y="262" width="180" height="84"/>
+    <rect x="230" y="262" width="180" height="84"/>
+  </g>
+  <rect x="440" y="262" width="180" height="84" fill="none" stroke="#2ee6a8" stroke-width="2"/>
+  <g font-size="11" text-anchor="middle">
+    <text x="110" y="230" fill="#e8f0ff">経過 0・半径 0</text>
+    <text x="110" y="245" fill="#9aa4c4">（まだリンゴに隠れている）</text>
+    <text x="320" y="230" fill="#e8f0ff">経過 6・半径 3</text>
+    <text x="320" y="245" fill="#9aa4c4">（リンゴのふちから出てくる）</text>
+    <text x="530" y="230" fill="#e8f0ff">経過 10・半径 5</text>
+    <text x="110" y="364" fill="#e8f0ff">経過 14・半径 7</text>
+    <text x="320" y="364" fill="#e8f0ff">経過 19・半径 9</text>
+    <text x="320" y="379" fill="#9aa4c4">（輪の最後）</text>
+    <text x="530" y="364" fill="#2ee6a8">経過 20・輪は消える</text>
+    <text x="530" y="379" fill="#9aa4c4">（画面の上に CLEAR!  ENTER）</text>
+  </g>
+</svg>
+</div>
+<figcaption>6 面のリンゴのまわりを切り抜いて、3 倍に拡大した実際の画面です</figcaption>
+</figure>
+
+<p>
+<b>「見えていないものは押せない」</b>——step1 で決めた約束です。
+<code>ENTER</code> の文字が出るのと<b>同じフレームから</b> <code>Enter</code> が効くように、
+描くほうと受け付けるほうで<b>同じ <code>CLEAR_WAIT</code></b> を見ます。
+</p>
+
+<h3 id="idea-ring">1-4. 輪の大きさを、たった時間から決める</h3>
+
+<p>
+輪の半径は、<b>クリアしてからの経過フレームを 2 で割った数</b>にします。
+</p>
+
+<pre><code>            r = self.clear_elapsed() // 2       # 2 フレームに 1 ドットずつ大きく</code></pre>
+
+<table>
+  <thead><tr><th>経過</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>…</td><td>18</td><td>19</td><td>20</td></tr></thead>
+  <tbody>
+    <tr><th>半径 <code>r</code></th><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>2</td><td>…</td><td>9</td><td>9</td><td>（描かない）</td></tr>
+  </tbody>
+</table>
+
+<p>
+経過は毎フレーム 1 ずつ増えるので、<b>半径は 2 フレームに 1 ドットずつ</b>大きくなります。
+20 フレームで半径 9——リンゴ 2 個ぶんほどの輪になったところで消えて、<code>CLEAR!</code> に入れかわります。
+</p>
+
+<div class="term">
+  <b>1 フレームに 1 ドットだと、大きすぎました</b>
+  <code>// 2</code> をつけずに <code>r = self.clear_elapsed()</code> にすると、最後は半径 19 になります。
+  荷物が 7 つある 10 面で試すと、輪が盤面いっぱいに重なって、
+  <b>どれがどのリンゴの輪なのか分からなく</b>なりました。合図は、<b>少し控えめ</b>なくらいがちょうどいいようです。
+</div>
+
+<p>
+「たった時間から、大きさを計算する」のは、<a href="phase4.html">フェーズ 4</a> で
+<code>walk_timer</code> から<b>歩いている途中の位置</b>を計算したのと同じ発想です。
+ゲームの動きの多くは、この「<b>経過 → 量</b>」の式で作れます。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.circb(x, y, r, col)</code></td>
+        <td><b>円の線だけ</b>を描く。中心が <code>(x, y)</code>、半径 <code>r</code>。
+        中までぬるのは <code>pyxel.circ</code>（<code>b</code> がない）。<code>rectb</code> と同じく、<code>b</code> は「枠だけ」の印。
+        <b>このフェーズで初めて出ます</b></td></tr>
+    <tr><td><code>pyxel.frame_count</code></td>
+        <td>起動してから何フレーム目か。<b>時刻を覚えておいて、引き算する</b>。step1 フェーズ 7 と同じ使い方</td></tr>
+    <tr><td><code>len(text) * 4</code></td>
+        <td>文字列の幅（ドット）。<code>draw_center()</code> と同じ</td></tr>
+    <tr><td><code>+=</code></td>
+        <td><code>self.steps += 1</code> は <code>self.steps = self.steps + 1</code> と同じ。step1 のスコアと同じ</td></tr>
+    <tr><td><code>A and B</code> は左から調べる</td>
+        <td><code>A</code> が <code>False</code> なら、<b><code>B</code> は調べもしない</b>。
+        <b>このフェーズで初めて、この性質に頼ります</b>（<a href="#and-order">6-4</a>）</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+<b>7 段階</b>です。足すのは 23 行、書き換えは 3 行（と先頭のフェーズ名）。
+<b>どれも、いまある行のすぐ隣</b>に足します。
+</p>
+
+<h3 id="step-const">3-1. 定数を 1 つ足す</h3>
+
+<p><code>BLINK_ON</code> のすぐ下に、空行をはさんで足します。</p>
+
+<pre><code>BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+                                                                                ← 足す（空行）
+CLEAR_WAIT = 20         # クリアしてから CLEAR! を出すまでのフレーム数（0.67 秒）   ← 足す</code></pre>
+
+<p>
+<code>20</code> は step1 の <code>GAMEOVER_WAIT</code> と同じ長さです。
+Pyxel は 1 秒が 30 フレームなので、20 フレームは 0.67 秒です。
+</p>
+
+<h3 id="step-right">3-2. <code>draw_right()</code> を足す</h3>
+
+<p><code>draw_center()</code> のすぐ下、<code>is_blink_on()</code> の手前です。</p>
+
+<pre><code>def draw_center(text, y, color):
+    """文字を、画面の横まんなかに描く"""
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)
+
+def draw_right(text, y, color):   ← ここから足す
+    """文字を、画面の右はしにそろえて描く（右に 2 ドット空ける）"""
+    x = SCREEN_WIDTH - len(text) * 4 - 1
+    pyxel.text(x, y, text, color)
+                                  ← ここまで足す
+def is_blink_on():</code></pre>
+
+<h3 id="step-steps">3-3. 歩数を数える（2 か所）</h3>
+
+<p>
+1 つめは <b>0 にする</b>ところ。<code>load_stage()</code> の、<code>self.cleared = False</code> のすぐ下です。
+</p>
+
+<pre><code>        self.pushing = False            # いまの一歩で荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
+        self.steps = 0                  # このステージで歩いた数   ← 足す</code></pre>
+
+<p>
+2 つめは <b>1 増やす</b>ところ。<code>try_move()</code> の<b>いちばん最後</b>です。
+</p>
+
+<pre><code>        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+        self.steps += 1                         # 動けたときだけ、1 歩と数える   ← 足す</code></pre>
+
+<div class="warn">
+  <b>インデント（字下げ）に気をつけてください</b>
+  この行は、すぐ上の <code>self.walk_timer = 1</code> と<b>同じ深さ（スペース 8 つ）</b>です。
+  もっと上にある荷物の <code>if</code> の中（スペース 12 個）に入ってしまうと、
+  <b>荷物を押したときしか増えません</b>（<a href="#count-place">6-1</a>）。
+</div>
+
+<div class="term">
+  <b><code>__init__()</code> ではなく <code>load_stage()</code> に置く理由</b>
+  <a href="phase8.html#step-init">フェーズ 8</a> で、置き場所は「<b><code>R</code> で戻ってほしいか</b>」で決めました。
+  クリア記録の <code>cleared_count</code> は戻ってほしくないので <code>__init__()</code>。
+  歩数は<b>やり直したら 0 に戻ってほしい</b>ので <code>load_stage()</code> です（<a href="#reset-place">6-2</a>）。
+</div>
+
+<h3 id="step-time">3-4. クリアした時刻を覚えて、<code>clear_elapsed()</code> を足す</h3>
+
+<p>
+「着いた、その瞬間に調べる」の <code>if</code> の中、<code>self.cleared = True</code> のすぐ下に 1 行足します。
+</p>
+
+<pre><code>                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
+                    self.clear_frame = pyxel.frame_count    # クリアした時刻を覚えておく   ← 足す
+                    # 何面目までクリアしたかを覚える。前の記録より小さくはしない
+                    self.cleared_count = max(self.cleared_count, self.stage_no + 1)</code></pre>
+
+<p>
+つぎに、<code>is_cleared()</code> のすぐ下に、<b>経過を答える関数</b>を足します。
+</p>
+
+<pre><code>    def is_cleared(self):
+        """すべての荷物がゴールに乗ったか"""
+        return all(self.on_goal(box) for box in self.boxes)
+
+    def clear_elapsed(self):   ← ここから足す
+        """クリアしてから何フレームたったか"""
+        return pyxel.frame_count - self.clear_frame
+                               ← ここまで足す
+    def next_stage(self):</code></pre>
+
+<p>
+step1 では <code>elapsed = pyxel.frame_count - self.gameover_frame</code> と<b>変数</b>に入れました。
+今回はこの引き算を <b>3 か所</b>で使うので、<b>関数</b>にします（<a href="#func">6-3</a>）。
+</p>
+
+<h3 id="step-enter">3-5. <code>Enter</code> は、待ちが明けてから受け付ける</h3>
+
+<p><code>update_game()</code> の、クリアしたあとの 2 行を書き換えます。</p>
+
+<pre><code>        if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ   ← 書き換え
+            if self.clear_elapsed() &gt;= CLEAR_WAIT and pyxel.btnp(pyxel.KEY_RETURN):                ← 書き換え
+                self.next_stage()
+            return</code></pre>
+
+<p>
+<code>R</code> と <code>Q</code> はこの<b>上</b>で先に調べているので、<b>待ちのあいだでも効きます</b>
+（<a href="phase8.html#q-order">フェーズ 8 の 6-4</a> の並び順のおかげです）。
+止めているのは <code>Enter</code>（次の面へ進む）だけです。
+</p>
+
+<h3 id="step-ring">3-6. 輪を描く（リンゴより<b>先</b>に）</h3>
+
+<p>
+<code>draw_game()</code> の、壁を描く <code>for</code> のあと、荷物を描く<b>手前</b>に足します。
+</p>
+
+<pre><code>                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                            0, u, V_TILE, TILE, TILE)
+
+        # クリアした直後は、リンゴから輪が広がる。リンゴの下から出てくるように、先に描く   ← ここから足す
+        if self.cleared and self.clear_elapsed() &lt; CLEAR_WAIT:
+            r = self.clear_elapsed() // 2       # 2 フレームに 1 ドットずつ大きく
+            for box in self.boxes:
+                cx = self.ox + box[0] * TILE + TILE // 2
+                cy = self.oy + box[1] * TILE + TILE // 2
+                pyxel.circb(cx, cy, r, pyxel.COLOR_YELLOW)
+                                                                                    ← ここまで足す
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる</code></pre>
+
+<p>
+<code>cx</code>・<code>cy</code> は<b>リンゴのマスのまんなか</b>です。
+マスの左上（<code>self.ox + box[0] * TILE</code>）に、マスの半分 <code>TILE // 2</code>（<code>4</code>）を足しています。
+</p>
+
+<div class="warn">
+  <b><code>and</code> の左右を入れかえないでください</b>
+  <code>self.clear_elapsed() &lt; CLEAR_WAIT and self.cleared</code> と書くと、
+  <b>ゲームが始まった瞬間に <code>AttributeError</code></b> で止まります。理由は <a href="#and-order">6-4</a> で。
+</div>
+
+<h3 id="step-hud">3-7. 画面の上に <code>STEPS</code> を出し、<code>CLEAR!</code> は待ちが明けてから</h3>
+
+<p><code>draw_game()</code> のいちばん下、画面の上の表示です。</p>
+
+<pre><code>        else:
+            pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
+                       pyxel.COLOR_GRAY)
+            draw_right(f"STEPS {self.steps}", 3, pyxel.COLOR_GRAY)    ← 足す
+            if self.cleared and self.clear_elapsed() &gt;= CLEAR_WAIT:   ← 書き換え
+                draw_center("CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)</code></pre>
+
+<p>
+輪は <code>&lt; CLEAR_WAIT</code>、<code>CLEAR!</code> は <code>&gt;= CLEAR_WAIT</code>。
+<b>ちょうど反対の条件</b>なので、経過 20 のフレームで、輪が消えるのと同時に <code>CLEAR!</code> が出ます。
+<code>STEPS</code> は <code>if</code> の外なので、クリアのあとも<b>出しっぱなし</b>——解いた歩数がそのまま読めます。
+</p>
+
+<h2 id="full-code">4. できあがりのコード</h2>
+
+<p>
+<code>step2/sokoban.py</code> の全文です（<b>500 行</b>）。
+フェーズ 8 のコード（477 行）に<b>23 行足して、4 行書き換えます</b>（先頭のフェーズ名を含みます）。
+地図（47〜171 行）は<b>触りません</b>。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ9：手数の表示とクリア演出
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
+
+SCENE_TITLE = 0         # タイトル画面
+SCENE_GAME = 1          # あそんでいる画面
+SCENE_SELECT = 2        # ステージを選ぶ画面
+
+SELECT_COLS = 5         # ステージ選択で、横 1 列に並べる数
+
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+CLEAR_WAIT = 20         # クリアしてから CLEAR! を出すまでのフレーム数（0.67 秒）
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER_A = 8          # 主人公の段（コマ A）
+V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
+U_FLOOR = 0             # 床（歩ける）
+U_WALL = 8              # 壁（歩けない）
+U_GOAL = 16             # ゴール
+U_BOX = 24              # 荷物
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物
+
+# 向き。この番号がそのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),         # 下
+    (0, -1),        # 上
+    (-1, 0),        # 左
+    (1, 0),         # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [
+    &quot;########&quot;,
+    &quot;#......#&quot;,
+    &quot;#..O.O.#&quot;,
+    &quot;#..$.$.#&quot;,
+    &quot;#..@...#&quot;,
+    &quot;########&quot;,
+]
+
+STAGE2 = [          # 横にも押せる
+    &quot;########&quot;,
+    &quot;#......#&quot;,
+    &quot;#.$..O.#&quot;,
+    &quot;#.@....#&quot;,
+    &quot;#.$..O.#&quot;,
+    &quot;#......#&quot;,
+    &quot;########&quot;,
+]
+
+STAGE3 = [          # 縦と横を組み合わせる
+    &quot;#########&quot;,
+    &quot;#.O...O.#&quot;,
+    &quot;#.......#&quot;,
+    &quot;#..$....#&quot;,
+    &quot;#....$..#&quot;,
+    &quot;#..@....#&quot;,
+    &quot;#.......#&quot;,
+    &quot;#########&quot;,
+]
+
+STAGE4 = [          # 壁があるので、押す側へ回り込む
+    &quot;##########&quot;,
+    &quot;#........#&quot;,
+    &quot;#.O.##.O.#&quot;,
+    &quot;#...##...#&quot;,
+    &quot;#..$..$..#&quot;,
+    &quot;#........#&quot;,
+    &quot;#...@....#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE5 = [          # 段が仕切られていて、行き来に回り道がいる
+    &quot;##########&quot;,
+    &quot;#........#&quot;,
+    &quot;#O..$....#&quot;,
+    &quot;#...##...#&quot;,
+    &quot;#O..$....#&quot;,
+    &quot;#...##...#&quot;,
+    &quot;#O..$....#&quot;,
+    &quot;#....@...#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE6 = [          # どれから動かすか、順番を考える
+    &quot;##########&quot;,
+    &quot;#........#&quot;,
+    &quot;#.O.O.O..#&quot;,
+    &quot;#........#&quot;,
+    &quot;#.$......#&quot;,
+    &quot;#..$.....#&quot;,
+    &quot;#...$....#&quot;,
+    &quot;#....@...#&quot;,
+    &quot;##########&quot;,
+]
+
+STAGE7 = [          # 1 マスの通路。押す向きが決まってしまう
+    &quot;#############&quot;,
+    &quot;#...........#&quot;,
+    &quot;#OO.........#&quot;,
+    &quot;#..###.###..#&quot;,
+    &quot;#.$###.###..#&quot;,
+    &quot;#..###.###..#&quot;,
+    &quot;#OO###.###..#&quot;,
+    &quot;#.$###.###..#&quot;,
+    &quot;#.@..$....$.#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#############&quot;,
+]
+
+STAGE8 = [          # 荷物が固まって始まる。動かす順番をまちがえられない
+    &quot;#############&quot;,
+    &quot;#@$......OO.#&quot;,
+    &quot;#.$$$....OO.#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#.#########.#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#.#########.#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#############&quot;,
+]
+
+STAGE9 = [          # 中央の大きな壁を、大きく回って運ぶ
+    &quot;#############&quot;,
+    &quot;#...........#&quot;,
+    &quot;#.OO........#&quot;,
+    &quot;#...#####...#&quot;,
+    &quot;#...#####...#&quot;,
+    &quot;#..$#####...#&quot;,
+    &quot;#.OO#####...#&quot;,
+    &quot;#...#####.$.#&quot;,
+    &quot;#........$$.#&quot;,
+    &quot;#........@..#&quot;,
+    &quot;#############&quot;,
+]
+
+STAGE10 = [         # 仕上げ。遠回りと詰みの両方
+    &quot;#############&quot;,
+    &quot;#...........#&quot;,
+    &quot;#...$@$.$.$.#&quot;,
+    &quot;#...........#&quot;,
+    &quot;#...#.#######&quot;,
+    &quot;#O###.#O#...#&quot;,
+    &quot;#...#.#..OO.#&quot;,
+    &quot;#.#.#.#.$##.#&quot;,
+    &quot;#.$.....$O#.#&quot;,
+    &quot;#..#.....O#O#&quot;,
+    &quot;#############&quot;,    
+]
+
+STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
+          STAGE6, STAGE7, STAGE8, STAGE9, STAGE10]
+
+def draw_center(text, y, color):
+    &quot;&quot;&quot;文字を、画面の横まんなかに描く&quot;&quot;&quot;
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)
+
+def draw_right(text, y, color):
+    &quot;&quot;&quot;文字を、画面の右はしにそろえて描く（右に 2 ドット空ける）&quot;&quot;&quot;
+    x = SCREEN_WIDTH - len(text) * 4 - 1
+    pyxel.text(x, y, text, color)
+
+def is_blink_on():
+    &quot;&quot;&quot;点滅の「見えている」タイミングなら True を返す&quot;&quot;&quot;
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+class App:
+    def __init__(self):
+        &quot;&quot;&quot;起動時の設定&quot;&quot;&quot;
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title=&quot;Sokoban&quot;)
+        pyxel.load(&quot;sokoban.pyxres&quot;)
+        self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.cleared_count = 0          # クリアした面の数（終了すると消える）
+        self.all_cleared = False        # 10 個ぜんぶ終わったか
+        pyxel.run(self.update, self.draw)
+
+    def opened_count(self):
+        &quot;&quot;&quot;選べる面の数。クリアした数より 1 つ先まで開く&quot;&quot;&quot;
+        return min(self.cleared_count + 1, len(STAGES))
+
+    def start_game(self):
+        &quot;&quot;&quot;いまの stage_no のステージを読み込んで、ゲームを始める&quot;&quot;&quot;
+        self.load_stage(STAGES[self.stage_no])
+        self.scene = SCENE_GAME
+
+    def load_stage(self, rows):
+        &quot;&quot;&quot;文字の地図を読んで、壁・主人公・荷物に分ける&quot;&quot;&quot;
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        self.walk_timer = 0             # 0 なら止まっている。1～8は歩いている途中
+        self.pushing = False            # いまの一歩で荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
+        self.steps = 0                  # このステージで歩いた数
+
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == &quot;@&quot;:
+                    self.player_x = x
+                    self.player_y = y
+                    mark = &quot;.&quot;          # 主人公の足元は床
+                elif mark == &quot;$&quot;:
+                    self.boxes.append([x, y])
+                    mark = &quot;.&quot;          # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        self.from_x = self.player_x     # 見た目の出発マス
+        self.from_y = self.player_y
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        &quot;&quot;&quot;フレーム毎の更新処理。いまの画面の担当へ渡す&quot;&quot;&quot;
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_SELECT:
+            self.update_select()
+        else:
+            self.update_game()
+
+    def update_title(self):
+        &quot;&quot;&quot;タイトル画面。Enter でステージ選択へ&quot;&quot;&quot;
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.scene = SCENE_SELECT
+
+    def update_select(self):
+        &quot;&quot;&quot;ステージ選択。矢印でカーソルを動かし、Enter で始める&quot;&quot;&quot;
+        if pyxel.btnp(pyxel.KEY_LEFT):
+            self.move_cursor(-1)
+        elif pyxel.btnp(pyxel.KEY_RIGHT):
+            self.move_cursor(1)
+        elif pyxel.btnp(pyxel.KEY_UP):
+            self.move_cursor(-SELECT_COLS)      # 1 段上は、5 つ前
+        elif pyxel.btnp(pyxel.KEY_DOWN):
+            self.move_cursor(SELECT_COLS)       # 1 段下は、5 つ後
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.start_game()
+
+    def move_cursor(self, step):
+        &quot;&quot;&quot;カーソル（stage_no）を step だけ動かす。選べない面へは動かない&quot;&quot;&quot;
+        next_no = self.stage_no + step
+        if 0 &lt;= next_no &lt; self.opened_count():
+            self.stage_no = next_no
+
+    def update_game(self):
+        &quot;&quot;&quot;あそんでいる間の更新&quot;&quot;&quot;
+        if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
+            if pyxel.btnp(pyxel.KEY_RETURN):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.scene = SCENE_TITLE
+            return
+
+        if pyxel.btnp(pyxel.KEY_Q):             # ステージ選択へもどる
+            self.scene = SCENE_SELECT
+            return
+
+        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
+            self.load_stage(STAGES[self.stage_no])
+            return
+
+        if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ
+            if self.clear_elapsed() &gt;= CLEAR_WAIT and pyxel.btnp(pyxel.KEY_RETURN):
+                self.next_stage()
+            return
+        
+        if self.walk_timer &gt; 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
+                    self.clear_frame = pyxel.frame_count    # クリアした時刻を覚えておく
+                    # 何面目までクリアしたかを覚える。前の記録より小さくはしない
+                    self.cleared_count = max(self.cleared_count, self.stage_no + 1)
+
+        # 止まっていて、まだクリアしていないときだけ、キーを見る    
+        if self.walk_timer == 0 and not self.cleared:
+            self.handle_key()
+
+    def handle_key(self):
+        &quot;&quot;&quot;矢印キーを見て、押された向きへ 1 歩進もうとする&quot;&quot;&quot;
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btn(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btn(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btn(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)
+
+    def has_box(self, x, y):
+        &quot;&quot;&quot;そのマスに荷物があるかどうかを答える&quot;&quot;&quot;
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        &quot;&quot;&quot;(x, y) にある荷物を、(dx, dy) だけ動かす&quot;&quot;&quot;
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
+    def on_goal(self, box):
+        &quot;&quot;&quot;その荷物が、ゴールのマスに乗っているか&quot;&quot;&quot;
+        return self.tiles[box[1]][box[0]] == &quot;O&quot;
+
+    def is_cleared(self):
+        &quot;&quot;&quot;すべての荷物がゴールに乗ったか&quot;&quot;&quot;
+        return all(self.on_goal(box) for box in self.boxes)
+
+    def clear_elapsed(self):
+        &quot;&quot;&quot;クリアしてから何フレームたったか&quot;&quot;&quot;
+        return pyxel.frame_count - self.clear_frame
+
+    def next_stage(self):
+        &quot;&quot;&quot;次のステージへ進む。最後だったら全クリア&quot;&quot;&quot;
+        if self.stage_no + 1 &lt; len(STAGES):
+            self.stage_no += 1
+            self.load_stage(STAGES[self.stage_no])
+        else:
+            self.all_cleared = True
+
+    def try_move(self, direction):
+        &quot;&quot;&quot;その向きへ動けるか調べて、動けるときだけ 1 マス進む&quot;&quot;&quot;
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == &quot;#&quot;:   # 行き先が壁なら
+            return                              # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):        # 行き先に荷物があるなら
+            far_x = next_x + dx                 # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == &quot;#&quot;: # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+            self.pushing = True                 # この一歩は、荷物を押している
+
+        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+        self.steps += 1                         # 動けたときだけ、1 歩と数える
+
+    def slide_pos(self, origin, from_cell, to_cell):
+        &quot;&quot;&quot;出発マスから到着マスへ、いまどこまで来たかをドットで返す&quot;&quot;&quot;
+        moved = (to_cell - from_cell) * TILE * self.walk_timer // MOVE_FRAMES
+        return origin + from_cell * TILE + moved
+
+    def draw(self):
+        &quot;&quot;&quot;フレーム毎の描画処理。画面を消してから、担当へ渡す&quot;&quot;&quot;
+        pyxel.cls(pyxel.COLOR_BLACK)    # 各画面で使うので、ここに 1 回だけ
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+        elif self.scene == SCENE_SELECT:
+            self.draw_select()
+        else:
+            self.draw_game()
+
+    def draw_title(self):
+        &quot;&quot;&quot;タイトル画面を描く&quot;&quot;&quot;
+        draw_center(&quot;SOKOBAN&quot;, 30, pyxel.COLOR_YELLOW)
+        draw_center(&quot;PUSH THE APPLES&quot;, 44, pyxel.COLOR_WHITE)
+
+        # ワンコが、リンゴをゴールへ押していく絵
+        x = SCREEN_WIDTH // 2 - TILE * 2
+        pyxel.blt(x, 66, 0, DIR_RIGHT * TILE, V_PLAYER_A, TILE, TILE, pyxel.COLOR_GRAY)
+        pyxel.blt(x + TILE, 66, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+        pyxel.blt(x + TILE * 3, 66, 0, U_GOAL, V_TILE, TILE, TILE)
+
+        if is_blink_on():               # 1 秒のうち 20 フレームだけ見える
+            draw_center(&quot;PRESS ENTER&quot;, 92, pyxel.COLOR_WHITE)
+
+        draw_center(&quot;ARROW: MOVE  R: RETRY  Q: SELECT&quot;, 108, pyxel.COLOR_GRAY)
+
+    def draw_select(self):
+        &quot;&quot;&quot;ステージ選択の画面を描く&quot;&quot;&quot;
+        draw_center(&quot;SELECT STAGE&quot;, 16, pyxel.COLOR_YELLOW)
+
+        for no in range(len(STAGES)):
+            col = no % SELECT_COLS              # 左から何番目か（0～4）
+            row = no // SELECT_COLS             # 上から何段目か（0～1）
+            x = 18 + col * 26
+            y = 36 + row * 24
+
+            if no &lt; self.cleared_count:         # クリアした面
+                color = pyxel.COLOR_LIME
+            elif no == self.cleared_count:      # 次に挑む 1 面
+                color = pyxel.COLOR_WHITE
+            else:                               # まだ選べない面
+                color = pyxel.COLOR_NAVY
+
+            pyxel.rectb(x, y, 20, 16, color)
+            label = f&quot;{no + 1}&quot;
+            pyxel.text(x + (20 - len(label) * 4) // 2, y + 5, label, color)
+
+            if no == self.stage_no:             # カーソルは、ひとまわり大きい枠
+                pyxel.rectb(x - 2, y - 2, 24, 20, pyxel.COLOR_YELLOW)
+
+        draw_center(&quot;ARROW: CHOOSE    ENTER: START&quot;, 96, pyxel.COLOR_GRAY)
+
+    def draw_game(self):
+        &quot;&quot;&quot;あそんでいる画面を描く&quot;&quot;&quot;
+
+        # 壁を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == &quot;#&quot;:
+                    u = U_WALL
+                elif mark == &quot;O&quot;:
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                            0, u, V_TILE, TILE, TILE)
+
+        # クリアした直後は、リンゴから輪が広がる。リンゴの下から出てくるように、先に描く
+        if self.cleared and self.clear_elapsed() &lt; CLEAR_WAIT:
+            r = self.clear_elapsed() // 2       # 2 フレームに 1 ドットずつ大きく
+            for box in self.boxes:
+                cx = self.ox + box[0] * TILE + TILE // 2
+                cy = self.oy + box[1] * TILE + TILE // 2
+                pyxel.circb(cx, cy, r, pyxel.COLOR_YELLOW)
+
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる
+        dx, dy = MOVES[self.player_dir]
+        push_x = self.player_x + dx             # 押した荷物は主人公の目の前にいる
+        push_y = self.player_y + dy
+        for box in self.boxes:
+            if self.pushing and box[0] == push_x and box[1] == push_y:
+                bx = self.slide_pos(self.ox, box[0] - dx, box[0])
+                by = self.slide_pos(self.oy, box[1] - dy, box[1])
+            else:
+                bx = self.ox + box[0] * TILE
+                by = self.oy + box[1] * TILE
+            u = U_BOX
+            if self.on_goal(box):       # ゴールに乗っているあいだは別の絵
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公
+        px = self.slide_pos(self.ox, self.from_x, self.player_x)
+        py = self.slide_pos(self.oy, self.from_y, self.player_y)
+        v = V_PLAYER_A
+        if self.walk_timer &gt;= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+
+        # 画面の上の表示
+        if self.all_cleared:
+            draw_center(&quot;ALL CLEAR!  ENTER=TITLE&quot;, 3, pyxel.COLOR_YELLOW)
+        else:
+            pyxel.text(2, 3, f&quot;STAGE {self.stage_no + 1}/{len(STAGES)}&quot;,
+                       pyxel.COLOR_GRAY)
+            draw_right(f&quot;STEPS {self.steps}&quot;, 3, pyxel.COLOR_GRAY)
+            if self.cleared and self.clear_elapsed() &gt;= CLEAR_WAIT:
+                draw_center(&quot;CLEAR!  ENTER&quot;, 3, pyxel.COLOR_YELLOW)
+App()</code></pre>
+
+<h2 id="run">5. 実行する</h2>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<p><b>次の 8 つを確かめてください。</b></p>
+
+<table>
+  <thead><tr><th>　</th><th>確かめること</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>1 面を始めると、右上に <code>STEPS 0</code> が出る</td></tr>
+    <tr><td>2</td><td>1 面のはじめに<b>下</b>（壁）へ矢印を押しつづけても、<b><code>STEPS 0</code> のまま</b>（ワンコの向きが変わるだけ）</td></tr>
+    <tr><td>3</td><td>1 マス歩くたびに 1 つ増える。<b>リンゴを押した 1 歩も 1</b></td></tr>
+    <tr><td>4</td><td><code>R</code> でやり直すと <code>STEPS 0</code> に戻る</td></tr>
+    <tr><td>5</td><td>最後のリンゴがゴールに乗ると、<b>リンゴから黄色い輪が広がる</b>。そのあいだ <code>CLEAR!</code> はまだ出ない</td></tr>
+    <tr><td>6</td><td>輪が消えると同時に <code>CLEAR!  ENTER</code> が出る。<b>輪が出ているあいだに <code>Enter</code> を押しても進まない</b></td></tr>
+    <tr><td>7</td><td><code>Enter</code> で次の面へ。<code>STEPS 0</code> から始まる</td></tr>
+    <tr><td>8</td><td>歩数が 2 けた・3 けたになっても、<b>右はしの位置は動かない</b>（左へ伸びる）</td></tr>
+  </tbody>
+</table>
+
+<div class="note" id="min-steps">
+  <b>目標の歩数</b>
+  <code>STEPS</code> が出ると、「<b>もっと少ない歩数で解けないか</b>」が気になってきます。
+  参考までに、プログラムで<b>すべての動かし方を調べた</b>、いちばん少ない歩数です。
+  <table>
+    <thead><tr><th>面</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr></thead>
+    <tbody><tr><th>最短</th><td>5</td><td>13</td><td>16</td><td>16</td><td>24</td><td>21</td><td>51</td><td>53</td><td>68</td><td>？</td></tr></tbody>
+  </table>
+  10 面は広すぎて、すべての動かし方は調べきれませんでした。<b>自分で作った面なので、記録も自分でつくってください。</b>
+</div>
+
+<div class="note" id="more">
+  <b>もう一歩：クリアの手ざわりを調整する</b>
+  どれも数行で試せます。<b>実際に動かして、気持ちいいほうを選んでください。</b>
+  <ul>
+    <li><b>間の長さを変えてみる</b>：<code>CLEAR_WAIT</code> の数を変えるだけで、輪の大きさもいっしょに変わります
+      （輪は最後に、半径 <code>(CLEAR_WAIT - 1) // 2</code> まで広がるからです）。
+      <table>
+        <thead><tr><th><code>CLEAR_WAIT</code></th><th>間の長さ</th><th>輪の最後の半径</th></tr></thead>
+        <tbody>
+          <tr><td><code>10</code></td><td>0.33 秒</td><td>4（リンゴのふちから少し出るだけ）</td></tr>
+          <tr><td><code>20</code>（今回）</td><td>0.67 秒</td><td>9</td></tr>
+          <tr><td><code>30</code></td><td>1 秒</td><td>14</td></tr>
+        </tbody>
+      </table></li>
+    <li><b>ワンコにも喜んでもらう</b>：<code>CLEAR!</code> が出たら、ワンコが<b>こちらを向いて、ぴょんぴょん跳ねます</b>。
+      <code>draw_game()</code> の主人公のところを、次のようにします（5 行足して 1 行書き換え）。
+<pre><code>        v = V_PLAYER_A
+        if self.walk_timer &gt;= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        d = self.player_dir                                               ← 足す
+        if self.cleared and self.clear_elapsed() &gt;= CLEAR_WAIT:           ← 足す
+            d = DIR_DOWN                        # こちらを向いて           ← 足す
+            if self.clear_elapsed() % 16 &lt; 8:                             ← 足す
+                py -= 2                         # ぴょんと跳ねる           ← 足す
+        pyxel.blt(px, py, 0, d * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)   ← 書き換え</code></pre>
+      16 フレームのうち 8 フレームだけ 2 ドット上に描くので、<b>1 秒に 2 回ほど</b>跳ねます
+      （<code>% 16 &lt; 8</code> は、フェーズ 7 の点滅 <code>% BLINK_CYCLE &lt; BLINK_ON</code> と同じ形です）。
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 214" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="ワンコが跳ねる様子を 6 倍に拡大した 3 枚。経過 19 では押し終えた上向き、経過 24 ではこちらを向いて立っている、経過 32 では 2 ドット上に跳んで、頭が上のリンゴに少し重なっている">
+  <image class="shot" x="104" y="16" width="96" height="144" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAYCAIAAAB8wupbAAAA8klEQVR42mPUNo5ngIF9E/4wMDA4FbAwIAE0QRYGBgY+TcsN6YcxlfJpWn66fhwiCNfGqG0cv2/CHzSluMC+CX+YGEgEjC8PR2Ma/y7JVmjeYawacNrwLsn2XZItsn+gGpwKWCAegoOVT3kZGBh2N1/Y3XwBLvjp+nHsNsBVI3OJchIESF1rIk0DYU+HS39GNt7WtZCoYMUDWLBGJ5yNaRZ6sKIFMZwLiQf0pLEi8BGmhRBBeDywQOyFmPTqIL5kB1HJguzWFYE4VcM9w6htHA9J97i8geZvFmT3oRmGqZmcmGZEztPkJA14usclTrENBAEA/kRpWHCZF2gAAAAASUVORK5CYII="/>
+  <image class="shot" x="272" y="16" width="96" height="144" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAYCAIAAAB8wupbAAAAv0lEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47d0yuf8qLpD5f+TIKnpa41kRAPOD0Ndx+aA6SuNdm6FlIacVhCad+EP3C2UwELgXhAVo3MhfsTRcOKwEeYFkIE4f7EEqzitkvRGAT88PJwNKv2ZAYGhpeHGbAnbz5NS+SQxe9pFrR42DfhD7IiNC45+YHiHEcwf9M+TwMAflNBouteZtEAAAAASUVORK5CYII="/>
+  <image class="shot" x="440" y="16" width="96" height="144" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAYCAIAAAB8wupbAAAAo0lEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47d0yuf8qLpD5f+TIKnpa41kRAPWAGWeNg34Q+c7VTAQiCUkFVjctE1rAh8hOkGNEEsnha3XYrGIBAPLw9Hs2pPZmBgeHkYIYgzHgh6mgVTNbIiNO5Qyg8kaCDoH9r7AQAZPTaWCxdibgAAAABJRU5ErkJggg=="/>
+  <g fill="none" stroke="#3b4166" stroke-width="1.5">
+    <rect x="104" y="16" width="96" height="144"/><rect x="272" y="16" width="96" height="144"/><rect x="440" y="16" width="96" height="144"/>
+  </g>
+  <g font-size="11" text-anchor="middle">
+    <text x="152" y="180" fill="#e8f0ff">経過 19</text>
+    <text x="152" y="196" fill="#9aa4c4">押し終えた向きのまま</text>
+    <text x="320" y="180" fill="#e8f0ff">経過 24</text>
+    <text x="320" y="196" fill="#9aa4c4">こちらを向いて立つ</text>
+    <text x="488" y="180" fill="#ffcc44">経過 32</text>
+    <text x="488" y="196" fill="#9aa4c4">2 ドット上へ、ぴょん</text>
+  </g>
+</svg>
+</div>
+<figcaption>真上にリンゴがあると、跳んだときに頭が少し重なります。ワンコをリンゴの<b>あと</b>に描いているので、ワンコが手前です（<a href="#draw-order">6-5</a>）</figcaption>
+</figure>
+      <small>最初の 1 回だけ跳ぶ時間が短く見えるのが気になったら、
+      <a href="../step1/phase7.html">step1 フェーズ 7</a> の「もう一歩」と同じく、
+      <code>(self.clear_elapsed() - CLEAR_WAIT) % 16 &lt; 8</code> と<b>待ち明けを起点に</b>数えます。</small></li>
+  </ul>
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3 id="count-place">6-1. 数える行は「関門をぜんぶ通ったあと」</h3>
+
+<p>
+<code>self.steps += 1</code> を<b>ほかの場所</b>に書くとどうなるか、実際に動かして比べました。
+</p>
+
+<table>
+  <thead><tr><th>書いた場所</th><th>壁へ 1 秒押しつづける</th><th>床を 2 歩</th><th>荷物を 1 回押す</th></tr></thead>
+  <tbody>
+    <tr><td><b><code>try_move()</code> のいちばん最後</b>（今回）</td><td><b>0</b></td><td><b>2</b></td><td><b>1</b></td></tr>
+    <tr><td><code>try_move()</code> の<b>いちばん上</b></td><td><b>30</b></td><td>2</td><td>1</td></tr>
+    <tr><td>荷物の <code>if</code> の中（インデントが深い）</td><td>0</td><td><b>0</b></td><td>1</td></tr>
+  </tbody>
+</table>
+
+<p>
+いちばん上に書くと、<b>壁に押しつけているだけで 1 秒に 30 ずつ</b>増えます。
+止まっているあいだ、<code>handle_key()</code> は<b>毎フレーム</b> <code>try_move()</code> を呼ぶ
+（<code>btn</code> は押しているあいだずっと <code>True</code>）ので、
+関門ではね返されるたびに数えてしまうからです。
+</p>
+
+<p>
+<b>「起きたことを数える行は、それが本当に起きたと決まった場所に書く」</b>——
+<a href="phase8.html#record">フェーズ 8 の 6-2</a> で、クリア記録を「クリアした瞬間」に書いたのと同じ考え方です。
+</p>
+
+<h3 id="reset-place">6-2. 0 に戻すのは <code>load_stage()</code>——<code>cleared_count</code> とのちがい</h3>
+
+<table>
+  <thead><tr><th>変数</th><th><code>R</code> でやり直したら</th><th>次の面へ進んだら</th><th>置き場所</th></tr></thead>
+  <tbody>
+    <tr><td><code>cleared_count</code>（フェーズ 8）</td><td>戻ってほしくない</td><td>戻ってほしくない</td><td><code>__init__()</code></td></tr>
+    <tr><td><code>steps</code>（今回）</td><td><b>0 に戻ってほしい</b></td><td><b>0 に戻ってほしい</b></td><td><code>load_stage()</code></td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>load_stage()</code> は、<b>面を始めるとき</b>（<code>start_game()</code>）、<b><code>R</code> でやり直すとき</b>、
+<b>次の面へ進むとき</b>（<code>next_stage()</code>）の 3 つの道すべてで呼ばれます。
+ここに置けば、<b>どの道から入っても 0 から</b>です。
+</p>
+
+<p>
+ためしに <code>__init__()</code> に置いて動かすと、2 歩あるいて <code>R</code> を押しても <code>STEPS 2</code> のまま。
+そこから 5 歩で解いて 2 面へ進むと、<b>2 面は 7 から</b>始まりました。
+どこにも書かないと、面が始まった瞬間に
+<code>AttributeError: 'App' object has no attribute 'steps'</code> で止まります。
+</p>
+
+<h3 id="func">6-3. 同じ引き算が 3 か所に出たら、関数にする</h3>
+
+<p>
+<code>pyxel.frame_count - self.clear_frame</code> は、次の 3 か所で使います。
+</p>
+
+<table>
+  <thead><tr><th>場所</th><th>見ていること</th></tr></thead>
+  <tbody>
+    <tr><td><code>update_game()</code></td><td>待ちが明けたか（<code>Enter</code> を受け付けるか）</td></tr>
+    <tr><td><code>draw_game()</code> の輪</td><td>待ちのあいだか、と、輪の半径</td></tr>
+    <tr><td><code>draw_game()</code> の画面の上</td><td>待ちが明けたか（<code>CLEAR!</code> を出すか）</td></tr>
+  </tbody>
+</table>
+
+<p>
+step1 フェーズ 7 では「<b>同じ数字が 2 か所に出たら、定数へ格上げ</b>」としました。
+<b>同じ式</b>が何か所にも出てきたら、<b>関数へ格上げ</b>します。
+<a href="phase8.html#idea-opened">フェーズ 8</a> の <code>opened_count()</code> と同じ、<b>計算した値を答えるだけの小さな関数</b>です。
+</p>
+
+<p>
+名前がつくと、<code>if self.clear_elapsed() &gt;= CLEAR_WAIT</code> が
+「<b>クリアしてからの経過が、待ち時間以上なら</b>」と、そのまま読めるようになります。
+</p>
+
+<div class="warn">
+  <b><code>()</code> を忘れると <code>TypeError</code></b>
+  <code>self.clear_elapsed &lt; CLEAR_WAIT</code> と <code>()</code> を忘れると、クリアした瞬間に
+  <code>TypeError: '&lt;' not supported between instances of 'method' and 'int'</code> で止まります。
+  フェーズ 8 の <code>opened_count</code> と同じで、「<b>関数を呼んだ答え</b>」ではなく「<b>関数そのもの</b>」と比べています。<br>
+  逆に <code>pyxel.frame_count</code> は関数ではなく<b>ただの数</b>なので、<code>pyxel.frame_count()</code> と書くと
+  <code>TypeError: 'int' object is not callable</code>（「数は呼び出せません」）になります。
+</div>
+
+<h3 id="and-order">6-4. <code>and</code> は左から調べて、答えが決まったらやめる</h3>
+
+<p>
+<code>A and B</code> は「<code>A</code> も <code>B</code> も <code>True</code> なら <code>True</code>」でした。
+ということは、<b><code>A</code> が <code>False</code> の時点で、<code>B</code> がなんであっても答えは <code>False</code></b> です。
+そこで Python は、<code>A</code> が <code>False</code> なら <b><code>B</code> を調べもしません</b>（関数なら、呼び出しもしない）。
+</p>
+
+<p>
+これが、輪の <code>if</code> で効いています。<code>self.clear_frame</code> は<b>クリアした瞬間に初めて作られる</b>変数です。
+クリアする前に <code>clear_elapsed()</code> を呼ぶと、まだ無い <code>self.clear_frame</code> を引き算しようとして止まります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="クリアする前の 2 つの書き方の比較。上の self.cleared and self.clear_elapsed() の順なら、左が False なので右は呼ばれず、無事に通る。下の self.clear_elapsed() and self.cleared の順だと、先に clear_elapsed が呼ばれ、まだ無い clear_frame を使うので AttributeError で止まる">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">クリアする<tspan font-weight="bold">前</tspan>（<tspan font-family="Consolas, monospace">self.cleared</tspan> が <tspan font-family="Consolas, monospace">False</tspan>、<tspan font-family="Consolas, monospace">self.clear_frame</tspan> はまだ無い）</text>
+
+  <!-- 上：今回 -->
+  <text x="20" y="56" fill="#2ee6a8" font-size="12" font-weight="bold">今回の順番</text>
+  <g font-family="Consolas, monospace" font-size="14">
+    <text x="20" y="84" fill="#9aa4c4">if</text>
+    <text x="44" y="84" fill="#2ee6a8" font-weight="bold">self.cleared</text>
+    <text x="148" y="84" fill="#9aa4c4">and</text>
+    <text x="182" y="84" fill="#5a6aa8">self.clear_elapsed() &lt; CLEAR_WAIT</text>
+    <text x="440" y="84" fill="#9aa4c4">:</text>
+  </g>
+  <path d="M44 92 H137" stroke="#2ee6a8" stroke-width="2"/>
+  <path d="M182 92 H436" stroke="#5a6aa8" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="90" y="110" fill="#2ee6a8" font-size="12" text-anchor="middle">① False</text>
+  <text x="309" y="110" fill="#5a6aa8" font-size="12" text-anchor="middle">② 調べない（呼ばれない）</text>
+  <text x="462" y="84" fill="#2ee6a8" font-size="12">→ そのまま通る ○</text>
+
+  <!-- 下：逆 -->
+  <text x="20" y="160" fill="#ff6b97" font-size="12" font-weight="bold">左右を逆にすると</text>
+  <g font-family="Consolas, monospace" font-size="14">
+    <text x="20" y="188" fill="#9aa4c4">if</text>
+    <text x="44" y="188" fill="#ff6b97" font-weight="bold">self.clear_elapsed() &lt; CLEAR_WAIT</text>
+    <text x="310" y="188" fill="#9aa4c4">and</text>
+    <text x="344" y="188" fill="#5a6aa8">self.cleared</text>
+    <text x="440" y="188" fill="#9aa4c4">:</text>
+  </g>
+  <path d="M44 196 H298" stroke="#ff6b97" stroke-width="2"/>
+  <text x="171" y="214" fill="#ff6b97" font-size="12" text-anchor="middle">① 先に呼ばれる → まだ無い clear_frame を使う</text>
+  <text x="20" y="244" fill="#ff6b97" font-family="Consolas, monospace" font-size="12">AttributeError: 'App' object has no attribute 'clear_frame'</text>
+  <text x="462" y="188" fill="#ff6b97" font-size="12">→ 止まる ✕</text>
+</svg>
+</div>
+<figcaption>答えが同じでも、<b>調べる順番</b>がちがう。<code>and</code> の左には「<b>右を調べてよいか</b>」の条件を置きます</figcaption>
+</figure>
+
+<p>
+左右を逆にすると、<b>ゲーム画面になった最初のフレーム</b>で止まります（実際に確かめました）。
+<code>and</code> の左に「<b>右を調べても大丈夫か</b>」を置く——これは、この先もよく使う書き方です。
+</p>
+
+<div class="term">
+  <b>なぜ <code>clear_frame</code> を、最初に 0 で作っておかないのか</b>
+  <code>load_stage()</code> で <code>self.clear_frame = 0</code> としておけば、順番を逆にしてもエラーは出ません。
+  でもそうすると、<b><code>self.clear_frame = pyxel.frame_count</code> の行を書き忘れても、エラーにならない</b>のです。
+  経過が「起動してからのフレーム数」になってしまい、<b>輪は出ず、<code>CLEAR!</code> がすぐ出る</b>——
+  ただ演出が消えるだけの、<b>だまって壊れる</b>動きになります。<br>
+  step1 の <code>gameover_frame</code> と同じく、<b>書き忘れたらすぐ止まって気づける</b>ほうを選んでいます。
+</div>
+
+<h3 id="draw-order">6-5. 描いた順が、重なる順</h3>
+
+<p>
+<a href="../step1/phase3.html">step1 フェーズ 3</a> で「<b>描く順番＝重なる順番</b>」と学びました。あとから描いたものほど手前に来ます。
+輪を<b>リンゴより先に</b>描いたのは、輪が<b>リンゴの下から</b>出てくるようにするためです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="1 個目のリンゴのまわりを 6 倍に拡大し、経過 0・2・4・6 フレームを並べた比較。上の段は輪をリンゴより先に描いたもので、はじめは輪がリンゴに隠れて見えず、経過 6 でリンゴのふちから出てくる。下の段はリンゴのあとに描いたもので、経過 0 からリンゴの顔に黄色い点や小さな輪が乗ってしまう">
+
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">1 個目のリンゴのまわり（16 × 16 ドット）を 6 倍に。経過 0・2・4・6 フレーム</text>
+
+  <text x="20" y="92" fill="#2ee6a8" font-size="12" font-weight="bold">リンゴより先に描く</text>
+  <text x="20" y="108" fill="#2ee6a8" font-size="12">（今回）</text>
+  <image class="shot" x="192" y="40" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAbUlEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47d0yuf8qLpD5f+TIKnpa41kRAPOD0Ndx+aA6SuNdm6Fg54xBFMV7R3EgDPbhzSX9BCfgAAAABJRU5ErkJggg=="/>
+  <image class="shot" x="304" y="40" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAbUlEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47d0yuf8qLpD5f+TIKnpa41kRAPOD0Ndx+aA6SuNdm6Fg54xBFMV7R3EgDPbhzSX9BCfgAAAABJRU5ErkJggg=="/>
+  <image class="shot" x="416" y="40" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAbUlEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47d0yuf8qLpD5f+TIKnpa41kRAPOD0Ndx+aA6SuNdm6Fg54xBFMV7R3EgDPbhzSX9BCfgAAAABJRU5ErkJggg=="/>
+  <image class="shot" x="528" y="40" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAiUlEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwiK7+41TAwsDA8On6ceyeXvmUF02/6Or3ED1EeVrqWhMJ8YDT03D3MTAwhEt/Rjb+99VcZPfgjLh9E/5AGGiqsYcSVnU4PU0wXdE+LQEAEAslir9qGv8AAAAASUVORK5CYII="/>
+
+  <text x="20" y="214" fill="#ff6b97" font-size="12" font-weight="bold">リンゴのあとに描く</text>
+  <image class="shot" x="192" y="162" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAdklEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47d0yuf8qLpD5f+TJSTRFe/Z2BgkLrWRGw8vA4VxOlpuPvQHCB1rcnWtXDAI45guqK9kwDZKR/S6pC6EQAAAABJRU5ErkJggg=="/>
+  <image class="shot" x="304" y="162" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAf0lEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8rgwMu5svMDAwhEtDBT9dP47dhpVPeRkYGHY3XxBd/R7OJewk0dXvX4cKiq5+L3Wtiah4gKh+HSpIVDzAnSF1rcnWtXDAI45guqK9kwAxTidrJo6TYQAAAABJRU5ErkJggg=="/>
+  <image class="shot" x="416" y="162" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAa0lEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZZkG94l2SJrg/uHBVPpyqe8onr7IWwnmIJP149j17DyKa/o6vevQwUh3H2r3zsVsFDsaVzxgBVgiQeIq6B+KGAZ8IgjmK5o7yQAoG8cNGW7CCsAAAAASUVORK5CYII="/>
+  <image class="shot" x="528" y="162" width="96" height="96" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAjUlEQVR42mPUNo5nIAUwMTAw8GlaYpXDKs5Ijg1U0PAuyZY0DRf09u+b8GffhD+Y/sGiYd+EPwaXHF+HCr4OFYTr+XT9OHZP75vw53WoILKI6Or3TgUsxHpa6loTCfGA09Nw9zEwMDgVsIiufg83/vfVXGT34Iw4uF/RVDMwMLBgtRdTHU5PE0xXtE9LAK/6LdgW4zAeAAAAAElFTkSuQmCC"/>
+
+  <g fill="none" stroke="#3b4166" stroke-width="1.5">
+    <rect x="192" y="40" width="96" height="96"/><rect x="304" y="40" width="96" height="96"/>
+    <rect x="416" y="40" width="96" height="96"/><rect x="528" y="40" width="96" height="96"/>
+    <rect x="192" y="162" width="96" height="96"/><rect x="304" y="162" width="96" height="96"/>
+    <rect x="416" y="162" width="96" height="96"/><rect x="528" y="162" width="96" height="96"/>
+  </g>
+  <g fill="#9aa4c4" font-size="11" text-anchor="middle">
+    <text x="240" y="152">経過 0</text><text x="352" y="152">経過 2</text>
+    <text x="464" y="152">経過 4</text><text x="576" y="152">経過 6</text>
+    <text x="240" y="274">経過 0</text><text x="352" y="274">経過 2</text>
+    <text x="464" y="274">経過 4</text><text x="576" y="274">経過 6</text>
+  </g>
+  <text x="408" y="294" fill="#ff6b97" font-size="11" text-anchor="middle">はじめから、リンゴの顔に黄色い点や小さな輪が乗ってしまう</text>
+</svg>
+</div>
+<figcaption>上の段は、半径 3（経過 6）でようやく<b>リンゴのふちから</b>輪が顔を出します。リンゴの絵の外側（黒いすき間）は透けるので、そこから見えています</figcaption>
+</figure>
+
+<p>
+いま <code>draw_game()</code> は、<b>床と壁 → 輪 → リンゴ → ワンコ → 画面の上の文字</b>の順に描いています。
+ワンコも輪のあとなので、輪はワンコの<b>うしろ</b>を通ります。
+</p>
+
+<h2 id="trouble">7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>面が始まった瞬間に <code>AttributeError: 'App' object has no attribute 'steps'</code></td>
+      <td><code>load_stage()</code> に <code>self.steps = 0</code> がありません（<a href="#step-steps">3-3</a>）。つづりも確かめてください</td>
+    </tr>
+    <tr>
+      <td>面が始まった瞬間に <code>AttributeError: 'App' object has no attribute 'clear_frame'</code></td>
+      <td><b><code>and</code> の左右が逆</b>です（<a href="#and-order">6-4</a>）。
+      <code>self.cleared and …</code> と、<code>self.cleared</code> を<b>左</b>に書きます。輪の <code>if</code> と画面の上の <code>if</code> の 2 か所です</td>
+    </tr>
+    <tr>
+      <td>クリアした瞬間に <code>AttributeError: 'App' object has no attribute 'clear_frame'</code></td>
+      <td><code>self.clear_frame = pyxel.frame_count</code> を書き忘れています（<a href="#step-time">3-4</a>）。
+      <code>self.cleared = True</code> のすぐ下です</td>
+    </tr>
+    <tr>
+      <td>クリアした瞬間に <code>TypeError: '&lt;' not supported between instances of 'method' and 'int'</code>（<code>'&gt;='</code> のことも）</td>
+      <td><code>self.clear_elapsed</code> の<b>うしろの <code>()</code> がありません</b>（<a href="#func">6-3</a>）</td>
+    </tr>
+    <tr>
+      <td>クリアした瞬間に <code>TypeError: 'int' object is not callable</code></td>
+      <td><code>pyxel.frame_count()</code> と <code>()</code> をつけています。<code>frame_count</code> は<b>ただの数</b>なので <code>()</code> はいりません</td>
+    </tr>
+    <tr>
+      <td>クリアした瞬間に <code>NameError: name 'CLEAR_WAIT' is not defined</code></td>
+      <td>定数を足していないか、つづりがちがいます（<a href="#step-const">3-1</a>）</td>
+    </tr>
+    <tr>
+      <td>壁に向かって押しているだけで、<code>STEPS</code> がどんどん増える</td>
+      <td><code>self.steps += 1</code> を <code>try_move()</code> の<b>いちばん上</b>に書いています。<b>いちばん下</b>です（<a href="#count-place">6-1</a>）</td>
+    </tr>
+    <tr>
+      <td>リンゴを押したときしか <code>STEPS</code> が増えない</td>
+      <td><code>self.steps += 1</code> の<b>インデントが深すぎ</b>て、荷物の <code>if</code> の中に入っています。
+      <code>self.walk_timer = 1</code> と同じ深さにそろえます</td>
+    </tr>
+    <tr>
+      <td><code>R</code> でやり直しても <code>STEPS</code> が 0 に戻らない／次の面が前の面の歩数から始まる</td>
+      <td><code>self.steps = 0</code> を <code>__init__()</code> に書いています。<code>load_stage()</code> です（<a href="#reset-place">6-2</a>）</td>
+    </tr>
+    <tr>
+      <td>輪と同時に <code>CLEAR!</code> が出る</td>
+      <td>画面の上の <code>if</code> が <code>if self.cleared:</code> のままです（<a href="#step-hud">3-7</a>）</td>
+    </tr>
+    <tr>
+      <td>輪が出ているあいだに <code>Enter</code> を押すと、次の面へ進んでしまう</td>
+      <td><code>update_game()</code> の <code>Enter</code> の <code>if</code> に <code>self.clear_elapsed() &gt;= CLEAR_WAIT and</code> がありません（<a href="#step-enter">3-5</a>）</td>
+    </tr>
+    <tr>
+      <td>クリアした瞬間、リンゴの顔に黄色い点が出る</td>
+      <td>輪を<b>リンゴのあと</b>に描いています。荷物を描く<b>手前</b>へ移します（<a href="#draw-order">6-5</a>）</td>
+    </tr>
+    <tr>
+      <td>輪の中心が、リンゴの左上にずれる</td>
+      <td><code>cx</code>・<code>cy</code> に <code>+ TILE // 2</code> がありません。マスの左上が中心になっています</td>
+    </tr>
+    <tr>
+      <td>輪が画面いっぱいに広がる</td>
+      <td><code>r = self.clear_elapsed() // 2</code> の <b><code>// 2</code> がありません</b>（<a href="#idea-ring">1-4</a>）。わざとなら、それも一つの演出です</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="next">8. 次のフェーズ</h2>
+
+<p>
+次は<b>効果音と BGM</b>です。step1 フェーズ 9 の復習で、リソースエディタで音を作り、
+<code>play</code> と <code>playm</code> で鳴らします。
+</p>
+
+<p>
+鳴らす場所は、もうできています。<b>歩いた</b>（<code>self.steps += 1</code> の隣）、
+<b>押した</b>（<code>self.pushing = True</code> の隣）、<b>クリアした</b>（<code>self.clear_frame = …</code> の隣）。
+step1 で決めた「<b>効果音は、変化させている行の隣で鳴らす</b>」がそのまま使えます。
+今回つくった 0.67 秒の間は、<b>クリアの短いジングル</b>を鳴らすのにちょうどいい長さです。
+</p>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
