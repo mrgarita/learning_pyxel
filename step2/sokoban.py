@@ -11,7 +11,7 @@ MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレー
 
 SCENE_TITLE = 0         # タイトル画面
 SCENE_GAME = 1          # あそんでいる画面
-SCENE_SELECT =2         # ステージを選ぶ画面
+SCENE_SELECT = 2        # ステージを選ぶ画面
 
 SELECT_COLS = 5         # ステージ選択で、横 1 列に並べる数
 
@@ -244,7 +244,7 @@ class App:
             self.scene = SCENE_SELECT
 
     def update_select(self):
-        """ステージ選択。↓でカーソルを動かし、Enter で始める"""
+        """ステージ選択。矢印でカーソルを動かし、Enter で始める"""
         if pyxel.btnp(pyxel.KEY_LEFT):
             self.move_cursor(-1)
         elif pyxel.btnp(pyxel.KEY_RIGHT):
@@ -405,7 +405,7 @@ class App:
         draw_center("SELECT STAGE", 16, pyxel.COLOR_YELLOW)
 
         for no in range(len(STAGES)):
-            col = no % SELECT_COLS          # 左から何段目か（0～4）
+            col = no % SELECT_COLS          # 左から何番目か（0～4）
             row = no // SELECT_COLS         # 上から何段目か（0～1）
             x = 18 + col * 26
             y = 36 + row * 24
