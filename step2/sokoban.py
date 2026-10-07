@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ7：タイトル画面と、画面の振り分け
+# step2 フェーズ8：ステージ選択
 
 import pyxel
 
@@ -11,6 +11,9 @@ MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレー
 
 SCENE_TITLE = 0         # タイトル画面
 SCENE_GAME = 1          # あそんでいる画面
+SCENE_SELECT =2         # ステージを選ぶ画面
+
+SELECT_COLS = 5         # ステージ選択で、横 1 列に並べる数
 
 BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
 BLINK_ON = 20           # そのうち文字が見えているフレーム数
@@ -181,9 +184,14 @@ class App:
         pyxel.load("sokoban.pyxres")
         self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面
         self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.cleared_count = 0          #  クリアした面の数（終了すると消える）
         self.all_cleared = False        # 10 個ぜんぶ終わったか
         pyxel.run(self.update, self.draw)
 
+    def opened_count(self):
+        """選べる面の数。クリアした数より 1 つ先まで開く"""
+        return min(self.cleared_count + 1, len(STAGES))
+    
     def start_game(self):
         """いまの stage_no のステージを読み込んで、ゲームを始める"""
         self.load_stage(STAGES[self.stage_no])
@@ -225,13 +233,35 @@ class App:
         """フレーム毎の更新処理。いまの画面の担当へ渡す"""
         if self.scene == SCENE_TITLE:
             self.update_title()
+        elif self.scene == SCENE_SELECT:
+            self.update_select()
         else:
             self.update_game()
 
     def update_title(self):
-        """タイトル画面。Enter でゲームを始める"""
+        """タイトル画面。Enter でステージ選択へ"""
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.scene = SCENE_SELECT
+
+    def update_select(self):
+        """ステージ選択。↓でカーソルを動かし、Enter で始める"""
+        if pyxel.btnp(pyxel.KEY_LEFT):
+            self.move_cursor(-1)
+        elif pyxel.btnp(pyxel.KEY_RIGHT):
+            self.move_cursor(1)
+        elif pyxel.btnp(pyxel.KEY_UP):
+            self.move_cursor(-SELECT_COLS)      # 1 段上は、5 つ前
+        elif pyxel.btnp(pyxel.KEY_DOWN):
+            self.move_cursor(SELECT_COLS)       # 1 段下は、5 つ後
+
         if pyxel.btnp(pyxel.KEY_RETURN):
             self.start_game()
+
+    def move_cursor(self, step):
+        """カーソル（stage_no）を step だけ動かす。遊べない面へは動かない"""
+        next_no = self.stage_no + step
+        if 0 <= next_no < self.opened_count():
+            self.stage_no = next_no
 
     def update_game(self):
         """あそんでいる間の更新"""
@@ -240,6 +270,10 @@ class App:
                 self.stage_no = 0
                 self.all_cleared = False
                 self.scene = SCENE_TITLE
+            return
+
+        if pyxel.btnp(pyxel.KEY_Q):             # ステージ選択へもどる
+            self.scene = SCENE_SELECT
             return
         
         if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
@@ -260,6 +294,8 @@ class App:
                 self.pushing = False
                 if self.is_cleared():           # 着いた、その瞬間に調べる
                     self.cleared = True
+                    # 何面目までクリアしたかを覚える。前の記録より小さくはしない
+                    self.cleared_count = max(self.cleared_count, self.stage_no + 1)
 
         # 止まっていて、まだクリアしていないときだけ、キーを見る    
         if self.walk_timer == 0 and not self.cleared:
@@ -343,6 +379,8 @@ class App:
 
         if self.scene == SCENE_TITLE:
             self.draw_title()
+        elif self.scene == SCENE_SELECT:
+            self.draw_select()
         else:
             self.draw_game()
 
@@ -360,7 +398,33 @@ class App:
         if is_blink_on():               # 1 秒のうち 20 フレームだけ見える
             draw_center("PRESS ENTER", 92, pyxel.COLOR_WHITE)
 
-        draw_center("ARROW: MOVE    R: RETRY", 108, pyxel.COLOR_GRAY)
+        draw_center("ARROW: MOVE  R: RETRY  Q: SELECT", 108, pyxel.COLOR_GRAY)
+
+    def draw_select(self):
+        """ステージ選択の画面を描く"""
+        draw_center("SELECT STAGE", 16, pyxel.COLOR_YELLOW)
+
+        for no in range(len(STAGES)):
+            col = no % SELECT_COLS          # 左から何段目か（0～4）
+            row = no // SELECT_COLS         # 上から何段目か（0～1）
+            x = 18 + col * 26
+            y = 36 + row * 24
+
+            if no < self.cleared_count:         # クリアした面
+                color = pyxel.COLOR_LIME
+            elif no == self.cleared_count:      # 次に挑む 1 面
+                color = pyxel.COLOR_WHITE
+            else:                               # まだ選べない面
+                color = pyxel.COLOR_NAVY
+
+            pyxel.rectb(x, y, 20, 16, color)
+            label = f"{no + 1}"
+            pyxel.text(x + (20 - len(label) * 4) // 2, y + 5, label, color)
+
+            if no == self.stage_no:             # カーソルは、ひとまわり大きい枠
+                pyxel.rectb(x - 2, y - 2, 24, 20, pyxel.COLOR_YELLOW)
+
+        draw_center("ARROW: CHOOSE    ENTER: START", 96, pyxel.COLOR_GRAY)
 
     def draw_game(self):
         """あそんでいる画面を描く"""
