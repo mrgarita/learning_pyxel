@@ -3208,7 +3208,7 @@ if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
   <b>マス目を 1 歩ずつ進むゲームでは、斜めに気をつける</b>
   倉庫番（step2）のように 1 回押すごとに 1 マス進むゲームでは、
   上と右が同時に来たとき<b>どちらに進むか</b>を決めておく必要があります。
-  step2 のフェーズ 10（スマホ対応）で扱います。
+  step2 のフェーズ 11（スマホ対応）で扱います。
 </div>
 
 <h4>⑤ 操作のいらない作品は、パッドを出さない</h4>
@@ -3238,6 +3238,103 @@ HTML の 1 語を変えると出なくなります。
   </ul>
   それに、ボタンを置く右下は 4 つの丸とちょうど重なります。
   Candy Hunt のスマホ版には付けていません。
+</div>
+
+<h3 id="sound-length">Q. 効果音の表に「2 フレーム」「6 フレーム」とある。どこで設定する？ 休符を入れて長さを合わせる？</h3>
+
+<p>
+<b>A.</b> <b>どこにも入力しません。休符も入れません。</b>
+音が鳴る長さは、<b>打ち込んだ音の数と SPEED で自然に決まります</b>。表の「2 フレーム」は、その<b>結果</b>を書いたものです
+（<a href="../step2/phase10.html#step-se">step2 フェーズ 10 の 3-2</a> で出た質問）。
+</p>
+
+<p>
+SPEED は <b>1 音の長さ</b>を決める数で、<code>120</code> で 1 音 1 秒です。
+Pyxel は 1 秒が 30 フレームなので、フレームで数えると次の式になります。
+</p>
+
+<div class="term">
+  <b>音が鳴る長さ（フレーム）＝ 音の数 × SPEED ÷ 4</b>
+  秒で数えるなら<b>音の数 × SPEED ÷ 120</b>。どちらも同じ長さです（÷ 4 は「÷ 120 して × 30」を 1 つにまとめたもの）。
+</div>
+
+<table>
+  <thead><tr><th>SOUND</th><th>入力するもの（音符と SPEED）</th><th>計算</th><th>鳴る長さ</th></tr></thead>
+  <tbody>
+    <tr><td>0 歩いた</td><td><code>C3</code> を 1 つ、SPEED <code>8</code></td><td>1 × 8 ÷ 4</td><td><b>2 フレーム</b>（0.07 秒）</td></tr>
+    <tr><td>1 押した</td><td><code>C2 G1</code> の 2 つ、SPEED <code>12</code></td><td>2 × 12 ÷ 4</td><td><b>6 フレーム</b>（0.2 秒）</td></tr>
+    <tr><td>2 乗せた</td><td><code>C4 G4</code> の 2 つ、SPEED <code>8</code></td><td>2 × 8 ÷ 4</td><td><b>4 フレーム</b>（0.13 秒）</td></tr>
+    <tr><td>3 クリア</td><td><code>C3 E3 G3 C4 E4 G4 G4 G4</code> の 8 つ、SPEED <code>10</code></td><td>8 × 10 ÷ 4</td><td><b>20 フレーム</b>（0.67 秒）</td></tr>
+  </tbody>
+</table>
+
+<p>
+エディタで入力するのは<b>音符・TONE・VOL・EFFECT・SPEED の 5 つだけ</b>です。
+たとえば歩いた音（SOUND 0）は、<code>C3</code> を 1 つ打って SPEED を <code>8</code> にすれば、それでもう 2 フレームの音です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 720 262" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="フレームを横軸にした 3 段の図。1 段目は SOUND 0 そのもので、C3 が 1 つ、2 フレームで鳴り終わる。2 段目は歩きつづけたときで、8 フレームごとに play が呼ばれ、2 フレーム鳴って 6 フレームは何も鳴っていない。このすき間は休符ではない。3 段目は SPEED を 30 のままにした場合で、1 音が 7.5 フレームあり、ほとんど切れ目なく鳴りつづける">
+  <style>
+    .sl { fill:#e8f0ff; font-size:12px; }
+    .sd { fill:#9aa4c4; font-size:11px; }
+    .sc { fill:#9aa4c4; font-size:10.5px; font-family:Consolas,monospace; }
+  </style>
+  <text class="sl" x="20" y="44">SOUND 0 そのもの</text>
+  <text class="sd" x="20" y="60">C3 を 1 つ・SPEED 8</text>
+  <rect x="200" y="34" width="28" height="18" rx="2" fill="#45b0e8"/>
+  <text class="sd" x="240" y="48">2 フレームで鳴り終わる。うしろに休符は入れない</text>
+
+  <text class="sl" x="20" y="114">歩きつづけたとき</text>
+  <text class="sd" x="20" y="130">1 歩（8 フレーム）ごとに play()</text>
+  <g class="sc" text-anchor="middle">
+    <text x="214" y="96">play()</text><text x="326" y="96">play()</text><text x="438" y="96">play()</text><text x="550" y="96">play()</text>
+  </g>
+  <g fill="#45b0e8">
+    <rect x="200" y="104" width="28" height="18" rx="2"/><rect x="312" y="104" width="28" height="18" rx="2"/>
+    <rect x="424" y="104" width="28" height="18" rx="2"/><rect x="536" y="104" width="28" height="18" rx="2"/>
+  </g>
+  <g stroke="#3b4166" stroke-dasharray="3 3">
+    <line x1="230" y1="113" x2="310" y2="113"/><line x1="342" y1="113" x2="422" y2="113"/>
+    <line x1="454" y1="113" x2="534" y2="113"/><line x1="566" y1="113" x2="646" y2="113"/>
+  </g>
+  <text class="sd" x="230" y="144">↑ 6 フレームのすき間は、次の play() まで何も鳴らしていないだけ（休符ではない）</text>
+
+  <text class="sl" x="20" y="184">SPEED を 30 のままだと</text>
+  <text class="sd" x="20" y="200">1 音 ＝ 30 ÷ 4 ＝ 7.5 フレーム</text>
+  <g fill="#ff6b97" opacity=".8">
+    <rect x="200" y="174" width="105" height="18" rx="2"/><rect x="312" y="174" width="105" height="18" rx="2"/>
+    <rect x="424" y="174" width="105" height="18" rx="2"/><rect x="536" y="174" width="105" height="18" rx="2"/>
+  </g>
+  <text class="sd" x="200" y="210">すき間がほとんどなく、「サーッ、サーッ」と長く伸びて聞こえる</text>
+
+  <line x1="200" y1="232" x2="648" y2="232" stroke="#9aa4c4"/>
+  <g stroke="#9aa4c4"><line x1="200" y1="228" x2="200" y2="236"/><line x1="312" y1="228" x2="312" y2="236"/><line x1="424" y1="228" x2="424" y2="236"/><line x1="536" y1="228" x2="536" y2="236"/><line x1="648" y1="228" x2="648" y2="236"/></g>
+  <g class="sc" text-anchor="middle">
+    <text x="200" y="250">0</text><text x="312" y="250">8</text><text x="424" y="250">16</text><text x="536" y="250">24</text><text x="648" y="250">32</text>
+  </g>
+  <text class="sd" x="20" y="250">フレーム</text>
+</svg>
+</div>
+<figcaption>音のデータは「C3 が 1 つ」だけ。歩くときのすき間は、ゲームが <code>play()</code> を呼ぶ間隔で決まる</figcaption>
+</figure>
+
+<p>
+歩きつづけると「サッ（2 フレーム）・無音（6 フレーム）」をくり返します。
+この無音は、<b>音のデータの中の休符ではありません</b>。
+ゲームは 1 歩（8 フレーム）ごとに <code>play()</code> を呼ぶだけで、そのあいだは<b>何も鳴らしていない</b>のです。
+</p>
+
+<div class="note">
+  <b>表の「鳴る長さ」は、確かめるために使う</b>
+  エディタで <code>SPACE</code> を押して再生し、解説ページの「▶ 聞く」と同じ長さに聞こえるかを比べます。<br>
+  よくあるのが <b>SPEED の変え忘れ</b>です（どの音も、はじめは <code>30</code>）。
+  1 音が 7.5 フレームになり、歩いた音は「サーッ」と長く伸びます。
+  クリアのジングルなら 8 音で 60 フレーム（2 秒）になり、<code>CLEAR!</code> が出たあとも鳴りつづけます。
+  表の長さと聞き比べれば、この変え忘れに気づけます。<br>
+  逆に、<b>もっと長くしたい</b>ときは <a href="#long-note">「音をもっと長く伸ばしたい」</a>へ。
 </div>
 
 <h2>環境・ツールについて</h2>

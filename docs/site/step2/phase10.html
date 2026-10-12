@@ -431,10 +431,16 @@ step1 で <code>start_game()</code> を作ったのと同じ考え方です（<a
 <b>SOUND 0〜3</b> に、次の内容を入れます。「聞く」で、できあがりの音を確かめられます。
 </p>
 
+<p>
+エディタに入力するのは、表の<b>「音符」から「SPEED」までの 5 列</b>です。
+右の<b>「鳴る長さ」は入力する項目ではありません</b>。音の数と SPEED から自然に決まる<b>結果</b>で、
+作った音が合っているかを確かめるために書いてあります（<b>休符も入れません</b>。くわしくは<a href="../memo/#sound-length">備忘録</a>）。
+</p>
+
 <div class="scroll-x">
 <table>
   <thead>
-    <tr><th>番号</th><th>音符</th><th>TONE</th><th>VOL</th><th>EFFECT</th><th>SPEED</th><th>長さ</th><th>試聴</th></tr>
+    <tr><th>番号</th><th>音符</th><th>TONE</th><th>VOL</th><th>EFFECT</th><th>SPEED</th><th>鳴る長さ<br><small>（入力しない）</small></th><th>試聴</th></tr>
   </thead>
   <tbody>
     <tr>
@@ -442,7 +448,7 @@ step1 で <code>start_game()</code> を作ったのと同じ考え方です（<a
       <td><code>C3</code>（1 音だけ）
           <span class="keys">OCTAVE 3 ／ <code>Z</code></span></td>
       <td><code>N</code></td><td><code>3</code></td><td><code>F</code></td><td><code>8</code></td>
-      <td>2 フレーム</td>
+      <td>2 フレーム<br><small>1 音 × 8 ÷ 4</small></td>
       <td><button type="button" class="listen" data-snd="step">▶ 聞く</button><br><small>（4 歩ぶん）</small></td>
     </tr>
     <tr>
@@ -450,7 +456,7 @@ step1 で <code>start_game()</code> を作ったのと同じ考え方です（<a
       <td><code>C2 G1</code>（下がる）
           <span class="keys">OCTAVE 1 ／ <code>Q B</code></span></td>
       <td><code>S</code></td><td><code>6</code></td><td><code>F</code></td><td><code>12</code></td>
-      <td>6 フレーム</td>
+      <td>6 フレーム<br><small>2 音 × 12 ÷ 4</small></td>
       <td><button type="button" class="listen" data-snd="push">▶ 聞く</button><br><small>（2 回ぶん）</small></td>
     </tr>
     <tr>
@@ -458,7 +464,7 @@ step1 で <code>start_game()</code> を作ったのと同じ考え方です（<a
       <td><code>C4 G4</code>（上がる）
           <span class="keys">OCTAVE 3 ／ <code>Q T</code></span></td>
       <td><code>P</code></td><td><code>6</code></td><td><code>N</code></td><td><code>8</code></td>
-      <td>4 フレーム</td>
+      <td>4 フレーム<br><small>2 音 × 8 ÷ 4</small></td>
       <td><button type="button" class="listen" data-snd="goal">▶ 聞く</button></td>
     </tr>
     <tr>
@@ -466,7 +472,7 @@ step1 で <code>start_game()</code> を作ったのと同じ考え方です（<a
       <td><code>C3 E3 G3 C4 E4 G4 G4 G4</code><br>ドミソドミソー（上がって、のばす）
           <span class="keys">OCTAVE 3 ／ <code>Z C B Q E T T T</code></span></td>
       <td><code>P</code></td><td><code>6</code></td><td><code>N N N N N N N F</code><br><small>（8 つ打つ）</small></td><td><code>10</code></td>
-      <td><b>20 フレーム</b></td>
+      <td><b>20 フレーム</b><br><small>8 音 × 10 ÷ 4</small></td>
       <td><button type="button" class="listen" data-snd="clear">▶ 聞く</button></td>
     </tr>
   </tbody>
