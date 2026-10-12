@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ11：スマホで遊べるようにする ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+<style>
+  /* 実機の画面キャプチャを、ぼかさずにドットのまま拡大する */
+  svg image.shot, img.shot { image-rendering: pixelated; image-rendering: crisp-edges; }
+  img.shot { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; }
+  ol.steps li { margin: .35rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 11 </span>スマホで遊べるようにする</h1>
+  <p>画面に出る十字キーとボタンも、キーボードと同じように受け付ける</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 11</p>
+
+<h2>ゴール</h2>
+
+<p>
+Pyxel の Web 版をスマホで開くと、画面の下に<b>十字キーとボタン（仮想ゲームパッド）</b>が出ます。
+ところが、いまのコードは<b>キーボードしか見ていない</b>ので、押しても何も起きません。
+このフェーズで、<b>キーボードでもパッドでも、同じように遊べる</b>ようにします。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="スマホで開いたときの実際の画面。上にゲーム、下に仮想ゲームパッド。左の十字キーで歩く・カーソルを動かす。右の 4 つの丸は、どれを押しても決定（Enter と同じ）。下のまん中の小さいボタンは、左がステージ選択へ（Q と同じ）、右がやり直し（R と同じ）">
+<style>.p1h{fill:#e8f0ff;font-size:13px;font-weight:bold}.p1s{fill:#9aa4c4;font-size:11.5px}.p1c{fill:#9aa4c4;font-size:10.5px;font-family:Consolas,monospace}</style>
+<rect x="265.0" y="10.0" width="230.0" height="479.1" rx="16" fill="#0b0d14" stroke="#3b4166" stroke-width="2"/>
+<image class="shot" href="data:image/png;base64,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EEkAACIJAEAkAQCIJAAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAACIJAEAkAQCIJAAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAACIJAEAkAQAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAACIJAEAkAQAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAACIJAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAACIJAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAACIJAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAEEkAAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgCASAIAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAABEEgAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAAAQSQAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEACCSAAAQSQAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEAIBIAgAQSQAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEAiCQAAJEEAIBIAgAQSQAAIgkAQCQBAIgkAACRBAAgkgAARBIAgEgCABBJAAAiCQBAJAEA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" x="273.0" y="18.0" width="214.0" height="463.1"/>
+<polyline points="321.4,411.7 321.4,411.7 265.0,411.7" fill="none" stroke="#45b0e8" stroke-width="1.5"/>
+<circle cx="321.4" cy="411.7" r="3" fill="#45b0e8"/>
+<text class="p1h" x="259.0" y="407.7" text-anchor="end" style="fill:#45b0e8">十字キー</text>
+<text class="p1s" x="259.0" y="423.7" text-anchor="end">歩く ／ カーソルを動かす</text>
+<text class="p1c" x="259.0" y="438.7" text-anchor="end">矢印キーと同じ</text>
+<polyline points="356.8,462.6 356.8,466.6 265.0,466.6" fill="none" stroke="#ff6b97" stroke-width="1.5"/>
+<circle cx="356.8" cy="462.6" r="3" fill="#ff6b97"/>
+<text class="p1h" x="259.0" y="462.6" text-anchor="end" style="fill:#ff6b97">小さいボタン（左）</text>
+<text class="p1s" x="259.0" y="478.6" text-anchor="end">ステージ選択へもどる</text>
+<text class="p1c" x="259.0" y="493.6" text-anchor="end">Q と同じ ／ BACK</text>
+<polyline points="438.6,411.7 438.6,411.7 495.0,411.7" fill="none" stroke="#ffcc44" stroke-width="1.5"/>
+<circle cx="438.6" cy="411.7" r="3" fill="#ffcc44"/>
+<text class="p1h" x="501.0" y="407.7" text-anchor="start" style="fill:#ffcc44">4 つの丸（どれでも）</text>
+<text class="p1s" x="501.0" y="423.7" text-anchor="start">決定</text>
+<text class="p1c" x="501.0" y="438.7" text-anchor="start">Enter と同じ ／ A・B・X・Y</text>
+<polyline points="403.2,462.6 403.2,466.6 495.0,466.6" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+<circle cx="403.2" cy="462.6" r="3" fill="#2ee6a8"/>
+<text class="p1h" x="501.0" y="462.6" text-anchor="start" style="fill:#2ee6a8">小さいボタン（右）</text>
+<text class="p1s" x="501.0" y="478.6" text-anchor="start">やり直し</text>
+<text class="p1c" x="501.0" y="493.6" text-anchor="start">R と同じ ／ START</text>
+<g stroke="#9aa4c4" stroke-width="1.2"><line x1="497.0" y1="123.0" x2="497.0" y2="283.5"/><line x1="493.0" y1="123.0" x2="501.0" y2="123.0"/><line x1="493.0" y1="283.5" x2="501.0" y2="283.5"/></g>
+<text class="p1h" x="509.0" y="201.2">ゲーム画面</text>
+<text class="p1s" x="509.0" y="217.2">160×120 を横幅いっぱいに</text>
+<text class="p1s" x="259.0" y="203.2" text-anchor="end">幅 390 の画面で撮影</text>
+<text class="p1s" x="259.0" y="219.2" text-anchor="end">（Chrome のスマホ表示）</text>
+</svg>
+</div>
+<figcaption>このフェーズのコードを Web 版にして、スマホの幅で開いたところ（実際の画面）。
+ボタンには文字が書いていないので、<b>役目は位置で覚えます</b></figcaption>
+</figure>
+
+<div class="note">
+  <b>このフェーズで新しく覚えること</b>
+  <b>① キーとボタンを「組」にして、関数 1 つで調べる</b>（<code>any()</code>）。
+  <b>② 十字キーを斜めに押したときの扱いを決める。</b>
+  <b>③ Web 版にして、PC のブラウザとスマホで確かめる。</b><br>
+  コードは、足すのが <b>23 行</b>、書き換えが <b>10 行</b>、<code>handle_key()</code> の中身を書き直します（9 行 → 12 行）。
+  ゲームの動き（歩く・押す・音）には手を入れません。<b>変えるのは「キーを見ているところ」だけです。</b>
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-pad">1-1. パッドを出すのは HTML、押されたかを読むのは Python</h3>
+
+<p>
+仮想ゲームパッドについては、step1 で調べたことが<a href="../memo/#virtual-gamepad">備忘録</a>にまとめてあります。要点は 3 つです。
+</p>
+
+<ul>
+  <li><code>pyxel app2html</code> が作る HTML には、はじめから <b>パッドを出す設定</b>（<code>gamepad: "enabled"</code>）が入っている。
+      出るのは<b>指で触る端末で開いたときだけ</b>で、パソコンの普通の画面では出ない</li>
+  <li>パッドのボタンは、Python からは<b>ゲームパッドのボタン</b>に見える。名前は <code>pyxel.GAMEPAD1_BUTTON_…</code></li>
+  <li>読み方はキーボードと同じ。<code>pyxel.btn()</code>（押しているあいだ）と <code>pyxel.btnp()</code>（押した瞬間）</li>
+</ul>
+
+<table>
+  <thead><tr><th>画面のパッド</th><th>Python で読む名前</th></tr></thead>
+  <tbody>
+    <tr><td>十字キーの上・下・左・右</td>
+        <td><code>pyxel.GAMEPAD1_BUTTON_DPAD_UP</code> ／ <code>_DOWN</code> ／ <code>_LEFT</code> ／ <code>_RIGHT</code></td></tr>
+    <tr><td>4 つの丸の<b>下・右・左・上</b></td>
+        <td><code>pyxel.GAMEPAD1_BUTTON_A</code> ／ <code>_B</code> ／ <code>_X</code> ／ <code>_Y</code></td></tr>
+    <tr><td>小さいボタンの<b>左・右</b></td>
+        <td><code>pyxel.GAMEPAD1_BUTTON_BACK</code> ／ <code>pyxel.GAMEPAD1_BUTTON_START</code></td></tr>
+  </tbody>
+</table>
+
+<p>
+つまり、<b>HTML 側は何も直さなくてよく、直すのは Python だけ</b>です。
+キーを見ている場所で、<b>キーに加えてボタンも見る</b>ようにします。
+</p>
+
+<h3 id="idea-assign">1-2. どのボタンに、どの役目をさせるか</h3>
+
+<p>
+いまのゲームで使っているキーは、矢印・<code>Enter</code>・<code>R</code>・<code>Q</code> の 4 種類です。パッドには、次のように割り当てます。
+</p>
+
+<table>
+  <thead><tr><th>役目</th><th>キーボード</th><th>パッド</th></tr></thead>
+  <tbody>
+    <tr><td>歩く ／ カーソルを動かす</td><td>矢印キー</td><td>十字キー</td></tr>
+    <tr><td>決定（始める・次の面へ・タイトルへ）</td><td><code>Enter</code></td><td><b>4 つの丸のどれでも</b></td></tr>
+    <tr><td>やり直し</td><td><code>R</code></td><td><b>小さいボタンの右</b>（START）</td></tr>
+    <tr><td>ステージ選択へもどる</td><td><code>Q</code></td><td><b>小さいボタンの左</b>（BACK）</td></tr>
+  </tbody>
+</table>
+
+<p>理由は 3 つです。</p>
+
+<ul>
+  <li><b>丸には文字が書いていない。</b>「下の丸が A」と覚えている人はいません。
+      そこで<b>どの丸を押しても決定</b>にします。step1 の Candy Hunt を<a href="../memo/#virtual-gamepad">スマホ版</a>にしたときと同じ考え方です</li>
+  <li><b>やり直しと「選択へもどる」は、押すとそれまでの手数が消える</b>ボタンです。
+      親指がいつも乗っている丸ではなく、<b>指から離れた小さいボタン</b>に置けば、うっかり押しにくくなります。
+      倉庫番には「1 手戻す」がないので、なおさらです</li>
+  <li>名前も合います。<b>START はもう一度スタート、BACK はひとつ前の画面へ</b>もどる</li>
+</ul>
+
+<div class="warn">
+  <b>概要ページの予定から、割り当てを変えました</b>
+  <a href="./">step2 概要</a>では「A ボタンで決定、B ボタンでやり直し」と予定していました。
+  これだと、丸に文字がないので「どれが A か」が分かりません。
+  かといって「どの丸でも決定」にして B もやり直しにすると、<b>クリアのあとに右の丸を押した人は、次の面へ進むつもりで同じ面をやり直す</b>ことになります
+  （<code>update_game()</code> は、やり直しを先に調べるからです）。
+  そこで、やり直しは丸から外しました。概要ページの表も直してあります。
+</div>
+
+<h3 id="idea-group">1-3. キーとボタンを「組」にして、1 か所で調べる</h3>
+
+<p>
+たとえば決定は、<code>Enter</code> と 4 つの丸の <b>5 つのうち、どれか 1 つでも押されたら</b>です。
+そのまま <code>or</code> でつなぐと、こうなります。
+</p>
+
+<pre><code>        if (pyxel.btnp(pyxel.KEY_RETURN) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_A)
+                or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_B) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_X)
+                or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_Y)):
+            self.scene = SCENE_SELECT</code></pre>
+
+<p>
+長いうえに、決定を見ている場所は<b>4 か所</b>あります（タイトル・選択画面・クリアのあと・全クリアのあと）。
+4 か所とも同じ 5 つを書くのは大変ですし、どこか 1 か所で書きもらすと、その画面だけパッドが効きません。
+</p>
+
+<p>
+そこで、<b>同じ役目のキーとボタンを 1 本のリストにまとめて名前をつけ</b>（<code>INPUT_OK</code>）、
+<b>「リストのどれかが押されたか」を答える関数</b>（<code>pressed()</code>）を 1 つ作ります。すると、さきほどの 4 行はこう書けます。
+</p>
+
+<pre><code>        if pressed(INPUT_OK):
+            self.scene = SCENE_SELECT</code></pre>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 290" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="右の丸（B）を押した瞬間に pressed(INPUT_OK) を呼んだときの流れ。INPUT_OK の 5 つ、KEY_RETURN・A・B・X・Y を 1 つずつ pyxel.btnp で調べると、B だけが True でほかは False。any は 1 つでも True があれば True を返すので、答えは True。決定になる">
+  <style>
+    .g3h { fill:#e8f0ff; font-size:13px; font-weight:bold; }
+    .g3s { fill:#9aa4c4; font-size:11.5px; }
+    .g3c { fill:#e8f0ff; font-size:12px; font-family:Consolas,monospace; }
+    .g3f { fill:#9aa4c4; font-size:12px; font-family:Consolas,monospace; }
+    .g3t { fill:#2ee6a8; font-size:12px; font-family:Consolas,monospace; font-weight:bold; }
+  </style>
+  <text class="g3h" x="20" y="26">右の丸（B）を押した瞬間に、<tspan font-family="Consolas,monospace">pressed(INPUT_OK)</tspan> を呼ぶと</text>
+
+  <rect x="20" y="44" width="270" height="196" rx="5" fill="#10121c" stroke="#ffcc44"/>
+  <text class="g3h" x="34" y="66" style="fill:#ffcc44">INPUT_OK（リスト）</text>
+  <text class="g3c" x="34" y="98">pyxel.KEY_RETURN</text>
+  <text class="g3c" x="34" y="130">pyxel.GAMEPAD1_BUTTON_A</text>
+  <rect x="28" y="146" width="254" height="24" rx="3" fill="#2ee6a8" fill-opacity=".14"/>
+  <text class="g3c" x="34" y="162">pyxel.GAMEPAD1_BUTTON_B</text>
+  <text class="g3c" x="34" y="194">pyxel.GAMEPAD1_BUTTON_X</text>
+  <text class="g3c" x="34" y="226">pyxel.GAMEPAD1_BUTTON_Y</text>
+
+  <g stroke="#3b4166" stroke-width="1.5">
+    <line x1="290" y1="94" x2="330" y2="94"/><line x1="290" y1="126" x2="330" y2="126"/>
+    <line x1="290" y1="158" x2="330" y2="158"/><line x1="290" y1="190" x2="330" y2="190"/>
+    <line x1="290" y1="222" x2="330" y2="222"/>
+  </g>
+  <text class="g3s" x="336" y="66">1 つずつ <tspan font-family="Consolas,monospace">pyxel.btnp()</tspan> で調べる</text>
+  <text class="g3f" x="336" y="98">False</text>
+  <text class="g3f" x="336" y="130">False</text>
+  <text class="g3t" x="336" y="162">True</text>
+  <text class="g3f" x="336" y="194">False</text>
+  <text class="g3f" x="336" y="226">False</text>
+
+  <path d="M392 88 H404 V230 H392" fill="none" stroke="#9aa4c4" stroke-width="1.5"/>
+  <line x1="404" y1="159" x2="452" y2="159" stroke="#9aa4c4" stroke-width="1.5"/>
+  <polygon points="452,154 462,159 452,164" fill="#9aa4c4"/>
+
+  <rect x="470" y="122" width="120" height="74" rx="5" fill="#10121c" stroke="#45b0e8"/>
+  <text class="g3c" x="530" y="152" text-anchor="middle" style="fill:#45b0e8">any( … )</text>
+  <text class="g3s" x="530" y="174" text-anchor="middle">1 つでも True</text>
+  <text class="g3s" x="530" y="189" text-anchor="middle">なら True</text>
+  <line x1="590" y1="159" x2="626" y2="159" stroke="#9aa4c4" stroke-width="1.5"/>
+  <polygon points="626,154 636,159 626,164" fill="#9aa4c4"/>
+  <text class="g3t" x="646" y="156" style="font-size:15px">True</text>
+  <text class="g3s" x="646" y="175">決定になる</text>
+
+  <text class="g3s" x="20" y="268">Enter で押しても、丸のどれで押しても、答えは同じ True。呼ぶ側は「どれで押されたか」を気にしなくてよい。</text>
+</svg>
+</div>
+<figcaption>キーとボタンを 1 本のリストにまとめ、「どれか 1 つでも押されたか」を 1 回で調べる</figcaption>
+</figure>
+
+<div class="term">
+  <b><code>any()</code> は <code>all()</code> の反対側</b>
+  <a href="phase5.html">フェーズ 5</a> の <code>is_cleared()</code> で、<code>all(self.on_goal(box) for box in self.boxes)</code> と書きました。
+  「<b>ぜんぶ</b> True なら True」です。<code>any()</code> は同じ書き方で「<b>どれか 1 つでも</b> True なら True」。
+  <code>any(pyxel.btnp(i) for i in inputs)</code> は、<code>inputs</code> の中身を 1 つずつ <code>i</code> に入れて
+  <code>pyxel.btnp(i)</code> を調べ、1 つでも True があれば True を返します。
+</div>
+
+<p>
+押しているあいだを見る <code>pyxel.btn()</code> にも、同じまとめ版 <code>held()</code> を作ります。
+歩くとき（押しっぱなしで歩きつづける）は <code>held()</code>、決定やカーソルのように<b>1 回押したら 1 回だけ</b>のときは <code>pressed()</code>。
+<b>使い分けは、これまでの <code>btn</code> と <code>btnp</code> とまったく同じ</b>です。
+</p>
+
+<h3 id="idea-diagonal">1-4. 十字キーを斜めに押したら、どうするか</h3>
+
+<p>
+キーボードの矢印キーは 4 つに分かれていますが、画面の十字キーは<b>1 枚の絵</b>です。
+<code>pyxel.js</code>（Web 版の Pyxel 本体）を読むと、十字キーの当たり判定は<b>円を 45° ずつ 8 つに分けたもの</b>でした。
+そのうち<b>斜めの 4 つ（円のちょうど半分）では、2 つの向きが同時に押されたことになります</b>。
+十字の腕の上でも、まん中寄りを押すと斜めに入ります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="十字キーの当たり判定は、円を 45 度ずつ 8 つに分けたもの。斜めの 4 つでは 2 つの向きが同時に入る。左の図、elif のままだと斜めはすべて上か下になり、上と下は 135 度、左と右は 45 度しかない。右から 30 度上を押すと上へ進んでしまう。右の図、1 つだけのときに進む書き方では、上下左右が 45 度ずつで、斜めの 4 つでは進まない。右から 30 度上を押すと、進まない">
+<style>.s4h{fill:#e8f0ff;font-size:13px;font-weight:bold}.s4s{fill:#9aa4c4;font-size:11.5px}.s4k{font-size:15px;font-weight:bold;text-anchor:middle;dominant-baseline:central}.s4d{fill:#9aa4c4;font-size:10.5px;text-anchor:middle;dominant-baseline:central}</style>
+<text class="s4h" x="190" y="28" text-anchor="middle">elif のまま（フェーズ 10 まで）</text>
+<text class="s4s" x="190" y="46" text-anchor="middle">斜めは、先に書いた「下」「上」が勝つ</text>
+<path d="M190.0,210.0 L293.5,252.9 A112,112 0 0 0 293.5,167.1 Z" fill="#ff6b97" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="277.4" y="210.0" style="fill:#ff6b97">右</text>
+<path d="M190.0,210.0 L293.5,167.1 A112,112 0 0 0 232.9,106.5 Z" fill="#45b0e8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="251.8" y="142.2" style="fill:#45b0e8">上</text>
+<text class="s4d" x="251.8" y="160.2">（上＋右）</text>
+<path d="M190.0,210.0 L232.9,106.5 A112,112 0 0 0 147.1,106.5 Z" fill="#45b0e8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="190.0" y="122.6" style="fill:#45b0e8">上</text>
+<path d="M190.0,210.0 L147.1,106.5 A112,112 0 0 0 86.5,167.1 Z" fill="#45b0e8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="128.2" y="142.2" style="fill:#45b0e8">上</text>
+<text class="s4d" x="128.2" y="160.2">（上＋左）</text>
+<path d="M190.0,210.0 L86.5,167.1 A112,112 0 0 0 86.5,252.9 Z" fill="#ffcc44" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="102.6" y="210.0" style="fill:#ffcc44">左</text>
+<path d="M190.0,210.0 L86.5,252.9 A112,112 0 0 0 147.1,313.5 Z" fill="#2ee6a8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="128.2" y="265.8" style="fill:#2ee6a8">下</text>
+<text class="s4d" x="128.2" y="283.8">（下＋左）</text>
+<path d="M190.0,210.0 L147.1,313.5 A112,112 0 0 0 232.9,313.5 Z" fill="#2ee6a8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="190.0" y="297.4" style="fill:#2ee6a8">下</text>
+<path d="M190.0,210.0 L232.9,313.5 A112,112 0 0 0 293.5,252.9 Z" fill="#2ee6a8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="251.8" y="265.8" style="fill:#2ee6a8">下</text>
+<text class="s4d" x="251.8" y="283.8">（下＋右）</text>
+<path d="M156.4,107.0 H223.6 V176.4 H293.0 V243.6 H223.6 V313.0 H156.4 V243.6 H87.0 V176.4 H156.4 Z" fill="none" stroke="#e8f0ff" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="190" cy="210" r="112" fill="none" stroke="#9aa4c4" stroke-width="1.2"/>
+<circle cx="234.6" cy="184.2" r="7" fill="none" stroke="#fff" stroke-width="2"/>
+<circle cx="234.6" cy="184.2" r="2" fill="#fff"/>
+<text class="s4s" x="190" y="348" text-anchor="middle">○ 右の腕の、少し上（30°）を押した</text>
+<text class="s4h" x="190" y="366" text-anchor="middle" style="fill:#ff6b97">→ 上へ進んでしまう</text>
+<text class="s4h" x="570" y="28" text-anchor="middle">1 つだけのときに進む（このフェーズ）</text>
+<text class="s4s" x="570" y="46" text-anchor="middle">斜めの 4 つでは、進まない</text>
+<path d="M570.0,210.0 L673.5,252.9 A112,112 0 0 0 673.5,167.1 Z" fill="#ff6b97" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="657.4" y="210.0" style="fill:#ff6b97">右</text>
+<path d="M570.0,210.0 L673.5,167.1 A112,112 0 0 0 612.9,106.5 Z" fill="#3b4166" fill-opacity="0.55" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4d" x="631.8" y="142.2">上＋右</text>
+<text class="s4d" x="631.8" y="156.2" style="fill:#e8f0ff">進まない</text>
+<path d="M570.0,210.0 L612.9,106.5 A112,112 0 0 0 527.1,106.5 Z" fill="#45b0e8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="570.0" y="122.6" style="fill:#45b0e8">上</text>
+<path d="M570.0,210.0 L527.1,106.5 A112,112 0 0 0 466.5,167.1 Z" fill="#3b4166" fill-opacity="0.55" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4d" x="508.2" y="142.2">上＋左</text>
+<text class="s4d" x="508.2" y="156.2" style="fill:#e8f0ff">進まない</text>
+<path d="M570.0,210.0 L466.5,167.1 A112,112 0 0 0 466.5,252.9 Z" fill="#ffcc44" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="482.6" y="210.0" style="fill:#ffcc44">左</text>
+<path d="M570.0,210.0 L466.5,252.9 A112,112 0 0 0 527.1,313.5 Z" fill="#3b4166" fill-opacity="0.55" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4d" x="508.2" y="265.8">下＋左</text>
+<text class="s4d" x="508.2" y="279.8" style="fill:#e8f0ff">進まない</text>
+<path d="M570.0,210.0 L527.1,313.5 A112,112 0 0 0 612.9,313.5 Z" fill="#2ee6a8" fill-opacity="0.32" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4k" x="570.0" y="297.4" style="fill:#2ee6a8">下</text>
+<path d="M570.0,210.0 L612.9,313.5 A112,112 0 0 0 673.5,252.9 Z" fill="#3b4166" fill-opacity="0.55" stroke="#10121c" stroke-width="1.5"/>
+<text class="s4d" x="631.8" y="265.8">下＋右</text>
+<text class="s4d" x="631.8" y="279.8" style="fill:#e8f0ff">進まない</text>
+<path d="M536.4,107.0 H603.6 V176.4 H673.0 V243.6 H603.6 V313.0 H536.4 V243.6 H467.0 V176.4 H536.4 Z" fill="none" stroke="#e8f0ff" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="570" cy="210" r="112" fill="none" stroke="#9aa4c4" stroke-width="1.2"/>
+<circle cx="614.6" cy="184.2" r="7" fill="none" stroke="#fff" stroke-width="2"/>
+<circle cx="614.6" cy="184.2" r="2" fill="#fff"/>
+<text class="s4s" x="570" y="348" text-anchor="middle">○ 右の腕の、少し上（30°）を押した</text>
+<text class="s4h" x="570" y="366" text-anchor="middle" style="fill:#2ee6a8">→ 進まない（指を右へずらせば進む）</text>
+</svg>
+</div>
+<figcaption>十字キーの当たり判定（点線は十字キーの絵）。斜めの扇形では 2 つの向きが同時に入る。
+左はフェーズ 10 までの <code>if</code> / <code>elif</code> のまま、右はこのフェーズの書き方</figcaption>
+</figure>
+
+<p>
+フェーズ 10 までの <code>handle_key()</code> は、<code>if</code> / <code>elif</code> で<b>下 → 上 → 左 → 右</b>の順に調べていました。
+斜めのときは<b>先に書いた「下」か「上」が勝つ</b>ので、上と下は 135°、左と右は 45° しかありません。
+<b>右へ押したつもりで指が少し上にずれると、上へ進みます。</b>
+倉庫番では、1 歩のまちがいでリンゴが角に詰まり、<b>やり直すしかなくなる</b>こともあります。
+</p>
+
+<p>
+そこで、<b>押されている向きが「1 つだけ」のときに進み、2 つ以上のときは進まない</b>ことにしました。
+まちがった向きへ進むより、<b>何も起きないほうがまし</b>だからです。
+止まったら、指を少しずらせば進みます。
+本物の Web 版で試すと、<b>右から 30° 上を押しても進まず、そこから指を右へずらした瞬間に 1 歩進みました</b>。
+キーボードで矢印を 2 つ同時に押したときも、同じように止まります。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<table>
+  <thead><tr><th>機能</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.GAMEPAD1_BUTTON_…</code></td><td>ゲームパッドのボタンの番号。スマホの仮想ゲームパッドも、これで読む（<a href="#idea-pad">1-1</a>）</td></tr>
+    <tr><td><code>any(… for … in …)</code></td><td>どれか 1 つでも True なら True（<code>all()</code> の反対側）</td></tr>
+    <tr><td><code>リスト.append(x)</code> ／ <code>len(リスト)</code></td><td>リストの最後に足す ／ リストの長さ（どちらも使ったことがあります）</td></tr>
+    <tr><td><code>pyxel package</code> ／ <code>pyxel app2html</code></td><td>ゲームを 1 つのファイルにまとめる ／ それを Web 版の HTML にする（<a href="../step1/phase10.html">step1 フェーズ 10</a> の復習）</td></tr>
+    <tr><td><code>python -m http.server</code></td><td>いまのフォルダを、ブラウザから開けるように配る（step1 の復習）</td></tr>
+    <tr><td>Chrome の<b>デバイスモード</b></td><td>PC の Chrome を「スマホのふり」にする。<code>F12</code> のあと <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code></td></tr>
+  </tbody>
+</table>
+
+<h2>3. 手順</h2>
+
+<p>
+コードの変更は 5 か所です。<b>3-1・3-2 で道具を作り、3-3〜3-5 でキーを見ている場所を置きかえます。</b>
+</p>
+
+<h3 id="step-const">3-1. 入力の組を定数にする</h3>
+
+<p>
+<code>CH_SE</code> の下に、役目ごとのリストを 7 つ足します。<b>1 つの役目 ＝ キーボードのキー ＋ パッドのボタン</b>です。
+</p>
+
+<pre><code>CH_SE = 3               # 押した音・ゴールの音・クリアの音を鳴らすチャンネル
+
+# 入力の組。キーボードのキーと、スマホに出るボタン（仮想ゲームパッド）   ← ここから足す
+INPUT_DOWN = [pyxel.KEY_DOWN, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN]
+INPUT_UP = [pyxel.KEY_UP, pyxel.GAMEPAD1_BUTTON_DPAD_UP]
+INPUT_LEFT = [pyxel.KEY_LEFT, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT]
+INPUT_RIGHT = [pyxel.KEY_RIGHT, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT]
+INPUT_OK = [                    # 決定。4 つの丸は、どれを押してもよい
+    pyxel.KEY_RETURN,
+    pyxel.GAMEPAD1_BUTTON_A,    # 下の丸
+    pyxel.GAMEPAD1_BUTTON_B,    # 右の丸
+    pyxel.GAMEPAD1_BUTTON_X,    # 左の丸
+    pyxel.GAMEPAD1_BUTTON_Y,    # 上の丸
+]
+INPUT_RETRY = [pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_START]    # やり直し。小さいボタンの右
+INPUT_SELECT = [pyxel.KEY_Q, pyxel.GAMEPAD1_BUTTON_BACK]    # 選択へ。小さいボタンの左
+                                                                   ← ここまで足す（空行も 1 つ）
+# イメージバンク 0 の、切り出し位置</code></pre>
+
+<ul>
+  <li><code>INPUT_OK</code> は 5 つあるので、<code>MOVES</code> と同じように<b>1 つ 1 行</b>で縦に並べました。<b>行の終わりのカンマ</b>を忘れないでください</li>
+  <li><code>GAMEPAD1</code> の <b><code>1</code></b> は「1 人目のゲームパッド」の意味です。<code>GAMEPAD_BUTTON_A</code> ではエラーになります</li>
+</ul>
+
+<h3 id="step-func">3-2. 調べる関数を 2 つ足す</h3>
+
+<p>
+<code>is_blink_on()</code> の下（<code>class App:</code> の上）に足します。<code>draw_center()</code> などと同じく、<b><code>App</code> の外</b>の関数です。
+</p>
+
+<pre><code>def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+def pressed(inputs):   ← ここから足す
+    """inputs のどれかを、いま押した瞬間なら True を返す（btnp のまとめ版）"""
+    return any(pyxel.btnp(i) for i in inputs)
+
+def held(inputs):
+    """inputs のどれかを、押しているあいだ True を返す（btn のまとめ版）"""
+    return any(pyxel.btn(i) for i in inputs)
+                       ← ここまで足す（空行も 1 つ）
+class App:</code></pre>
+
+<div class="warn">
+  <b>字下げしないで書く</b>
+  <code>App</code> の中（スペース 4 つ下げ）に書くと、<code>App</code> のメソッドになってしまい、
+  <code>pressed(INPUT_OK)</code> と呼んだところで <code>NameError</code> になります（<a href="#trouble">7</a>）。
+</div>
+
+<h3 id="step-title">3-3. タイトルとステージ選択</h3>
+
+<p>
+<code>pyxel.btnp(pyxel.KEY_…)</code> を <code>pressed(INPUT_…)</code> に置きかえます。6 行です。
+</p>
+
+<pre><code>    def update_title(self):
+        """タイトル画面。Enter でステージ選択へ"""
+        if pressed(INPUT_OK):        ← 書き換え
+            self.scene = SCENE_SELECT
+
+    def update_select(self):
+        """ステージ選択。矢印でカーソルを動かし、Enter で始める"""
+        if pressed(INPUT_LEFT):      ← 書き換え
+            self.move_cursor(-1)
+        elif pressed(INPUT_RIGHT):   ← 書き換え
+            self.move_cursor(1)
+        elif pressed(INPUT_UP):      ← 書き換え
+            self.move_cursor(-SELECT_COLS)      # 1 段上は、5 つ前
+        elif pressed(INPUT_DOWN):    ← 書き換え
+            self.move_cursor(SELECT_COLS)       # 1 段下は、5 つ後
+
+        if pressed(INPUT_OK):        ← 書き換え
+            self.start_game()</code></pre>
+
+<p>
+カーソルは<b>1 回押したら 1 つ</b>動いてほしいので、<code>pressed()</code> です。
+ここは <code>elif</code> のままにします（<a href="#select-diag">6-4</a>）。
+</p>
+
+<h3 id="step-game">3-4. あそぶ画面の、決定・やり直し・選択へ</h3>
+
+<p>
+<code>update_game()</code> の前半です。4 行置きかえます。最後の 1 行は、<code>and</code> の後ろ半分だけ変わります。
+</p>
+
+<pre><code>    def update_game(self):
+        """あそんでいる間の更新"""
+        if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
+            if pressed(INPUT_OK):                                             ← 書き換え
+                self.stage_no = 0
+                self.all_cleared = False
+                self.scene = SCENE_TITLE
+            return
+
+        if pressed(INPUT_SELECT):               # ステージ選択へもどる          ← 書き換え
+            pyxel.stop()                        # 選択画面では BGM を止める
+            self.scene = SCENE_SELECT
+            return
+
+        if pressed(INPUT_RETRY):                # いつでも、最初からやり直せる   ← 書き換え
+            self.start_game()                   # BGM も頭から鳴らしなおす
+            return
+
+        if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ
+            if self.clear_elapsed() &gt;= CLEAR_WAIT and pressed(INPUT_OK):      ← 書き換え（後ろ半分）
+                self.next_stage()
+            return</code></pre>
+
+<h3 id="step-handle">3-5. <code>handle_key()</code> を書き直す</h3>
+
+<p>
+歩く向きを決めているところです。<b>中身をまるごと書き直します</b>。いまはこうなっています。
+</p>
+
+<pre><code>    def handle_key(self):
+        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
+        if pyxel.btn(pyxel.KEY_DOWN):
+            self.try_move(DIR_DOWN)
+        elif pyxel.btn(pyxel.KEY_UP):
+            self.try_move(DIR_UP)
+        elif pyxel.btn(pyxel.KEY_LEFT):
+            self.try_move(DIR_LEFT)
+        elif pyxel.btn(pyxel.KEY_RIGHT):
+            self.try_move(DIR_RIGHT)</code></pre>
+
+<p>
+これを、次のようにします。<b><code>elif</code> が 1 つもない</b>ことに気をつけてください。
+</p>
+
+<pre><code>    def handle_key(self):
+        """押されている向きへ 1 歩進もうとする。斜め（2 つ同時）のときは進まない"""
+        dirs = []                               # いま押されている向きを集める
+        if held(INPUT_DOWN):
+            dirs.append(DIR_DOWN)
+        if held(INPUT_UP):
+            dirs.append(DIR_UP)
+        if held(INPUT_LEFT):
+            dirs.append(DIR_LEFT)
+        if held(INPUT_RIGHT):
+            dirs.append(DIR_RIGHT)
+        if len(dirs) == 1:                      # 1 つだけのときに進む
+            self.try_move(dirs[0])</code></pre>
+
+<ol>
+  <li>空のリスト <code>dirs</code> を用意する</li>
+  <li>下・上・左・右を<b>ぜんぶ</b>調べて、押されている向きを <code>dirs</code> に足していく</li>
+  <li>集まった数が<b>ちょうど 1 つ</b>なら、その向き（<code>dirs[0]</code>）へ進もうとする。0 個（何も押していない）と 2 個以上（斜め）は何もしない</li>
+</ol>
+
+<p>
+<code>try_move()</code> には、これまでと同じ<b>向きの番号</b>（<code>DIR_DOWN</code> など）を 1 つ渡しています。
+<code>try_move()</code> から先は 1 文字も変えていません。
+</p>
+
+<h2 id="full-code">4. できあがりのコード</h2>
+
+<p>
+<code>step2/sokoban.py</code> の全文です（<b>550 行</b>）。
+フェーズ 10 のコードに、<b>23 行足して、10 行書き換え、<code>handle_key()</code> の中身を書き直します</b>（ほかに先頭のフェーズ名）。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ11：スマホで遊べるようにする
+
+import pyxel
+
+SCREEN_WIDTH = 160
+SCREEN_HEIGHT = 120
+TILE = 8                # 1 マスの大きさ（ドット）
+HUD_HEIGHT = 12         # 画面の上、手数などを出すために空けておく高さ
+MOVE_FRAMES = 8         # 隣のマスへ移りきるまでにかけるフレーム数
+
+SCENE_TITLE = 0         # タイトル画面
+SCENE_GAME = 1          # あそんでいる画面
+SCENE_SELECT = 2        # ステージを選ぶ画面
+
+SELECT_COLS = 5         # ステージ選択で、横 1 列に並べる数
+
+BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
+BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+CLEAR_WAIT = 20         # クリアしてから CLEAR! を出すまでのフレーム数（0.67 秒）
+
+# サウンドとミュージックの番号（リソースエディタで作る）
+SOUND_STEP = 0          # 歩いた音
+SOUND_PUSH = 1          # リンゴを押した音
+SOUND_GOAL = 2          # リンゴをゴールに乗せた音
+SOUND_CLEAR = 3         # クリアのジングル（CLEAR_WAIT と同じ 20 フレーム）
+MUSIC_BGM = 0           # BGM（チャンネル 0 と 1 を使う）
+
+CH_STEP = 2             # 歩いた音を鳴らすチャンネル
+CH_SE = 3               # 押した音・ゴールの音・クリアの音を鳴らすチャンネル
+
+# 入力の組。キーボードのキーと、スマホに出るボタン（仮想ゲームパッド）
+INPUT_DOWN = [pyxel.KEY_DOWN, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN]
+INPUT_UP = [pyxel.KEY_UP, pyxel.GAMEPAD1_BUTTON_DPAD_UP]
+INPUT_LEFT = [pyxel.KEY_LEFT, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT]
+INPUT_RIGHT = [pyxel.KEY_RIGHT, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT]
+INPUT_OK = [                    # 決定。4 つの丸は、どれを押してもよい
+    pyxel.KEY_RETURN,
+    pyxel.GAMEPAD1_BUTTON_A,    # 下の丸
+    pyxel.GAMEPAD1_BUTTON_B,    # 右の丸
+    pyxel.GAMEPAD1_BUTTON_X,    # 左の丸
+    pyxel.GAMEPAD1_BUTTON_Y,    # 上の丸
+]
+INPUT_RETRY = [pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_START]    # やり直し。小さいボタンの右
+INPUT_SELECT = [pyxel.KEY_Q, pyxel.GAMEPAD1_BUTTON_BACK]    # 選択へ。小さいボタンの左
+
+# イメージバンク 0 の、切り出し位置
+V_TILE = 0              # タイルの段
+V_PLAYER_A = 8          # 主人公の段（コマ A）
+V_PLAYER_B = 16         # 主人公の段（コマ B・足を入れ替えた絵）
+U_FLOOR = 0             # 床（歩ける）
+U_WALL = 8              # 壁（歩けない）
+U_GOAL = 16             # ゴール
+U_BOX = 24              # 荷物
+U_BOX_ON_GOAL = 32      # ゴールに乗っている荷物
+
+# 向き。この番号がそのまま主人公の絵の切り出し位置になる
+DIR_DOWN = 0
+DIR_UP = 1
+DIR_LEFT = 2
+DIR_RIGHT = 3
+
+# 向きごとの、1 歩ぶんのずれ（x のずれ, y のずれ）
+MOVES = [
+    (0, 1),         # 下
+    (0, -1),        # 上
+    (-1, 0),        # 左
+    (1, 0),         # 右
+]
+
+# ステージの地図
+# # 壁  . 床  O ゴール  $ 荷物  @ 主人公
+STAGE1 = [
+    "########",
+    "#......#",
+    "#..O.O.#",
+    "#..$.$.#",
+    "#..@...#",
+    "########",
+]
+
+STAGE2 = [          # 横にも押せる
+    "########",
+    "#......#",
+    "#.$..O.#",
+    "#.@....#",
+    "#.$..O.#",
+    "#......#",
+    "########",
+]
+
+STAGE3 = [          # 縦と横を組み合わせる
+    "#########",
+    "#.O...O.#",
+    "#.......#",
+    "#..$....#",
+    "#....$..#",
+    "#..@....#",
+    "#.......#",
+    "#########",
+]
+
+STAGE4 = [          # 壁があるので、押す側へ回り込む
+    "##########",
+    "#........#",
+    "#.O.##.O.#",
+    "#...##...#",
+    "#..$..$..#",
+    "#........#",
+    "#...@....#",
+    "##########",
+]
+
+STAGE5 = [          # 段が仕切られていて、行き来に回り道がいる
+    "##########",
+    "#........#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#...##...#",
+    "#O..$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE6 = [          # どれから動かすか、順番を考える
+    "##########",
+    "#........#",
+    "#.O.O.O..#",
+    "#........#",
+    "#.$......#",
+    "#..$.....#",
+    "#...$....#",
+    "#....@...#",
+    "##########",
+]
+
+STAGE7 = [          # 1 マスの通路。押す向きが決まってしまう
+    "#############",
+    "#...........#",
+    "#OO.........#",
+    "#..###.###..#",
+    "#.$###.###..#",
+    "#..###.###..#",
+    "#OO###.###..#",
+    "#.$###.###..#",
+    "#.@..$....$.#",
+    "#...........#",
+    "#############",
+]
+
+STAGE8 = [          # 荷物が固まって始まる。動かす順番をまちがえられない
+    "#############",
+    "#@$......OO.#",
+    "#.$$$....OO.#",
+    "#...........#",
+    "#.#########.#",
+    "#...........#",
+    "#.#########.#",
+    "#...........#",
+    "#...........#",
+    "#...........#",
+    "#############",
+]
+
+STAGE9 = [          # 中央の大きな壁を、大きく回って運ぶ
+    "#############",
+    "#...........#",
+    "#.OO........#",
+    "#...#####...#",
+    "#...#####...#",
+    "#..$#####...#",
+    "#.OO#####...#",
+    "#...#####.$.#",
+    "#........$$.#",
+    "#........@..#",
+    "#############",
+]
+
+STAGE10 = [         # 仕上げ。遠回りと詰みの両方
+    "#############",
+    "#...........#",
+    "#...$@$.$.$.#",
+    "#...........#",
+    "#...#.#######",
+    "#O###.#O#...#",
+    "#...#.#..OO.#",
+    "#.#.#.#.$##.#",
+    "#.$.....$O#.#",
+    "#..#.....O#O#",
+    "#############",    
+]
+
+STAGES = [STAGE1, STAGE2, STAGE3, STAGE4, STAGE5,
+          STAGE6, STAGE7, STAGE8, STAGE9, STAGE10]
+
+def draw_center(text, y, color):
+    """文字を、画面の横まんなかに描く"""
+    x = (SCREEN_WIDTH - len(text) * 4) // 2
+    pyxel.text(x, y, text, color)
+
+def draw_right(text, y, color):
+    """文字を、画面の右はしにそろえて描く（右に 2 ドット空ける）"""
+    x = SCREEN_WIDTH - len(text) * 4 - 1
+    pyxel.text(x, y, text, color)
+
+def is_blink_on():
+    """点滅の「見えている」タイミングなら True を返す"""
+    return pyxel.frame_count % BLINK_CYCLE &lt; BLINK_ON
+
+def pressed(inputs):
+    """inputs のどれかを、いま押した瞬間なら True を返す（btnp のまとめ版）"""
+    return any(pyxel.btnp(i) for i in inputs)
+
+def held(inputs):
+    """inputs のどれかを、押しているあいだ True を返す（btn のまとめ版）"""
+    return any(pyxel.btn(i) for i in inputs)
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.load("sokoban.pyxres")
+        self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面
+        self.stage_no = 0               # いま何番目のステージか（0 から数える）
+        self.cleared_count = 0          # クリアした面の数（終了すると消える）
+        self.all_cleared = False        # 10 個ぜんぶ終わったか
+        pyxel.run(self.update, self.draw)
+
+    def opened_count(self):
+        """選べる面の数。クリアした数より 1 つ先まで開く"""
+        return min(self.cleared_count + 1, len(STAGES))
+
+    def start_game(self):
+        """いまの stage_no のステージを読み込んで、BGM を鳴らしはじめる"""
+        self.load_stage(STAGES[self.stage_no])
+        self.scene = SCENE_GAME
+        pyxel.playm(MUSIC_BGM, loop=True)
+
+    def load_stage(self, rows):
+        """文字の地図を読んで、壁・主人公・荷物に分ける"""
+        self.tiles = []
+        self.boxes = []
+        self.player_dir = DIR_DOWN      # はじめは下を向いている
+        self.walk_timer = 0             # 0 なら止まっている。1～8は歩いている途中
+        self.pushing = False            # いまの一歩で荷物を押しているか
+        self.cleared = False            # このステージをクリアしたか
+        self.steps = 0                  # このステージで歩いた数
+
+        for y in range(len(rows)):
+            line = []
+            for x in range(len(rows[y])):
+                mark = rows[y][x]
+                if mark == "@":
+                    self.player_x = x
+                    self.player_y = y
+                    mark = "."          # 主人公の足元は床
+                elif mark == "$":
+                    self.boxes.append([x, y])
+                    mark = "."          # 荷物の下も床
+                line.append(mark)
+            self.tiles.append(line)
+
+        self.from_x = self.player_x     # 見た目の出発マス
+        self.from_y = self.player_y
+
+        # 盤面を画面の中央に置くための、ずらし幅
+        board_w = len(self.tiles[0]) * TILE
+        board_h = len(self.tiles) * TILE
+        self.ox = (SCREEN_WIDTH - board_w) // 2
+        self.oy = HUD_HEIGHT + (SCREEN_HEIGHT - HUD_HEIGHT - board_h) // 2
+
+    def update(self):
+        """フレーム毎の更新処理。いまの画面の担当へ渡す"""
+        if self.scene == SCENE_TITLE:
+            self.update_title()
+        elif self.scene == SCENE_SELECT:
+            self.update_select()
+        else:
+            self.update_game()
+
+    def update_title(self):
+        """タイトル画面。Enter でステージ選択へ"""
+        if pressed(INPUT_OK):
+            self.scene = SCENE_SELECT
+
+    def update_select(self):
+        """ステージ選択。矢印でカーソルを動かし、Enter で始める"""
+        if pressed(INPUT_LEFT):
+            self.move_cursor(-1)
+        elif pressed(INPUT_RIGHT):
+            self.move_cursor(1)
+        elif pressed(INPUT_UP):
+            self.move_cursor(-SELECT_COLS)      # 1 段上は、5 つ前
+        elif pressed(INPUT_DOWN):
+            self.move_cursor(SELECT_COLS)       # 1 段下は、5 つ後
+
+        if pressed(INPUT_OK):
+            self.start_game()
+
+    def move_cursor(self, step):
+        """カーソル（stage_no）を step だけ動かす。選べない面へは動かない"""
+        next_no = self.stage_no + step
+        if 0 &lt;= next_no &lt; self.opened_count():
+            self.stage_no = next_no
+
+    def update_game(self):
+        """あそんでいる間の更新"""
+        if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
+            if pressed(INPUT_OK):
+                self.stage_no = 0
+                self.all_cleared = False
+                self.scene = SCENE_TITLE
+            return
+
+        if pressed(INPUT_SELECT):               # ステージ選択へもどる
+            pyxel.stop()                        # 選択画面では BGM を止める
+            self.scene = SCENE_SELECT
+            return
+
+        if pressed(INPUT_RETRY):                # いつでも、最初からやり直せる
+            self.start_game()                   # BGM も頭から鳴らしなおす
+            return
+
+        if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ
+            if self.clear_elapsed() &gt;= CLEAR_WAIT and pressed(INPUT_OK):
+                self.next_stage()
+            return
+        
+        if self.walk_timer &gt; 0:                 # 歩いている途中
+            self.walk_timer += 1
+            if self.walk_timer &gt; MOVE_FRAMES:   # 隣のマスに着いた
+                self.walk_timer = 0
+                self.from_x = self.player_x     # 見た目を、いまいるマスに合わせる
+                self.from_y = self.player_y
+                self.pushing = False
+                if self.is_cleared():           # 着いた、その瞬間に調べる
+                    self.cleared = True
+                    self.clear_frame = pyxel.frame_count    # クリアした時刻を覚えておく
+                    pyxel.stop()                            # BGM を止めてから
+                    pyxel.play(CH_SE, SOUND_CLEAR)          # クリアのジングル
+                    # 何面目までクリアしたかを覚える。前の記録より小さくはしない
+                    self.cleared_count = max(self.cleared_count, self.stage_no + 1)
+
+        # 止まっていて、まだクリアしていないときだけ、キーを見る    
+        if self.walk_timer == 0 and not self.cleared:
+            self.handle_key()
+
+    def handle_key(self):
+        """押されている向きへ 1 歩進もうとする。斜め（2 つ同時）のときは進まない"""
+        dirs = []                               # いま押されている向きを集める
+        if held(INPUT_DOWN):
+            dirs.append(DIR_DOWN)
+        if held(INPUT_UP):
+            dirs.append(DIR_UP)
+        if held(INPUT_LEFT):
+            dirs.append(DIR_LEFT)
+        if held(INPUT_RIGHT):
+            dirs.append(DIR_RIGHT)
+        if len(dirs) == 1:                      # 1 つだけのときに進む
+            self.try_move(dirs[0])
+
+    def has_box(self, x, y):
+        """そのマスに荷物があるかどうかを答える"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                return True
+        return False
+
+    def move_box(self, x, y, dx, dy):
+        """(x, y) にある荷物を、(dx, dy) だけ動かす"""
+        for box in self.boxes:
+            if box[0] == x and box[1] == y:
+                box[0] += dx
+                box[1] += dy
+                return
+
+    def on_goal(self, box):
+        """その荷物が、ゴールのマスに乗っているか"""
+        return self.tiles[box[1]][box[0]] == "O"
+
+    def is_cleared(self):
+        """すべての荷物がゴールに乗ったか"""
+        return all(self.on_goal(box) for box in self.boxes)
+
+    def clear_elapsed(self):
+        """クリアしてから何フレームたったか"""
+        return pyxel.frame_count - self.clear_frame
+
+    def next_stage(self):
+        """次のステージへ進む。最後だったら全クリア"""
+        if self.stage_no + 1 &lt; len(STAGES):
+            self.stage_no += 1
+            self.start_game()                   # 読み込みと BGM は start_game() にまかせる
+        else:
+            self.all_cleared = True
+
+    def try_move(self, direction):
+        """その向きへ動けるか調べて、動けるときだけ 1 マス進む"""
+        self.player_dir = direction     # 動けなくても、向きだけは変える
+
+        dx, dy = MOVES[direction]
+        next_x = self.player_x + dx
+        next_y = self.player_y + dy
+
+        if self.tiles[next_y][next_x] == "#":   # 行き先が壁なら
+            return                              # 何もしないで戻る
+
+        if self.has_box(next_x, next_y):        # 行き先に荷物があるなら
+            far_x = next_x + dx                 # 荷物の、1 つ先のマス
+            far_y = next_y + dy
+            if self.tiles[far_y][far_x] == "#": # その先が壁なら押せない
+                return
+            if self.has_box(far_x, far_y):      # その先に別の荷物があっても押せない
+                return
+            self.move_box(next_x, next_y, dx, dy)
+            self.pushing = True                 # この一歩は、荷物を押している
+            if self.tiles[far_y][far_x] == "O": # 押した先がゴールなら
+                pyxel.play(CH_SE, SOUND_GOAL)   # 乗せた音
+            else:
+                pyxel.play(CH_SE, SOUND_PUSH)   # 押した音
+
+        self.player_x = next_x
+        self.player_y = next_y
+        self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+        self.steps += 1                         # 動けたときだけ、1 歩と数える
+        pyxel.play(CH_STEP, SOUND_STEP)         # 歩いた音（押したときも鳴る）
+
+    def slide_pos(self, origin, from_cell, to_cell):
+        """出発マスから到着マスへ、いまどこまで来たかをドットで返す"""
+        moved = (to_cell - from_cell) * TILE * self.walk_timer // MOVE_FRAMES
+        return origin + from_cell * TILE + moved
+
+    def draw(self):
+        """フレーム毎の描画処理。画面を消してから、担当へ渡す"""
+        pyxel.cls(pyxel.COLOR_BLACK)    # 各画面で使うので、ここに 1 回だけ
+
+        if self.scene == SCENE_TITLE:
+            self.draw_title()
+        elif self.scene == SCENE_SELECT:
+            self.draw_select()
+        else:
+            self.draw_game()
+
+    def draw_title(self):
+        """タイトル画面を描く"""
+        draw_center("SOKOBAN", 30, pyxel.COLOR_YELLOW)
+        draw_center("PUSH THE APPLES", 44, pyxel.COLOR_WHITE)
+
+        # ワンコが、リンゴをゴールへ押していく絵
+        x = SCREEN_WIDTH // 2 - TILE * 2
+        pyxel.blt(x, 66, 0, DIR_RIGHT * TILE, V_PLAYER_A, TILE, TILE, pyxel.COLOR_GRAY)
+        pyxel.blt(x + TILE, 66, 0, U_BOX, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+        pyxel.blt(x + TILE * 3, 66, 0, U_GOAL, V_TILE, TILE, TILE)
+
+        if is_blink_on():               # 1 秒のうち 20 フレームだけ見える
+            draw_center("PRESS ENTER", 92, pyxel.COLOR_WHITE)
+
+        draw_center("ARROW: MOVE  R: RETRY  Q: SELECT", 108, pyxel.COLOR_GRAY)
+
+    def draw_select(self):
+        """ステージ選択の画面を描く"""
+        draw_center("SELECT STAGE", 16, pyxel.COLOR_YELLOW)
+
+        for no in range(len(STAGES)):
+            col = no % SELECT_COLS              # 左から何番目か（0～4）
+            row = no // SELECT_COLS             # 上から何段目か（0～1）
+            x = 18 + col * 26
+            y = 36 + row * 24
+
+            if no &lt; self.cleared_count:         # クリアした面
+                color = pyxel.COLOR_LIME
+            elif no == self.cleared_count:      # 次に挑む 1 面
+                color = pyxel.COLOR_WHITE
+            else:                               # まだ選べない面
+                color = pyxel.COLOR_NAVY
+
+            pyxel.rectb(x, y, 20, 16, color)
+            label = f"{no + 1}"
+            pyxel.text(x + (20 - len(label) * 4) // 2, y + 5, label, color)
+
+            if no == self.stage_no:             # カーソルは、ひとまわり大きい枠
+                pyxel.rectb(x - 2, y - 2, 24, 20, pyxel.COLOR_YELLOW)
+
+        draw_center("ARROW: CHOOSE    ENTER: START", 96, pyxel.COLOR_GRAY)
+
+    def draw_game(self):
+        """あそんでいる画面を描く"""
+
+        # 壁を、上の行から 1 マスずつ描く
+        for y in range(len(self.tiles)):
+            for x in range(len(self.tiles[y])):
+                mark = self.tiles[y][x]
+                if mark == "#":
+                    u = U_WALL
+                elif mark == "O":
+                    u = U_GOAL
+                else:
+                    u = U_FLOOR
+                pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
+                            0, u, V_TILE, TILE, TILE)
+
+        # クリアした直後は、リンゴから輪が広がる。リンゴの下から出てくるように、先に描く
+        if self.cleared and self.clear_elapsed() &lt; CLEAR_WAIT:
+            r = self.clear_elapsed() // 2       # 2 フレームに 1 ドットずつ大きく
+            for box in self.boxes:
+                cx = self.ox + box[0] * TILE + TILE // 2
+                cy = self.oy + box[1] * TILE + TILE // 2
+                pyxel.circb(cx, cy, r, pyxel.COLOR_YELLOW)
+
+        # 荷物。押している 1 つだけは、主人公といっしょにすべる
+        dx, dy = MOVES[self.player_dir]
+        push_x = self.player_x + dx             # 押した荷物は主人公の目の前にいる
+        push_y = self.player_y + dy
+        for box in self.boxes:
+            if self.pushing and box[0] == push_x and box[1] == push_y:
+                bx = self.slide_pos(self.ox, box[0] - dx, box[0])
+                by = self.slide_pos(self.oy, box[1] - dy, box[1])
+            else:
+                bx = self.ox + box[0] * TILE
+                by = self.oy + box[1] * TILE
+            u = U_BOX
+            if self.on_goal(box):       # ゴールに乗っているあいだは別の絵
+                u = U_BOX_ON_GOAL
+            pyxel.blt(bx, by, 0, u, V_TILE, TILE, TILE, pyxel.COLOR_BLACK)
+
+        # 主人公
+        px = self.slide_pos(self.ox, self.from_x, self.player_x)
+        py = self.slide_pos(self.oy, self.from_y, self.player_y)
+        v = V_PLAYER_A
+        if self.walk_timer &gt;= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
+            v = V_PLAYER_B
+        d = self.player_dir
+        if self.cleared and self.clear_elapsed() &gt;= CLEAR_WAIT:
+            d = DIR_DOWN                        # こちらを向いて
+            if self.clear_elapsed() % 16 &lt; 8:
+                py -= 2                         # ぴょんと跳ねる
+        pyxel.blt(px, py, 0, d * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+
+        # 画面の上の表示
+        if self.all_cleared:
+            draw_center("ALL CLEAR!  ENTER=TITLE", 3, pyxel.COLOR_YELLOW)
+        else:
+            pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
+                       pyxel.COLOR_GRAY)
+            draw_right(f"STEPS {self.steps}", 3, pyxel.COLOR_GRAY)
+            if self.cleared and self.clear_elapsed() &gt;= CLEAR_WAIT:
+                draw_center("CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
+App()</code></pre>
+
+<h2 id="run">5. 実行する</h2>
+
+<p>
+確かめるのは 3 段階です。<b>まず PC でいつもどおり</b>、次に <b>Web 版を PC のブラウザで</b>、できれば<b>自分のスマホで</b>。
+</p>
+
+<h3 id="run-pc">5-1. PC で、いつもどおり遊べるか</h3>
+
+<pre><code>cd step2
+python sokoban.py</code></pre>
+
+<table>
+  <thead><tr><th>　</th><th>確かめること</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>矢印・<code>Enter</code>・<code>R</code>・<code>Q</code> で、<b>フェーズ 10 と同じように</b>遊べる（音も同じ）</td></tr>
+    <tr><td>2</td><td>矢印キーを<b>2 つ同時に押しているあいだは、進まない</b>（向きも変わらない）。片方を離すと、残ったほうへ進む</td></tr>
+    <tr><td>3</td><td>右へ押しっぱなしで歩いている途中に上も押すと、<b>いまの 1 歩は最後まで歩いて、そこで止まる</b></td></tr>
+  </tbody>
+</table>
+
+<h3 id="run-browser">5-2. Web 版にして、PC のブラウザで確かめる</h3>
+
+<p>
+パッドは<b>指で触る端末</b>でしか出ません。そこで Chrome を<b>「スマホのふり」</b>にさせます（デバイスモード）。
+クリックがタッチとして届くので、マウスでパッドを押せます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Web 版にして開くまでの流れ。step2 フォルダの sokoban.py と sokoban.pyxres を、pyxel package で step2.pyxapp にまとめる。pyxel app2html で step2.html にする。python -m http.server で配り、PC の Chrome のデバイスモードで localhost:8000/step2.html を開く。スマホからは、同じ Wi-Fi で PC の IP アドレスの 8000 番を開く">
+  <style>
+    .f5h { fill:#e8f0ff; font-size:13px; font-weight:bold; }
+    .f5s { fill:#9aa4c4; font-size:11.5px; }
+    .f5c { fill:#2ee6a8; font-size:11.5px; font-family:Consolas,monospace; }
+    .f5u { fill:#ffcc44; font-size:11px; font-family:Consolas,monospace; }
+  </style>
+  <rect x="200" y="14" width="360" height="50" rx="5" fill="#10121c" stroke="#3b4166"/>
+  <text class="f5h" x="380" y="36" text-anchor="middle">step2/ フォルダ</text>
+  <text class="f5s" x="380" y="54" text-anchor="middle">sokoban.py ・ sokoban.pyxres</text>
+  <line x1="380" y1="64" x2="380" y2="96" stroke="#9aa4c4" stroke-width="1.5"/><polygon points="375,94 380,104 385,94" fill="#9aa4c4"/>
+  <text class="f5c" x="392" y="88"><tspan font-family="sans-serif" font-weight="bold">①</tspan> pyxel package step2 step2/sokoban.py</text>
+
+  <rect x="200" y="106" width="360" height="40" rx="5" fill="#10121c" stroke="#3b4166"/>
+  <text class="f5h" x="380" y="131" text-anchor="middle">step2.pyxapp<tspan class="f5s" font-weight="normal">（ゲームを 1 つにまとめたもの）</tspan></text>
+  <line x1="380" y1="146" x2="380" y2="178" stroke="#9aa4c4" stroke-width="1.5"/><polygon points="375,176 380,186 385,176" fill="#9aa4c4"/>
+  <text class="f5c" x="392" y="170"><tspan font-family="sans-serif" font-weight="bold">②</tspan> pyxel app2html step2.pyxapp</text>
+
+  <rect x="200" y="188" width="360" height="40" rx="5" fill="#10121c" stroke="#45b0e8"/>
+  <text class="f5h" x="380" y="213" text-anchor="middle">step2.html<tspan class="f5s" font-weight="normal">（Web 版。パッドの仕組みも入っている）</tspan></text>
+  <line x1="380" y1="228" x2="380" y2="260" stroke="#9aa4c4" stroke-width="1.5"/><polygon points="375,258 380,268 385,258" fill="#9aa4c4"/>
+  <text class="f5c" x="392" y="252"><tspan font-family="sans-serif" font-weight="bold">③</tspan> python -m http.server<tspan font-family="sans-serif">（開いたままにする）</tspan></text>
+
+  <path d="M380 268 V280 M200 280 H560 M200 280 V300 M560 280 V300" fill="none" stroke="#9aa4c4" stroke-width="1.5"/>
+  <polygon points="195,298 200,308 205,298" fill="#9aa4c4"/><polygon points="555,298 560,308 565,298" fill="#9aa4c4"/>
+
+  <rect x="40" y="310" width="320" height="96" rx="5" fill="#10121c" stroke="#2ee6a8"/>
+  <text class="f5h" x="56" y="334">PC の Chrome（5-2）</text>
+  <text class="f5u" x="56" y="356">http://localhost:8000/step2.html</text>
+  <text class="f5s" x="56" y="378">F12 → Ctrl＋Shift＋M でデバイスモード</text>
+  <text class="f5s" x="56" y="395">→ 機種を選んで、F5 で読み込みなおす</text>
+
+  <rect x="400" y="310" width="320" height="96" rx="5" fill="#10121c" stroke="#ff6b97"/>
+  <text class="f5h" x="416" y="334">自分のスマホ（5-3）</text>
+  <text class="f5u" x="416" y="356">http://192.168.<tspan font-family="sans-serif">○.○</tspan>:8000/step2.html</text>
+  <text class="f5s" x="416" y="378">PC と同じ Wi-Fi につなぐ</text>
+  <text class="f5s" x="416" y="395">○.○ は PC の IP アドレス（ipconfig で調べる）</text>
+</svg>
+</div>
+<figcaption>Web 版にして開くまで。①〜③ は step1 フェーズ 10 と同じ手順で、開く先が 2 つになる</figcaption>
+</figure>
+
+<ol class="steps">
+  <li><b>リポジトリのいちばん上</b>（<code>step2</code> フォルダが見える場所）で、パッケージ化して HTML にします。
+<pre><code>pyxel package step2 step2/sokoban.py
+pyxel app2html step2.pyxapp</code></pre>
+      <code>step2.pyxapp</code> と <code>step2.html</code> ができます。</li>
+  <li>同じ場所で、配る係を起動します（このウィンドウは開いたままにします）。
+<pre><code>python -m http.server</code></pre></li>
+  <li>Chrome で <code>http://localhost:8000/step2.html</code> を開き、<code>CLICK TO START</code> が出たら<b>まだ押さずに</b>、
+      <code>F12</code>（開発者ツール）→ <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code>（デバイスモード）。</li>
+  <li>画面の上の機種の欄で、スマホ（たとえば iPhone 12 Pro）を選び、<b><code>F5</code> で読み込みなおします。</b>
+      文字が <code>TOUCH TO START</code> に変わり、下にパッドが出ます。</li>
+</ol>
+
+<div class="note">
+  <b>今回の <code>step2.pyxapp</code> は、ためし用</b>
+  <code>step2</code> フォルダの中身は全部まとめられるので、<code>stages/</code> のアイデアや <code>tempCodeRunnerFile.py</code> も入ります。
+  手元で試すだけなので、今回はそのままでかまいません。<b>公開用はフェーズ 12 で、フォルダを掃除してから作り直します。</b>
+  確かめ終わったら、リポジトリの直下にできた <code>step2.html</code> と <code>step2.pyxapp</code> は消してかまいません（コミットしません）。
+</div>
+
+<p><b>デバイスモードで、次の 7 つを確かめてください。</b>マウスでボタンをクリックします。</p>
+
+<table>
+  <thead><tr><th>　</th><th>確かめること</th></tr></thead>
+  <tbody>
+    <tr><td>4</td><td><code>TOUCH TO START</code> をクリックするとタイトル。<b>丸のどれか</b>で選択画面へ</td></tr>
+    <tr><td>5</td><td>選択画面で、十字キーでカーソルが 1 つずつ動き、<b>丸のどれか</b>で始まる</td></tr>
+    <tr><td>6</td><td>十字キーで歩く。<b>押したままにすると、歩きつづける</b></td></tr>
+    <tr><td>7</td><td>十字キーの<b>斜め（腕と腕のあいだ）</b>を押しても、進まない。押したまま腕の上へずらすと進む</td></tr>
+    <tr><td>8</td><td><b>右の小さいボタン</b>でやり直し（手数が 0 にもどり、BGM が頭から）</td></tr>
+    <tr><td>9</td><td><b>左の小さいボタン</b>でステージ選択へ（BGM が止まる）</td></tr>
+    <tr><td>10</td><td>クリアして <code>CLEAR!</code> が出たら、<b>丸のどれか</b>で次の面へ</td></tr>
+  </tbody>
+</table>
+
+<h3 id="run-phone">5-3. 自分のスマホで確かめる（できれば）</h3>
+
+<p>
+5-2 の <code>python -m http.server</code> は、<b>同じ Wi-Fi のスマホからも開けます</b>。公開しなくても試せます。
+</p>
+
+<ol class="steps">
+  <li>PC で、もう 1 つターミナルを開いて <code>ipconfig</code> と打ち、<b>「IPv4 アドレス」</b>を見ます（<code>192.168.</code> で始まることが多い）。
+      Wi-Fi か、有線（イーサネット）の欄です。</li>
+  <li>スマホを <b>PC と同じ Wi-Fi</b> につなぎ、ブラウザで <code>http://（IPv4 アドレス）:8000/step2.html</code> を開きます。</li>
+  <li><b>はじめての場合、PC に「Windows セキュリティの重要な警告」</b>が出ることがあります。
+      家の Wi-Fi なら<b>「プライベート ネットワーク」にチェックして「アクセスを許可する」</b>を押します。</li>
+  <li>確かめ終わったら、<code>http.server</code> のウィンドウで <code>Ctrl</code>＋<code>C</code> を押して止めます。</li>
+</ol>
+
+<p>
+スマホでは、<b>5-2 の 4〜10</b> に加えて、<b>親指で遊んだ手ざわり</b>を確かめてください。
+とくに、十字キーの<b>斜めで止まる</b>のが気になるかどうかです。
+</p>
+
+<div class="warn">
+  <b>配っているあいだは、フォルダの中身がまるごと見える</b>
+  <code>python -m http.server</code> は、起動した場所のフォルダを<b>同じ Wi-Fi のだれからでも</b>開けるようにします。
+  家の Wi-Fi で試すときだけ使い、<b>終わったら必ず止めてください</b>。カフェなどの共用 Wi-Fi では使わないでください。
+  つながらないときは <a href="#trouble">7</a> を見てください。<b>スマホで試すのはフェーズ 12 で公開してからでもかまいません。</b>
+</div>
+
+<div class="note" id="more">
+  <b>もう一歩（やらなくても大丈夫です）</b>
+  <ul>
+    <li><b>タイトル画面に、スマホのボタンの案内を出す</b>：パッドのボタンには文字がないので、はじめて遊ぶ人には役目が分かりません。
+      そこで、<b>実物と同じ並び</b>（左に十字、まん中に小さいボタン 2 つ、右に丸 4 つ）で小さな案内を描きます。
+      <code>is_blink_on()</code> の上に関数を 1 つ足して、
+<pre><code>def draw_pad_guide(y):
+    """スマホのボタンの案内を、実物と同じ並び（十字・小さいボタン 2 つ・丸 4 つ）で描く"""
+    col = pyxel.COLOR_CYAN
+    pyxel.rect(19, y + 1, 7, 3, col)            # 十字キー（横の棒）
+    pyxel.rect(21, y - 1, 3, 7, col)            # 十字キー（縦の棒）
+    pyxel.text(29, y, "MOVE", pyxel.COLOR_GRAY)
+    pyxel.text(51, y, "SELECT", pyxel.COLOR_GRAY)
+    pyxel.rectb(77, y, 9, 5, col)               # 小さいボタン（左）
+    pyxel.rectb(89, y, 9, 5, col)               # 小さいボタン（右）
+    pyxel.text(100, y, "RETRY", pyxel.COLOR_GRAY)
+    for dx, dy in MOVES:                        # 丸 4 つを、ひし形に並べる
+        pyxel.rect(127 + dx * 3, y + 1 + dy * 3, 2, 2, col)
+    pyxel.text(134, y, "OK", pyxel.COLOR_GRAY)
+
+def is_blink_on():</code></pre>
+      <code>draw_title()</code> の最後の行を 2 行にします（キーボードの案内を少し上げて、その下にパッドの案内）。
+<pre><code>        if is_blink_on():               # 1 秒のうち 20 フレームだけ見える
+            draw_center("PRESS ENTER", 92, pyxel.COLOR_WHITE)
+
+        draw_center("ARROW: MOVE  R: RETRY  Q: SELECT", 101, pyxel.COLOR_GRAY)   ← 108 を 101 に
+        draw_pad_guide(111)                     # スマホのボタンの案内             ← 足す</code></pre>
+      丸 4 つは、<b><code>MOVES</code>（下・上・左・右の 1 歩ぶんのずれ）をそのまま使ってひし形に</b>並べています。こうなります。
+      <figure>
+        <div class="fig-box"><img class="shot" src="data:image/png;base64,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" width="640" height="480"
+          alt="タイトル画面。PRESS ENTER の下に、キーボードの案内 ARROW: MOVE  R: RETRY  Q: SELECT、その下に水色の十字と MOVE、SELECT と小さい四角 2 つと RETRY、水色の点 4 つのひし形と OK"></div>
+        <figcaption>案内を足したタイトル画面（本物の Pyxel で描いたもの。4 倍に拡大）</figcaption>
+      </figure></li>
+    <li><b>キーを増やすのは、組に 1 つ足すだけ</b>：入力をリストにまとめたので、たとえば <b>WASD でも歩けるようにする</b>、
+      <b>Space でも決定できるようにする</b>のは、リストに足すだけです。<code>handle_key()</code> などは 1 文字も変えません。
+<pre><code>INPUT_DOWN = [pyxel.KEY_DOWN, pyxel.KEY_S, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN]
+INPUT_UP = [pyxel.KEY_UP, pyxel.KEY_W, pyxel.GAMEPAD1_BUTTON_DPAD_UP]
+INPUT_LEFT = [pyxel.KEY_LEFT, pyxel.KEY_A, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT]
+INPUT_RIGHT = [pyxel.KEY_RIGHT, pyxel.KEY_D, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT]
+INPUT_OK = [                    # 決定。4 つの丸は、どれを押してもよい
+    pyxel.KEY_RETURN,
+    pyxel.KEY_SPACE,</code></pre>
+      ためしたところ、<code>W</code>＋<code>D</code> の同時押しも、矢印と同じように<b>進みません</b>でした。</li>
+  </ul>
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3 id="any">6-1. <code>any()</code> と <code>all()</code>：「どれか」と「ぜんぶ」</h3>
+
+<table>
+  <thead><tr><th>書き方</th><th>True になるとき</th><th>使った場所</th></tr></thead>
+  <tbody>
+    <tr><td><code>all(… for … in …)</code></td><td><b>ぜんぶ</b> True のとき</td><td><code>is_cleared()</code>：リンゴが<b>ぜんぶ</b>ゴールに乗った（フェーズ 5）</td></tr>
+    <tr><td><code>any(… for … in …)</code></td><td><b>どれか 1 つでも</b> True のとき</td><td><code>pressed()</code>：組のキーとボタンの<b>どれか</b>を押した（このフェーズ）</td></tr>
+  </tbody>
+</table>
+
+<p>
+<code>pressed(INPUT_OK)</code> を <code>for</code> で書きくだすと、こうなります。<b>1 つでも見つかったら、その場で True を返して終わり</b>です。
+</p>
+
+<pre><code>def pressed(inputs):
+    for i in inputs:
+        if pyxel.btnp(i):
+            return True         # 1 つ見つかれば、あとは調べない
+    return False                # 最後まで見つからなかった</code></pre>
+
+<p>
+リストに入っているのは、じつは<b>ただの数</b>です（<code>pyxel.KEY_RETURN</code> は <code>13</code>）。
+<code>pyxel.btnp()</code> は数を受け取るので、<b>リストのまま渡すと <code>TypeError</code></b> になります（<a href="#trouble">7</a>）。
+1 つずつ取り出して渡すのが <code>for i in inputs</code> の役目です。
+</p>
+
+<h3 id="collect">6-2. <code>elif</code> は「最初の 1 つ」、<code>if</code> を並べると「ぜんぶ」</h3>
+
+<p>
+フェーズ 10 までの <code>handle_key()</code> は、<code>elif</code> で<b>最初に当たった 1 つ</b>だけを見ていました。
+これだと「ほかにも押されていたか」が分かりません。
+新しい <code>handle_key()</code> は <b><code>if</code> を 4 つ並べて、ぜんぶ調べてから決めます</b>。
+</p>
+
+<table>
+  <thead><tr><th>押しているもの</th><th><code>dirs</code></th><th>どうなる</th></tr></thead>
+  <tbody>
+    <tr><td>何も押していない</td><td><code>[]</code></td><td>何もしない</td></tr>
+    <tr><td>右だけ</td><td><code>[DIR_RIGHT]</code>（<code>[3]</code>）</td><td>右へ 1 歩</td></tr>
+    <tr><td>上と右（斜め）</td><td><code>[DIR_UP, DIR_RIGHT]</code>（<code>[1, 3]</code>）</td><td><b>何もしない</b></td></tr>
+    <tr><td><code>↑</code> キーと十字キーの上を同時に</td><td><code>[DIR_UP]</code></td><td>上へ 1 歩（同じ向きは 1 つと数える）</td></tr>
+  </tbody>
+</table>
+
+<p>
+最後の行に注目してください。<code>held(INPUT_UP)</code> は、キーとボタンのどちらで押しても <b>1 回 True になるだけ</b>なので、
+同じ向きが 2 つ入ることはありません。<b>「集めてから、数で決める」</b>書き方は、こういう場面でよく使います。
+</p>
+
+<h3 id="hold">6-3. 歩くのは <code>held()</code>、それ以外は <code>pressed()</code></h3>
+
+<p>
+置きかえるとき、<b><code>btn</code> だったところは <code>held</code>、<code>btnp</code> だったところは <code>pressed</code></b> にしました。
+逆にすると、こうなります（どちらもエラーは出ません）。
+</p>
+
+<table>
+  <thead><tr><th>まちがえた場所</th><th>実際に試した結果</th></tr></thead>
+  <tbody>
+    <tr><td><code>handle_key()</code> で <code>pressed()</code></td><td>右を 40 フレーム押しっぱなしにしても <b>1 歩だけ</b>。押しなおさないと次の 1 歩が出ない</td></tr>
+    <tr><td>選択画面で <code>held()</code></td><td>右を 10 フレーム押しただけで、カーソルが<b>1 面から 10 面まで一気に</b>飛ぶ</td></tr>
+  </tbody>
+</table>
+
+<h3 id="select-diag">6-4. 選択画面は <code>elif</code> のままでよい</h3>
+
+<p>
+選択画面のカーソルも、十字キーの斜めでは 2 つの向きが入ります。こちらは <code>elif</code> のままなので、
+<b>押した瞬間が斜めなら、先に書いた左右が勝ちます</b>（試すと、上＋右で右へ 1 つ動きました）。
+</p>
+
+<p>
+それでも直さないのは、<b>カーソルはすぐに戻せる</b>からです。まちがえても、反対へ 1 回押せば元どおり。
+倉庫番の 1 歩のように<b>取り返しがつかない</b>ところだけ、慎重にしました。
+</p>
+
+<h3 id="no-html">6-5. HTML には手を入れていない</h3>
+
+<p>
+パッドを出す・押された場所を調べる、という仕事は <code>pyxel app2html</code> が作った HTML（と、そこから読み込む <code>pyxel.js</code>）がやっています。
+Python のコードは「<code>GAMEPAD1_BUTTON_…</code> が押されたか」を聞くだけです。
+そのため、<b>同じコードが、PC（キーボード）・USB のゲームパッド・スマホの画面の 3 つで動きます</b>。
+</p>
+
+<h2 id="trouble">7. うまくいかないときは</h2>
+
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>起動した瞬間に <code>SyntaxError: invalid syntax. Perhaps you forgot a comma?</code></td>
+      <td><code>INPUT_OK</code> の中の<b>行の終わりのカンマ</b>が抜けています（<a href="#step-const">3-1</a>）。<b>エラーに出た行の終わり</b>（コメントの前）に <code>,</code> を足します</td>
+    </tr>
+    <tr>
+      <td>起動した瞬間に <code>SyntaxError: '[' was never closed</code></td>
+      <td><code>INPUT_OK</code> の最後の <code>]</code> がありません（<a href="#step-const">3-1</a>）</td>
+    </tr>
+    <tr>
+      <td>起動した瞬間に <code>AttributeError: module 'pyxel' has no attribute 'GAMEPAD_BUTTON_A'</code></td>
+      <td><code>GAMEPAD1</code> の <code>1</code> が抜けています。エラーに出た名前のつづりを確かめてください（<a href="#step-const">3-1</a>）</td>
+    </tr>
+    <tr>
+      <td>起動して<b>タイトルが出る前に</b> <code>NameError: name 'pressed' is not defined. Did you mean: 'self.pressed'?</code></td>
+      <td><code>pressed()</code> と <code>held()</code> を <b><code>App</code> の中に字下げして</b>書いています。字下げをなくして <code>class App:</code> の上へ（<a href="#step-func">3-2</a>）。
+        <code>Did you mean</code> の後ろがない <code>NameError: name 'pressed' is not defined</code> なら、関数を足し忘れています</td>
+    </tr>
+    <tr>
+      <td>起動して<b>タイトルが出る前に</b>（またはその画面になった瞬間に） <code>TypeError: 'list' object cannot be interpreted as an integer</code></td>
+      <td><code>pyxel.btnp(INPUT_OK)</code> のように、<b>リストをそのまま <code>btnp</code> に渡しています</b>。<code>pressed(INPUT_OK)</code> にします（<a href="#any">6-1</a>）</td>
+    </tr>
+    <tr>
+      <td>歩こうとした瞬間に <code>TypeError: list indices must be integers or slices, not list</code></td>
+      <td><code>self.try_move(dirs)</code> になっています。<code>self.try_move(dirs[0])</code>（<b>1 つ目を取り出して渡す</b>）にします（<a href="#step-handle">3-5</a>）</td>
+    </tr>
+    <tr>
+      <td><code>Enter</code> もボタンも、<b>何を押しても</b>タイトルから進まない</td>
+      <td><code>pressed()</code> の <code>return</code> が抜けています。<code>return</code> がない関数は <code>None</code> を返すので、<code>if</code> がいつも成り立ちません（<a href="#step-func">3-2</a>）</td>
+    </tr>
+    <tr>
+      <td><b>右にしか</b>進まない（下・上・左は、向きも変わらない）</td>
+      <td><code>if len(dirs) == 1:</code> の<b>字下げが深く</b>、<code>if held(INPUT_RIGHT):</code> の中に入っています。<code>dirs = []</code> と同じ深さ（スペース 8 つ）に（<a href="#step-handle">3-5</a>）</td>
+    </tr>
+    <tr>
+      <td>斜めに押すと、<b>上（か下）へ進んでしまう</b></td>
+      <td><code>handle_key()</code> に <code>elif</code> が残っているか、<code>len(dirs) == 1</code> が <code>&gt;= 1</code> になっています（<a href="#collect">6-2</a>）</td>
+    </tr>
+    <tr>
+      <td>押しっぱなしでも、<b>1 歩しか</b>進まない</td>
+      <td><code>handle_key()</code> で <code>pressed()</code> を使っています。<code>held()</code> に（<a href="#hold">6-3</a>）</td>
+    </tr>
+    <tr>
+      <td>選択画面で、カーソルが<b>端まで一気に</b>飛ぶ</td>
+      <td><code>update_select()</code> で <code>held()</code> を使っています。<code>pressed()</code> に（<a href="#hold">6-3</a>）</td>
+    </tr>
+    <tr>
+      <td>ブラウザが<b>真っ黒のまま</b>何も起きない</td>
+      <td><code>step2.html</code> を<b>ダブルクリックで開いています</b>。<code>python -m http.server</code> 経由（<code>http://localhost:8000/…</code>）で開きます（step1 と同じ）</td>
+    </tr>
+    <tr>
+      <td>デバイスモードにしたのに、<b>パッドが出ない</b>（<code>CLICK TO START</code> のまま）</td>
+      <td>デバイスモードにしたあと、<b><code>F5</code> で読み込みなおしていません</b>。パッドを出すかどうかは、ページを読み込んだ瞬間に決まります</td>
+    </tr>
+    <tr>
+      <td>パッドは出るが、押しても<b>前と同じ</b>（キーボードしか効かない）</td>
+      <td>コードを直す<b>前に作った</b> <code>step2.html</code> を開いています。<code>pyxel package</code> と <code>pyxel app2html</code> を<b>やり直して</b>、<code>Ctrl</code>＋<code>F5</code> で読み込みなおします</td>
+    </tr>
+    <tr>
+      <td>スマホで開くと、いつまでも読み込み中（つながらない）</td>
+      <td>① PC とスマホが<b>同じ Wi-Fi</b> か（スマホがモバイル回線になっていないか）。② IP アドレスが <code>ipconfig</code> の<b>「IPv4 アドレス」</b>か。
+        ③ <b>Windows のファイアウォールが止めている</b>：「Windows セキュリティ」→「ファイアウォールとネットワーク保護」→「ファイアウォールによるアプリケーションの許可」で、
+        <b>Python（<code>python.exe</code>）</b>の<b>「プライベート」</b>にチェックが入っているか。家の Wi-Fi が「パブリック ネットワーク」になっている場合も止められます。
+        うまくいかなければ、<b>フェーズ 12 で公開してから</b>スマホで試してもかまいません</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="next">8. 次のフェーズ</h2>
+
+<p>
+次は <b>パッケージ化して Web で公開する</b>（フェーズ 12）です。step2 の最後のフェーズです。
+今回ためしに作った手順を、<b>公開用</b>にやり直します。<code>step2</code> フォルダを掃除し、
+できた HTML を <code>docs/site/step2/</code> に置いて、トップページと概要ページからリンクします。
+公開すれば、<b>URL を開くだけで、スマホからも遊べる</b>ようになります。
+</p>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
