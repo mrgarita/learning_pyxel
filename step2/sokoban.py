@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ8：ステージ選択
+# step2 フェーズ9： 手数の表示とクリア演出
 
 import pyxel
 
@@ -17,6 +17,8 @@ SELECT_COLS = 5         # ステージ選択で、横 1 列に並べる数
 
 BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
 BLINK_ON = 20           # そのうち文字が見えているフレーム数
+
+CLEAR_WAIT = 20         # クリアしてから CLEAR! を出すまでのフレーム数（0.67 秒）
 
 # イメージバンク 0 の、切り出し位置
 V_TILE = 0              # タイルの段
@@ -173,6 +175,11 @@ def draw_center(text, y, color):
     x = (SCREEN_WIDTH - len(text) * 4) // 2
     pyxel.text(x, y, text, color)
 
+def draw_right(text, y, color):
+    """文字を、画面の右はしにそろえて描く（右に 2 ドット空ける）"""
+    x = SCREEN_WIDTH - len(text) * 4 - 1
+    pyxel.text(x, y, text, color)
+
 def is_blink_on():
     """点滅の「見えている」タイミングなら True を返す"""
     return pyxel.frame_count % BLINK_CYCLE < BLINK_ON
@@ -205,6 +212,7 @@ class App:
         self.walk_timer = 0             # 0 なら止まっている。1～8は歩いている途中
         self.pushing = False            # いまの一歩で荷物を押しているか
         self.cleared = False            # このステージをクリアしたか
+        self.steps = 0                  # このステージで歩いた数
 
         for y in range(len(rows)):
             line = []
@@ -280,8 +288,8 @@ class App:
             self.load_stage(STAGES[self.stage_no])
             return
 
-        if self.cleared:                        # クリアした。Enter で次のステージへ
-            if pyxel.btnp(pyxel.KEY_RETURN):
+        if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ
+            if self.clear_elapsed() >= CLEAR_WAIT and pyxel.btnp(pyxel.KEY_RETURN):
                 self.next_stage()
             return
         
@@ -294,6 +302,7 @@ class App:
                 self.pushing = False
                 if self.is_cleared():           # 着いた、その瞬間に調べる
                     self.cleared = True
+                    self.clear_frame = pyxel.frame_count    # クリアした時刻を覚えておく
                     # 何面目までクリアしたかを覚える。前の記録より小さくはしない
                     self.cleared_count = max(self.cleared_count, self.stage_no + 1)
 
@@ -335,6 +344,10 @@ class App:
         """すべての荷物がゴールに乗ったか"""
         return all(self.on_goal(box) for box in self.boxes)
 
+    def clear_elapsed(self):
+        """クリアしてから何フレームたったか"""
+        return pyxel.frame_count - self.clear_frame
+    
     def next_stage(self):
         """次のステージへ進む。最後だったら全クリア"""
         if self.stage_no + 1 < len(STAGES):
@@ -367,6 +380,7 @@ class App:
         self.player_x = next_x
         self.player_y = next_y
         self.walk_timer = 1                     # ここから 8 フレームかけて歩く
+        self.steps += 1                         # 動けたときだけ、1 歩と数える
 
     def slide_pos(self, origin, from_cell, to_cell):
         """出発マスから到着マスへ、いまどこまで来たかをドットで返す"""
@@ -441,6 +455,13 @@ class App:
                     u = U_FLOOR
                 pyxel.blt(self.ox + x * TILE, self.oy + y * TILE,
                             0, u, V_TILE, TILE, TILE)
+        # クリアした直後は、リンゴから輪が広がる。リンゴの下から出てくるように、先に描く
+        if self.cleared and self.clear_elapsed() < CLEAR_WAIT:
+            r = self.clear_elapsed() // 2       # 2 フレームに 1 ドットずつ大きく
+            for box in self.boxes:
+                cx = self.ox + box[0] * TILE + TILE // 2
+                cy = self.oy + box[1] * TILE + TILE // 2
+                pyxel.circb(cx, cy, r, pyxel.COLOR_YELLOW)
 
         # 荷物。押している 1 つだけは、主人公といっしょにすべる
         dx, dy = MOVES[self.player_dir]
@@ -472,6 +493,7 @@ class App:
         else:
             pyxel.text(2, 3, f"STAGE {self.stage_no + 1}/{len(STAGES)}",
                        pyxel.COLOR_GRAY)
-            if self.cleared:
+            draw_right(f"STEPS {self.steps}", 3, pyxel.COLOR_GRAY)
+            if self.cleared and self.clear_elapsed() >= CLEAR_WAIT:
                 draw_center("CLEAR!  ENTER", 3, pyxel.COLOR_YELLOW)
 App()
