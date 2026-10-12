@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ9： 手数の表示とクリア演出
+# step2 フェーズ10： 効果音と BGM
 
 import pyxel
 
@@ -19,6 +19,16 @@ BLINK_CYCLE = 30        # 点滅 1 周期のフレーム数（1 秒）
 BLINK_ON = 20           # そのうち文字が見えているフレーム数
 
 CLEAR_WAIT = 20         # クリアしてから CLEAR! を出すまでのフレーム数（0.67 秒）
+
+# サウンドとミュージックの番号（リソースエディタで作る）
+SOUND_STEP = 0          # 歩いた音
+SOUND_PUSH = 1          # リンゴを押した音
+SOUND_GOAL = 2          # リンゴをゴールにのせた音
+SOUND_CLEAR = 3         # クリアのジングル（CLEAR_WAIT と同じ 20 フレーム）
+MUSIC_BGM = 0           # BGM（チャンネル 0 と 1 を使う）
+
+CH_STEP = 2             # 歩いた音を鳴らすチャンネル
+CH_SE = 3               # 押した音・ゴールの音・クリアの音を鳴らすチャンネル
 
 # イメージバンク 0 の、切り出し位置
 V_TILE = 0              # タイルの段
@@ -200,9 +210,10 @@ class App:
         return min(self.cleared_count + 1, len(STAGES))
     
     def start_game(self):
-        """いまの stage_no のステージを読み込んで、ゲームを始める"""
+        """いまの stage_no のステージを読み込んで、BGM を鳴らしゲームを始める"""
         self.load_stage(STAGES[self.stage_no])
         self.scene = SCENE_GAME
+        pyxel.playm(MUSIC_BGM, loop=True)
 
     def load_stage(self, rows):
         """文字の地図を読んで、壁・主人公・荷物に分ける"""
@@ -281,11 +292,12 @@ class App:
             return
 
         if pyxel.btnp(pyxel.KEY_Q):             # ステージ選択へもどる
+            pyxel.stop()                        # 選択画面では BGM を止める
             self.scene = SCENE_SELECT
             return
         
         if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
-            self.load_stage(STAGES[self.stage_no])
+            self.start_game()                   # BGM も頭から鳴らしなおす
             return
 
         if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ
@@ -303,6 +315,8 @@ class App:
                 if self.is_cleared():           # 着いた、その瞬間に調べる
                     self.cleared = True
                     self.clear_frame = pyxel.frame_count    # クリアした時刻を覚えておく
+                    pyxel.stop()                            # BGM を止めてから
+                    pyxel.play(CH_SE, SOUND_CLEAR)          # クリアのジングル
                     # 何面目までクリアしたかを覚える。前の記録より小さくはしない
                     self.cleared_count = max(self.cleared_count, self.stage_no + 1)
 
@@ -352,7 +366,7 @@ class App:
         """次のステージへ進む。最後だったら全クリア"""
         if self.stage_no + 1 < len(STAGES):
             self.stage_no += 1
-            self.load_stage(STAGES[self.stage_no])
+            self.start_game()               # 読み込みと BGM は、start_game() にまかせる
         else:
             self.all_cleared = True
 
@@ -376,11 +390,16 @@ class App:
                 return
             self.move_box(next_x, next_y, dx, dy)
             self.pushing = True                 # この一歩は、荷物を押している
+            if self.tiles[far_y][far_x] == "O": # 押した先がゴールなら
+                pyxel.play(CH_SE, SOUND_GOAL)   # 乗せた音
+            else:
+                pyxel.play(CH_SE, SOUND_PUSH)   # 押した音
 
         self.player_x = next_x
         self.player_y = next_y
         self.walk_timer = 1                     # ここから 8 フレームかけて歩く
         self.steps += 1                         # 動けたときだけ、1 歩と数える
+        pyxel.play(CH_STEP, SOUND_STEP)         # 歩いた音（押したときも鳴る）
 
     def slide_pos(self, origin, from_cell, to_cell):
         """出発マスから到着マスへ、いまどこまで来たかをドットで返す"""
