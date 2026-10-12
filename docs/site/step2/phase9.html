@@ -1392,6 +1392,12 @@ step1 フェーズ 7 では「<b>同じ数字が 2 か所に出たら、定数�
       <td><code>cx</code>・<code>cy</code> に <code>+ TILE // 2</code> がありません。マスの左上が中心になっています</td>
     </tr>
     <tr>
+      <td>輪の<b>横</b>は合っているのに、<b>縦</b>だけずれる（下の段のリンゴほど、上へ大きくずれる）</td>
+      <td><code>cy</code> の <code>box[1] <b>*</b> TILE</code> が <code>box[1] <b>+</b> TILE</code> になっています。
+        マスの番号に 8 を<b>かける</b>はずが、8 を<b>足して</b>いるので、どの段のリンゴも上のほうに集まります。
+        日本語キーボードでは <code>*</code>（<code>Shift</code>＋<code>:</code>）と <code>+</code>（<code>Shift</code>＋<code>;</code>）がとなりどうしなので、起きやすい打ち間違いです</td>
+    </tr>
+    <tr>
       <td>輪が画面いっぱいに広がる</td>
       <td><code>r = self.clear_elapsed() // 2</code> の <b><code>// 2</code> がありません</b>（<a href="#idea-ring">1-4</a>）。わざとなら、それも一つの演出です</td>
     </tr>
