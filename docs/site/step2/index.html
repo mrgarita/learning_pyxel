@@ -143,7 +143,7 @@
 
 <div class="note">
   <b>作品の規模感</b>
-  最終的なコードは <b>530 行前後</b>になりそうです（フェーズ 9 の時点で <b>500 行</b>）。
+  最終的なコードは <b>540 行前後</b>になりそうです（フェーズ 10 の時点で <b>524 行</b>）。
   step1（150〜200 行）より増えますが、<b>そのうち 125 行ほどは「ステージの地図」そのもの</b>で、
   考えて書くコードの量は step1 と大きくは変わりません。
   <b>12 のフェーズ</b>に分けて進めます。
@@ -213,8 +213,11 @@
         <td>右そろえの式、<b>数える場所の選び方</b>、<code>frame_count</code> の引き算（step1 の復習）、
         <code>pyxel.circb</code>、<code>and</code> の順番</td></tr>
     <tr><td class="phase-no">10</td>
-        <td><b>効果音と BGM をつける</b></td>
-        <td><code>play</code> / <code>playm</code>（step1 の復習）</td></tr>
+        <td><a href="phase10.html"><b>効果音と BGM をつける</b></a><br>
+        歩く・押す・ゴールに乗せる・クリアの 4 つの効果音と BGM。
+        クリアのジングルは、フェーズ 9 の「間」とぴったり同じ長さにする</td>
+        <td><code>play</code> / <code>playm</code> / <code>stop</code>（step1 の復習）、
+        <b>同時に鳴る音はチャンネルを分ける</b>、BGM の入口を <code>start_game()</code> に集める</td></tr>
     <tr><td class="phase-no">11</td>
         <td><b>スマホで遊べるようにする</b>（step2 で追加した内容）<br>
         仮想ゲームパッドの十字キーとボタンも受け付ける。
@@ -290,7 +293,7 @@ step1 が「ゲームとして成立させるための仕組み」だったの�
     <tr><td>タイトル画面と、画面の振り分け（step1 の画面遷移の応用）</td><td>7</td></tr>
     <tr><td>ステージ選択（クリアした面だけ選べる）</td><td>8</td></tr>
     <tr><td>画面表示</td><td>ステージ番号・手数の表示、クリア演出</td><td>9</td></tr>
-    <tr><td>サウンド</td><td>押す音・ゴールに乗った音・クリア音（step1 の復習）</td><td>10</td></tr>
+    <tr><td>サウンド</td><td>歩く音・押す音・ゴールに乗せた音・クリアのジングルと BGM（step1 の復習）</td><td>10</td></tr>
     <tr><td rowspan="2">スマホ対応</td>
         <td><b>仮想ゲームパッドのボタンを受け取る</b>（<code>GAMEPAD1_BUTTON_*</code>）</td><td>11</td></tr>
     <tr><td>キーとボタンの判定を<b>自分の関数にまとめる</b></td><td>11</td></tr>
