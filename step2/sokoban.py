@@ -485,7 +485,12 @@ class App:
         v = V_PLAYER_A
         if self.walk_timer >= MOVE_FRAMES // 2:     # 歩きの後半は、足を入れ替える
             v = V_PLAYER_B
-        pyxel.blt(px, py, 0, self.player_dir * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
+        d = self.player_dir
+        if self.cleared and self.clear_elapsed() >= CLEAR_WAIT:
+            d = DIR_DOWN            # こちらを向いて
+            if self.clear_elapsed() % 16 < 8:
+                py -= 2             # ぴょんと跳ねる
+        pyxel.blt(px, py, 0, d * TILE, v, TILE, TILE, pyxel.COLOR_GRAY)
 
         # 画面の上の表示
         if self.all_cleared:
