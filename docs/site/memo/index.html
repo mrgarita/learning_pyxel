@@ -423,6 +423,7 @@ print(len(t))   # → 3
 すると足元の位置が地面（<code>GROUND_Y = 111</code>）から最大 <code>0.8</code> ドットずれます。
 </p>
 
+<div class="scroll-x">
 <table>
   <thead><tr><th><code>hiyoko_scale</code></th><th>1.0</th><th>1.2</th><th>1.4</th><th>1.6</th><th>1.8</th><th>2.0</th></tr></thead>
   <tbody>
@@ -430,6 +431,7 @@ print(len(t))   # → 3
     <tr><td><b><code>/</code> のときの足元</b></td><td>111.0</td><td>111.0</td><td>111.0</td><td>111.0</td><td>111.0</td><td>111.0</td></tr>
   </tbody>
 </table>
+</div>
 
 <p>
 <code>//</code> で切り捨てると <b>引く量が減る</b> ので、Y 座標が下へずれて足元が地面へ埋まります。
@@ -781,12 +783,14 @@ data = [[0, 0, 0, 0, 0, 0, 6, 7, 7, 6, 0], [0, 0, 0, 6, 6, 6, 6, 7, 7, 6, ...
 （<code>pyxel.Image</code> に <code>pset</code> して、どのドットが点いたかを調べたもの）。
 </p>
 
+<div class="scroll-x">
 <table>
   <thead><tr><th>渡した値</th><th>0.0</th><th>0.2</th><th>0.4</th><th>0.5</th><th>0.6</th><th>1.0</th><th>1.5</th><th>2.5</th></tr></thead>
   <tbody>
     <tr><td><b>点いたドット</b></td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>2</td><td>3</td></tr>
   </tbody>
 </table>
+</div>
 
 <p>
 <b>四捨五入</b>で、<code>.5</code> はつねに切り上げです（切り捨てではありません）。
@@ -2243,6 +2247,7 @@ HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四�
 全通り調べた結果です。<code>HIT_SIZE</code> を変えたときの手ごたえの目安にしてください。
 </p>
 
+<div class="scroll-x">
 <table>
   <thead><tr><th><code>HIT_SIZE</code></th><th><code>HIT_OFFSET</code></th><th>当たる位置</th><th>絵が重ならないのに当たる</th><th>重なりドット数（最小／平均）</th></tr></thead>
   <tbody>
@@ -2252,6 +2257,7 @@ HIT_OFFSET = (BOY_SIZE - HIT_SIZE) // 2     # 絵の左上から、判定の四�
     <tr><td>2</td><td>3</td><td>9 通り</td><td>0 通り</td><td>18 ／ 20.4</td></tr>
   </tbody>
 </table>
+</div>
 
 <p>
 <code>4</code> にすると、当たった瞬間には<b>必ず 6 ドット以上が重なっている</b>ので、

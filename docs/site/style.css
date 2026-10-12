@@ -81,6 +81,10 @@ th, td {
 }
 th { background: var(--c-panel); color: var(--c-accent); font-weight: 600; }
 tbody tr:nth-child(even) { background: var(--c-bg-soft); }
+/* 表の中の長いコード（エラー文など）は、スマホの幅では途中で折り返す */
+td code { overflow-wrap: anywhere; }
+/* 列の多い表は、この入れ物で包む。スマホの幅では、表の中だけ横にスクロールする */
+.scroll-x { overflow-x: auto; }
 
 /* --- コード --- */
 code {

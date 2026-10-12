@@ -322,12 +322,14 @@ Pyxel の文字は、<b>1 文字が幅 4 ドットの箱</b>に入っていま�
 
 <pre><code>            r = self.clear_elapsed() // 2       # 2 フレームに 1 ドットずつ大きく</code></pre>
 
+<div class="scroll-x">
 <table>
   <thead><tr><th>経過</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>…</td><td>18</td><td>19</td><td>20</td></tr></thead>
   <tbody>
     <tr><th>半径 <code>r</code></th><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>2</td><td>…</td><td>9</td><td>9</td><td>（描かない）</td></tr>
   </tbody>
 </table>
+</div>
 
 <p>
 経過は毎フレーム 1 ずつ増えるので、<b>半径は 2 フレームに 1 ドットずつ</b>大きくなります。
@@ -1065,10 +1067,12 @@ python sokoban.py</code></pre>
   <b>目標の歩数</b>
   <code>STEPS</code> が出ると、「<b>もっと少ない歩数で解けないか</b>」が気になってきます。
   参考までに、プログラムで<b>すべての動かし方を調べた</b>、いちばん少ない歩数です。
+  <div class="scroll-x">
   <table>
     <thead><tr><th>面</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td></tr></thead>
     <tbody><tr><th>最短</th><td>5</td><td>13</td><td>16</td><td>16</td><td>24</td><td>21</td><td>51</td><td>53</td><td>68</td><td>？</td></tr></tbody>
   </table>
+  </div>
   10 面は広すぎて、すべての動かし方は調べきれませんでした。<b>自分で作った面なので、記録も自分でつくってください。</b>
 </div>
 

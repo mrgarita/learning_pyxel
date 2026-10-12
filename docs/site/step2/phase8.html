@@ -198,6 +198,7 @@
         """選べる面の数。クリアした数より 1 つ先まで開く"""
         return min(self.cleared_count + 1, len(STAGES))</code></pre>
 
+<div class="scroll-x">
 <table>
   <thead><tr><th><code>cleared_count</code></th><th><code>cleared_count + 1</code></th><th><code>min(…, 10)</code> の結果</th><th>選べる面</th></tr></thead>
   <tbody>
@@ -207,6 +208,7 @@
     <tr><td><code>10</code>（ぜんぶクリア）</td><td><code>11</code></td><td><b><code>10</code></b></td><td>1〜10 面（<b>11 にならない</b>）</td></tr>
   </tbody>
 </table>
+</div>
 
 <div class="note">
   <b><code>min()</code> は step1 で使いました</b>
