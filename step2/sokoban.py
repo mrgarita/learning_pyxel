@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ10： 効果音と BGM
+# step2 フェーズ11： スマホで遊べるようにする
 
 import pyxel
 
@@ -29,6 +29,22 @@ MUSIC_BGM = 0           # BGM（チャンネル 0 と 1 を使う）
 
 CH_STEP = 2             # 歩いた音を鳴らすチャンネル
 CH_SE = 3               # 押した音・ゴールの音・クリアの音を鳴らすチャンネル
+
+# 入力の組。キーボードのキーと、スマホに出るボタン（仮想ゲームパッド）
+INPUT_DOWN = [pyxel.KEY_DOWN, pyxel.KEY_S, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN]
+INPUT_UP = [pyxel.KEY_UP, pyxel.KEY_W, pyxel.GAMEPAD1_BUTTON_DPAD_UP]
+INPUT_LEFT = [pyxel.KEY_LEFT, pyxel.KEY_A, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT]
+INPUT_RIGHT = [pyxel.KEY_RIGHT, pyxel.KEY_D, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT]
+INPUT_OK = [                    # 決定。4 つの丸は、どれを押してもよい
+    pyxel.KEY_RETURN,
+    pyxel.KEY_SPACE,
+    pyxel.GAMEPAD1_BUTTON_A,    # 下の丸
+    pyxel.GAMEPAD1_BUTTON_B,    # 右の丸
+    pyxel.GAMEPAD1_BUTTON_X,    # 左の丸
+    pyxel.GAMEPAD1_BUTTON_Y,    # 上の丸    
+]
+INPUT_RETRY = [pyxel.KEY_R, pyxel.GAMEPAD1_BUTTON_START]    # やり直し。小さいボタンの右
+INPUT_SELECT = [pyxel.KEY_Q, pyxel.GAMEPAD1_BUTTON_BACK]    # 選択へ。小さいボタンの左
 
 # イメージバンク 0 の、切り出し位置
 V_TILE = 0              # タイルの段
@@ -190,9 +206,31 @@ def draw_right(text, y, color):
     x = SCREEN_WIDTH - len(text) * 4 - 1
     pyxel.text(x, y, text, color)
 
+def draw_pad_guide(y):
+    """スマホのボタンの案内を、実物と同じ並び（十字・小さいボタン 2 つ・丸 4 つ）で描く"""
+    col = pyxel.COLOR_CYAN
+    pyxel.rect(19, y + 1, 7, 3, col)            # 十字キー（横の棒）
+    pyxel.rect(21, y - 1, 3, 7, col)            # 十字キー（縦の棒）
+    pyxel.text(29, y, "MOVE", pyxel.COLOR_GRAY)
+    pyxel.text(51, y, "SELECT", pyxel.COLOR_GRAY)
+    pyxel.rectb(77, y, 9, 5, col)               # 小さいボタン（左）
+    pyxel.rectb(89, y, 9, 5, col)               # 小さいボタン（右）
+    pyxel.text(100, y, "RETRY", pyxel.COLOR_GRAY)
+    for dx, dy in MOVES:                        # 丸 4 つを、ひし形に並べる
+        pyxel.rect(127 + dx * 3, y + 1 + dy * 3, 2, 2, col)
+    pyxel.text(134, y, "OK", pyxel.COLOR_GRAY)
+
 def is_blink_on():
     """点滅の「見えている」タイミングなら True を返す"""
     return pyxel.frame_count % BLINK_CYCLE < BLINK_ON
+
+def pressed(inputs):
+    """inputs のどれかを、いま押した瞬間なら True を返す（btnp のまとめ版）"""
+    return any(pyxel.btnp(i) for i in inputs)
+
+def held(inputs):
+    """inputs のどれかを、押しているあいだ True を返す（btn のまとめ版）"""
+    return any(pyxel.btn(i) for i in inputs)
 
 class App:
     def __init__(self):
@@ -259,21 +297,21 @@ class App:
 
     def update_title(self):
         """タイトル画面。Enter でステージ選択へ"""
-        if pyxel.btnp(pyxel.KEY_RETURN):
+        if pressed(INPUT_OK):
             self.scene = SCENE_SELECT
 
     def update_select(self):
         """ステージ選択。矢印でカーソルを動かし、Enter で始める"""
-        if pyxel.btnp(pyxel.KEY_LEFT):
+        if pressed(INPUT_LEFT):
             self.move_cursor(-1)
-        elif pyxel.btnp(pyxel.KEY_RIGHT):
+        elif pressed(INPUT_RIGHT):
             self.move_cursor(1)
-        elif pyxel.btnp(pyxel.KEY_UP):
+        elif pressed(INPUT_UP):
             self.move_cursor(-SELECT_COLS)      # 1 段上は、5 つ前
-        elif pyxel.btnp(pyxel.KEY_DOWN):
+        elif pressed(INPUT_DOWN):
             self.move_cursor(SELECT_COLS)       # 1 段下は、5 つ後
 
-        if pyxel.btnp(pyxel.KEY_RETURN):
+        if pressed(INPUT_OK):
             self.start_game()
 
     def move_cursor(self, step):
@@ -285,23 +323,23 @@ class App:
     def update_game(self):
         """あそんでいる間の更新"""
         if self.all_cleared:                    # ぜんぶおわった。Enter でタイトルへ
-            if pyxel.btnp(pyxel.KEY_RETURN):
+            if pressed(INPUT_OK):
                 self.stage_no = 0
                 self.all_cleared = False
                 self.scene = SCENE_TITLE
             return
 
-        if pyxel.btnp(pyxel.KEY_Q):             # ステージ選択へもどる
+        if pressed(INPUT_SELECT):             # ステージ選択へもどる
             pyxel.stop()                        # 選択画面では BGM を止める
             self.scene = SCENE_SELECT
             return
         
-        if pyxel.btnp(pyxel.KEY_R):             # いつでも、最初からやり直せる
+        if pressed(INPUT_RETRY):             # いつでも、最初からやり直せる
             self.start_game()                   # BGM も頭から鳴らしなおす
             return
 
         if self.cleared:                        # クリアした。間をおいてから、Enter で次のステージへ
-            if self.clear_elapsed() >= CLEAR_WAIT and pyxel.btnp(pyxel.KEY_RETURN):
+            if self.clear_elapsed() >= CLEAR_WAIT and pressed(INPUT_OK):
                 self.next_stage()
             return
         
@@ -325,15 +363,18 @@ class App:
             self.handle_key()
 
     def handle_key(self):
-        """矢印キーを見て、押された向きへ 1 歩進もうとする"""
-        if pyxel.btn(pyxel.KEY_DOWN):
-            self.try_move(DIR_DOWN)
-        elif pyxel.btn(pyxel.KEY_UP):
-            self.try_move(DIR_UP)
-        elif pyxel.btn(pyxel.KEY_LEFT):
-            self.try_move(DIR_LEFT)
-        elif pyxel.btn(pyxel.KEY_RIGHT):
-            self.try_move(DIR_RIGHT)
+        """押されている向きへ 1 歩進もうとする。斜め（2 つ同時）のときは進まない"""
+        dirs = []                               # いま押されている向きを集める
+        if held(INPUT_DOWN):
+            dirs.append(DIR_DOWN)
+        if held(INPUT_UP):
+            dirs.append(DIR_UP)
+        if held(INPUT_LEFT):
+            dirs.append(DIR_LEFT)
+        if held(INPUT_RIGHT):
+            dirs.append(DIR_RIGHT)
+        if len(dirs) == 1:                  # 1 つだけのときに進む
+            self.try_move(dirs[0])
 
     def has_box(self, x, y):
         """そのマスに荷物があるかどうかを答える"""
@@ -431,7 +472,8 @@ class App:
         if is_blink_on():               # 1 秒のうち 20 フレームだけ見える
             draw_center("PRESS ENTER", 92, pyxel.COLOR_WHITE)
 
-        draw_center("ARROW: MOVE  R: RETRY  Q: SELECT", 108, pyxel.COLOR_GRAY)
+        draw_center("ARROW: MOVE  R: RETRY  Q: SELECT", 101, pyxel.COLOR_GRAY)
+        draw_pad_guide(111)                 # スマホのボタンの案内
 
     def draw_select(self):
         """ステージ選択の画面を描く"""
