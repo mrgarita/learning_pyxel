@@ -144,7 +144,7 @@
 
 <div class="note">
   <b>作品の規模感</b>
-  最終的なコードは <b>550 行前後</b>になりそうです（フェーズ 11 の時点で <b>550 行</b>）。
+  完成版のコードは <b>550 行</b>です（フェーズ 11 のもう一歩を入れると 565 行ほど）。
   step1（150〜200 行）より増えますが、<b>そのうち 125 行ほどは「ステージの地図」そのもの</b>で、
   考えて書くコードの量は step1 と大きくは変わりません。
   <b>12 のフェーズ</b>に分けて進めます。
@@ -226,8 +226,11 @@
         <td><code>GAMEPAD1_BUTTON_*</code>、<b>入力の判定を自分の関数にまとめる</b>（<code>any()</code>）、
         <code>if</code> を並べて<b>集めてから決める</b></td></tr>
     <tr><td class="phase-no">12</td>
-        <td><b>パッケージ化して Web で公開する</b></td>
-        <td><code>pyxel package</code> / <code>app2html</code>（step1 の復習）</td></tr>
+        <td><a href="phase12.html"><b>パッケージ化して Web で公開する</b></a><br>
+        1 枚の HTML で、パソコンでもスマホでも遊べる形にして公開する。
+        全画面ボタンはパッドが出る端末では隠し、ESC でゲームが止まらないようにする</td>
+        <td><code>pyxel package</code> / <code>app2html</code>（step1 の復習）、
+        <b>公開しないものはフォルダの外へ</b>、<code>@media (pointer: coarse)</code>、<code>quit_key</code></td></tr>
   </tbody>
 </table>
 
@@ -299,7 +302,7 @@ step1 が「ゲームとして成立させるための仕組み」だったの�
     <tr><td rowspan="2">スマホ対応</td>
         <td><b>仮想ゲームパッドのボタンを受け取る</b>（<code>GAMEPAD1_BUTTON_*</code>）</td><td>11</td></tr>
     <tr><td>キーとボタンの判定を<b>自分の関数にまとめる</b></td><td>11</td></tr>
-    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）</td><td>12</td></tr>
+    <tr><td>公開</td><td>パッケージ化と Web 公開（step1 の復習）。<b>1 枚の HTML をパソコンとスマホで共用</b>する</td><td>12</td></tr>
   </tbody>
 </table>
 

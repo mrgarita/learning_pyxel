@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step2 フェーズ12：パッケージ化して Web で公開する ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+<style>
+  /* 実機の画面キャプチャを、ぼかさずにドットのまま縮小・拡大する */
+  svg image.shot { image-rendering: pixelated; image-rendering: crisp-edges; }
+  ol.steps li { margin: .35rem 0; }
+  /* 行数グラフ：棒にマウスを乗せると明るくなる */
+  svg .bar:hover path { fill: #7cc8f0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 12 </span>パッケージ化して Web で公開する</h1>
+  <p>1 枚の HTML で、パソコンでもスマホでも遊べる形にして公開する</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step2 概要</a> ／ フェーズ 12</p>
+
+<h2>ゴール</h2>
+
+<p>
+完成した倉庫番を、<b>URL を開くだけで遊べる形</b>にして公開します。これで step2 は完了です。
+フェーズ 11 でスマホにも対応したので、<b>同じ 1 枚の HTML が、パソコンでもスマホでも遊べます</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 490" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="同じ sokoban.html を開いたところ。左はパソコンで、右下に全画面ボタンが出て、パッドは出ない。右はスマホで、下に十字キーと丸のパッドが出て、全画面ボタンは出ない">
+  <style>.g1h{fill:#e8f0ff;font-size:13px;font-weight:bold}.g1s{fill:#9aa4c4;font-size:11.5px}</style>
+
+  <!-- パソコン -->
+  <text class="g1h" x="20" y="26">パソコンで開く</text>
+  <text class="g1s" x="20" y="43">幅 640 のウィンドウ</text>
+  <rect x="13" y="53" width="414" height="239" rx="6" fill="#0b0d14" stroke="#3b4166" stroke-width="2"/>
+  <image class="shot" href="data:image/png;base64,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" x="20" y="60" width="400" height="225"/>
+  <rect x="363" y="250" width="54" height="32" rx="5" fill="none" stroke="#ffcc44" stroke-width="2"/>
+  <line x1="390" y1="282" x2="390" y2="316" stroke="#ffcc44" stroke-width="1.5"/>
+  <text class="g1h" x="426" y="334" text-anchor="end" style="fill:#ffcc44">右下に「全画面」ボタン</text>
+  <text class="g1s" x="426" y="351" text-anchor="end">押すと、画面いっぱいに広がる</text>
+  <text class="g1h" x="20" y="334">パッドは出ない</text>
+  <text class="g1s" x="20" y="351">矢印キーと Enter で遊ぶ</text>
+
+  <!-- スマホ -->
+  <text class="g1h" x="625" y="26" text-anchor="middle">スマホで開く</text>
+  <text class="g1s" x="625" y="43" text-anchor="middle">幅 390（Chrome のスマホ表示）</text>
+  <rect x="531" y="53" width="188" height="384" rx="16" fill="#0b0d14" stroke="#3b4166" stroke-width="2"/>
+  <image class="shot" href="data:image/png;base64,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" x="540" y="61" width="170" height="367.9"/>
+  <circle cx="578.4" cy="373.1" r="3" fill="#2ee6a8"/>
+  <line x1="578.4" y1="373.1" x2="522" y2="373.1" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text class="g1h" x="516" y="369" text-anchor="end" style="fill:#2ee6a8">パッドが出る</text>
+  <text class="g1s" x="516" y="386" text-anchor="end">十字キーと丸で遊ぶ</text>
+  <rect x="671" y="405" width="36" height="21" rx="4" fill="none" stroke="#ff6b97" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text class="g1h" x="625" y="458" text-anchor="middle" style="fill:#ff6b97">右下に「全画面」は出ない</text>
+  <text class="g1s" x="625" y="475" text-anchor="middle">押しても効かないので隠す</text>
+
+  <!-- まとめ -->
+  <text class="g1h" x="20" y="420">どちらも同じ sokoban.html</text>
+  <text class="g1s" x="20" y="437">同じ URL を開くだけで、出るものが変わる</text>
+</svg>
+</div>
+<figcaption>このフェーズで作る公開版を、パソコンとスマホの幅で開いたところ（実際の画面）。
+<b>パッドと全画面ボタンは、どちらか一方だけが出ます</b></figcaption>
+</figure>
+
+<p>
+<b>手順の大筋は step1 の Candy Hunt と同じ</b>です（<a href="../step1/phase10.html">step1 フェーズ 10</a>）。
+このページでは手順を短くおさらいし、<b>step2 で新しく出てくることだけ</b>を厚く扱います。
+</p>
+
+<div class="note">
+  <b>step2 で新しく出てくるのは、この 3 つです</b>
+  <b>① 公開しないものは、フォルダの外へ。</b><code>.gitignore</code> で GitHub に上げないようにしたものでも、
+  フォルダの中にあれば公開する HTML には入ります。<br>
+  <b>② 1 枚の HTML を、パソコンとスマホで共用する。</b>全画面ボタンは、パッドが出る端末では隠します（CSS を 3 行）。<br>
+  <b>③ ESC で止まらないようにする。</b>Web 版でも、ESC を押すとゲームが止まります。<code>pyxel.init()</code> を 1 か所直します。<br>
+  コードの変更はこの 1 か所と、2 行目のコメントだけです（565 行のまま）。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-folder">1-1. 公開しないものは、フォルダの外へ</h3>
+
+<p>
+<code>pyxel package</code> は、<b>指定したフォルダの中身を丸ごと</b>詰めます（step1 で学んだとおりです）。
+フェーズ 11 でためしに作った <code>step2.html</code> の中身を取り出してみると、こうなっていました。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>入っていたもの</th><th>大きさ（バイト）</th><th>これは？</th></tr></thead>
+  <tbody>
+    <tr><td><code>step2/sokoban.py</code></td><td>21,941</td><td>ゲーム本体</td></tr>
+    <tr><td><code>step2/sokoban.pyxres</code></td><td>680</td><td>絵と音</td></tr>
+    <tr><td><code>step2/.pyxapp_startup_script</code></td><td>10</td><td>Pyxel が作るメモ（中身は <code>sokoban.py</code> の 10 文字。どれで起動するか）</td></tr>
+    <tr><td><code>step2/stages/stage_data.txt</code></td><td>179</td><td><b>自作ステージのアイデア</b>。まだ公開するつもりのないもの</td></tr>
+    <tr><td><code>step2/tempCodeRunnerFile.py</code></td><td>5</td><td>VS Code の拡張が作る一時ファイル（step1 でも出てきたもの）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+<code>stages/</code> は、<code>.gitignore</code> に書いて <b>GitHub に上げないようにしていた</b>フォルダです。
+ところが <code>pyxel package</code> は <code>.gitignore</code> を見ないので、<b>公開する HTML の中には入ってしまいます</b>。
+その HTML を <code>docs/site/</code> に置いて push すれば、隠したつもりのアイデアも一緒に公開されます。
+画面には出ませんが、HTML から中身を取り出せば、だれでも読めます。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 350" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="step2 フォルダから 2 つの道がある。git push は .gitignore を見るので、stages と tempCodeRunnerFile.py は GitHub のリポジトリに上がらない。pyxel package は .gitignore を見ないので、公開する HTML の中に stages/stage_data.txt と tempCodeRunnerFile.py が入る。アイデアは step2 の外の step2_ideas へ移せば、どちらにも入らない">
+  <style>.g2h{fill:#e8f0ff;font-size:13px;font-weight:bold}.g2s{fill:#9aa4c4;font-size:11.5px}.g2c{fill:#e8f0ff;font-family:Consolas,monospace;font-size:12px}</style>
+
+  <!-- 左：フォルダ -->
+  <text class="g2h" x="20" y="40">step2/ フォルダ</text>
+  <text class="g2s" x="20" y="57">フェーズ 11 でためしに作ったとき</text>
+  <rect x="20" y="68" width="250" height="180" rx="4" fill="#10121c" stroke="#3b4166"/>
+  <text class="g2c" x="36" y="96">sokoban.py</text>
+  <text class="g2c" x="36" y="122">sokoban.pyxres</text>
+  <text class="g2c" x="36" y="148" style="fill:#ff6b97">stages/stage_data.txt</text>
+  <text class="g2s" x="186" y="148" style="fill:#ff6b97">アイデア</text>
+  <text class="g2c" x="36" y="174" style="fill:#9aa4c4">tempCodeRunnerFile.py</text>
+  <text class="g2s" x="186" y="174">一時ファイル</text>
+  <text class="g2c" x="36" y="200" style="fill:#9aa4c4">__pycache__/</text>
+  <text class="g2s" x="36" y="232">※ stages と tempCode… は .gitignore 済み</text>
+
+  <!-- 上の道：git push -->
+  <line x1="270" y1="96" x2="470" y2="96" stroke="#2ee6a8" stroke-width="1.5"/>
+  <path d="M478 96 l-10 -5 0 10 z" fill="#2ee6a8"/>
+  <text class="g2c" x="374" y="86" text-anchor="middle" style="fill:#2ee6a8">git push</text>
+  <text class="g2s" x="374" y="114" text-anchor="middle">（.gitignore を見る）</text>
+
+  <!-- 下の道：pyxel package -->
+  <line x1="270" y1="214" x2="470" y2="214" stroke="#ff6b97" stroke-width="1.5"/>
+  <path d="M478 214 l-10 -5 0 10 z" fill="#ff6b97"/>
+  <text class="g2c" x="374" y="204" text-anchor="middle" style="fill:#ff6b97">pyxel package → app2html</text>
+  <text class="g2s" x="374" y="232" text-anchor="middle">（.gitignore を見ない）</text>
+
+  <!-- 右上：GitHub -->
+  <rect x="480" y="20" width="260" height="130" rx="4" fill="#10121c" stroke="#2ee6a8"/>
+  <text class="g2h" x="496" y="44">GitHub のリポジトリ</text>
+  <text class="g2c" x="496" y="70">sokoban.py</text>
+  <text class="g2c" x="496" y="92">sokoban.pyxres</text>
+  <text class="g2s" x="496" y="118" style="fill:#2ee6a8">stages/ は上がらない（隠せている）</text>
+  <text class="g2s" x="496" y="138">tempCodeRunnerFile.py も上がらない</text>
+
+  <!-- 右下：公開する HTML -->
+  <rect x="480" y="170" width="260" height="170" rx="4" fill="#10121c" stroke="#ff6b97"/>
+  <text class="g2h" x="496" y="194">公開する HTML の中身</text>
+  <text class="g2c" x="496" y="220">sokoban.py</text>
+  <text class="g2c" x="496" y="242">sokoban.pyxres</text>
+  <text class="g2c" x="496" y="264" style="fill:#ff6b97">stages/stage_data.txt</text>
+  <text class="g2s" x="648" y="264" style="fill:#ff6b97">← 入る</text>
+  <text class="g2c" x="496" y="286" style="fill:#9aa4c4">tempCodeRunnerFile.py</text>
+  <text class="g2s" x="648" y="286" style="fill:#ff6b97">← 入る</text>
+  <text class="g2s" x="496" y="314" style="fill:#ff6b97">docs/site に置いて push すると、</text>
+  <text class="g2s" x="496" y="331" style="fill:#ff6b97">取り出せば、だれでも読める</text>
+
+  <!-- 左下：対策 -->
+  <text class="g2h" x="20" y="286" style="fill:#2ee6a8">→ アイデアは step2 の外へ</text>
+  <text class="g2c" x="20" y="306">step2_ideas/stage_data.txt</text>
+  <text class="g2s" x="20" y="326">フォルダの外なら、どちらにも入らない</text>
+</svg>
+</div>
+<figcaption><b>「GitHub に上げない」と「公開する HTML に入れない」は、別のこと</b>。
+<code>git push</code> は <code>.gitignore</code> を見ますが、<code>pyxel package</code> は見ません</figcaption>
+</figure>
+
+<p>
+そこで、アイデア置き場は <b><code>step2/</code> の外（リポジトリ直下の <code>step2_ideas/</code>）へ引っ越しました</b>
+（このページを書く前に、もう済ませてあります。<code>.gitignore</code> も <code>step2_ideas/</code> に書き換え済みです）。
+公開版を作る前に毎回よけておく、というやり方もできますが、<b>ゲームを直すたびに作り直す</b>ので、
+1 回でも忘れれば入ってしまいます。<b>最初から外に置いておけば、忘れようがありません</b>。
+</p>
+
+<div class="term">
+  <b>大きさを見ても、気づけない</b>
+  ためし版の <code>step2.html</code> は 10,548 バイト、アイデアと一時ファイルを除いた公開版は 10,480 バイトでした。
+  <b>ちがいはたった 68 バイト</b>です。中身の確かめ方は、<code>pyxel package</code> を実行したときに出る
+  <b>一覧を見る</b>ことです（<a href="#step-package">3-3</a>）。
+</div>
+
+<p>
+ちなみに、Pyxel 2.9.9 の <code>pyxel package</code> のプログラムを読むと、次のものだけは<b>自動で外れます</b>。
+それ以外は、どんなファイルでも入ります。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>自動で外れるもの</th><th>例</th></tr></thead>
+  <tbody>
+    <tr><td><code>__pycache__</code> フォルダの中身</td><td>Python が自動で作る中間ファイル</td></tr>
+    <tr><td>名前が <code>.</code>（ドット）で始まるファイルとフォルダ</td><td><code>.vscode/</code>、<code>.DS_Store</code> など（起動用のメモ <code>.pyxapp_startup_script</code> だけは入る）</td></tr>
+    <tr><td>拡張子が <code>.gif</code> と <code>.zip</code> のファイル</td><td>画面録画の GIF など</td></tr>
+    <tr><td>作ろうとしている <code>.pyxapp</code> 自身</td><td><code>step2.pyxapp</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <b>「名前を <code>.stages</code> にすれば外れる」には頼らない</b>
+  ドットで始まる名前は外れるので、<code>stages</code> を <code>.stages</code> に変えても入らなくはなります。
+  ただ、これは Pyxel のプログラムの中の決まりで、使い方の説明には書かれていません。
+  バージョンが変われば変わるかもしれないので、<b>フォルダの外に置くのが確実</b>です。
+</div>
+
+<h3 id="idea-one-html">1-2. 1 枚の HTML を、パソコンとスマホで共用する</h3>
+
+<p>
+step1 では、パソコン版の <code>candy_hunt.html</code> とスマホ版の <code>candy_hunt_mobile.html</code> を
+<b>別々に</b>公開しました。全画面ボタンはパソコン版にだけ付けています。
+step2 はコードがはじめから両方に対応しているので、<b>HTML は 1 枚</b>にします。
+</p>
+
+<p>
+困るのは全画面ボタンです。<a href="../memo/#virtual-gamepad">備忘録</a>で調べたとおり、
+<b>スマホでは全画面ボタンを押しても反応しません</b>（パッドが画面のタッチをすべて受け止めるため。
+iPhone の Safari には、そもそもページを全画面にする機能がありません）。
+付けたままスマホで開くと、こうなります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="スマホで開いたときの画面の下半分。左は全画面ボタンを隠さなかったもので、4 つの丸のすぐ下に全画面ボタンが出ているが、タップしても何も起きない。右は隠したもので、パッドだけが出ている">
+  <style>.g3h{fill:#e8f0ff;font-size:13px;font-weight:bold}.g3s{fill:#9aa4c4;font-size:11.5px}</style>
+  <text class="g3h" x="40" y="24" style="fill:#ff6b97">隠さないと</text>
+  <text class="g3s" x="40" y="41">@media の 3 行がないとき</text>
+  <rect x="39.5" y="51.5" width="313" height="193" fill="none" stroke="#3b4166"/>
+  <image class="shot" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYYAAADwCAMAAAAzUjO/AAAAYFBMVEWam5yXmJl2lt6QkZOIiYuEhIeDhIaChIZ9f4F6fH93eHtwcnVsbXFrbXFkZmpgYWZbXWJSWGxPVGJOUFZCR1Y+Qk48QE07QEw2OUErM18wMz8wMzssLjYnKjQjJS0gIiS8lkLRAAAE40lEQVR42u3d61baQBAAYCvUlrZARcBGDuH937JVrhaMu7mRDd/8aTnK5exnJuxmdnK3ER2IO0OAQWDAIDBgEBgwCAwYBAYMAgMGgQGDwIBBYMAgMGAQGDAIDBgEBgwCAwaBAYPAIDBgEBjiIvs/MGC4YYH706jfAsNnCO9G/tSkTggMGFLIRxcy0B6jxsyEAUMK+eijkf7kxxgw9CshfZJ1jpkJQ4MIAX/p+1/LMGAomO1fipQYQrP+DgIDhrO5ZmGkAxEztuFiDTOcTnKK4j6RIyIu4YeeRjDcCkPEl4o0TgxRfzC7PzEMGPYMIb+XEkPDz8CAIQWGMimm+tcPDDXMA6qf9zBg6CxD/LMwYMCAAQMGDBgwYMCAAQMGixkWMzBY6LbQjQGDq28YMKjMUC6GAYNSYgwY7G/A0N9NVxgwNNWYp9qG3Oj9ZhgwdKQ90uX+SCW7BIS/AQYM3eiPlJ33R8ouj2hcB5ms+A0w7Ef1fFgPQ/XxIRHW1qrMG2BIhCELjgiG0GgqH2XFuT4LyvUfnUuy4nNJwY8xdJwhrAPD/oOFMQS/XO0OnySF9yml7Dwj9A0wJMZwerKpKYlkUVmuVojQXhGl3zp8Dery57hrrOaj3RqVmhauw890F897pRfGMXSfIaEaldrGtvHiyYtiGDC0wxB33o3v/BT5jIsf5xYY7qOHNWrZJfb4uXRwYsDQIkODz4j/boUBw3UYyhQSlSierDiNwYChHYb45YCmiyfPlwlug6Hc4kfdv1rwqTBgwIABAwYMGDBgwIABAwYMGKwpWWG1worB1beNq28YVGaozMCgam+jak8NK4YWGexvsM0Eg71vXdn7ZieoDbkYdAnQrAGDDjIa+WDQXUx3Mb32MGDYdARDH1YMGPToxoChgcvL7t/gbiYYMLjTFQYM7oLonqAb9wTF4H7R7heN4ZYZGi6exIAhLYYWdhRhwIABAwYMGDBgwIABAwYMFjMwYLDQbaHb1TcM3WIILfdUmYGh5wzHHWKF23av1oTjRsrFMHSAIbSvQ5ZKWX2apcTBHQU2yUSK+xswdIahZ5HipisMGBpeWiq5IRdD3e01YrsEYMDQ28QU2UEGA4beZ6awtlYYMNxCZgppeYihA41/MGC41VjNZ48VYjZfYagei8XLOq8Q65f5EkNlhee8ciyXGCpmpEVeQyxW3WHIysUVXvQk5i91MLzMMVRimK3rYFjPusKQRd0iIrC2oOSLRkA85rXEIwYM5W8fFFLwlJV90QgIDBgaYCh3Nb2wJKVk8VYWU+fSR4aan1i6aghDHxjWD9+3/3ka3B1i8DT9cnz0ZYqhaYZfg+HpKI/GJw+eh78dDa0wTAez2elgv2OYfPuDoQ2GyeD3K8XkdXr9dTLeJqHxdPicj45JaYShUYbF9+HT9rQwnOX5w3Q8ej0aRuPpw9th8e9h/mP69g+G5hgmg9Eu6ax+Dn5iuBLD6k8+3KadYb5evTLsk9KOYfstCUMb84bDSdnR0FEGR0M7DPsp29sE7TwpORqucjQcJhMJMfRlae/AMDzOFIZ5EvOGfix0L96tIp0fDbsYY3C9wUVQDBh6XCCDAYPA0KnoW9VeotG/GtZNmntM6mCYrzBUi+XS/oZOOFTf7fO8wWDvm9jYCYpBYMAgMGAQGDAIDBgEhuTjLz6ugLkXZ4m2AAAAAElFTkSuQmCC" x="40" y="52" width="312" height="192"/>
+  <rect x="281" y="201" width="65" height="37" rx="5" fill="none" stroke="#ff6b97" stroke-width="2"/>
+  <text class="g3s" x="40" y="268">4 つの丸のすぐ下に「全画面」が出る</text>
+  <text class="g3s" x="40" y="286" style="fill:#ff6b97">タップしても、何も起きない（実測）</text>
+
+  <text class="g3h" x="408" y="24" style="fill:#2ee6a8">@media で隠すと</text>
+  <text class="g3s" x="408" y="41">指で触る端末では出さない</text>
+  <rect x="407.5" y="51.5" width="313" height="193" fill="none" stroke="#3b4166"/>
+  <image class="shot" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYYAAADwAgMAAAB54iseAAAACVBMVEV2lt4rM18gIiSpsVq3AAAE00lEQVR42u1cvXLbOBBeRMIVcaMZkUXuDW5ORR6BKlwpBTQmMpMHUJHJFX6ZewmTHiMzVqWCSpH+CvkpSM3oCqeBPEjBHwAiacuRSQMZsOJAND9gd7nY/fjR6Ao6Pn68gc4PB+EgHISDcBAOwkE4CAfhIByEg3AQ6jF8sTulawBMLF9FJGIAGofdQfD0GwWIsBdYbCjB7kIKAvapzc9FFk0pAKKDmNnrC5FQDwAA5sA7WkW2xXmw4iljRhiKl9NA4fGG2nwuzryZGe6+iYuTpmTQcqxReYZg/yQEf6DF2T47OkFt5WTwzeHMXsVQt4tiFlfro/29odUp2RuRo1BpSnL8XZDiC2szrZ4zsi4guBqmg7WtW5KnnBNX0zoIB/EbQWStOdGiVWA1uT4Elq6CtKZdqyJKSGd0VfxPZNSyW2uDdqwYam5r0EIgKsfXq+SXgUCTMjNlS/ua4pKD8sZ8HQAA8ISQQ27K8FWImLOcg0LTLx/zRvH6ExTclM+pFavYp98pQOR7AXg0ERRE/BASAM6/UoCU+cGpEPzmjlDgkKUAiKQxAER4ASDYMvQDEc/SPAT6MxRnTe6M4DGuYndNQwBMrxgmgP2LCICiACBL5yEAolH8qWd376oJwx/ywaoG/YZViFWYb6HTPQcAmqL8cRPJ3Z/5ditWpNdViJVs/yVjIscyVm/Cs/siKP3zSz8A8IvL99tzUtBf/zMiDXXv1++Bad3vqqH++7c4G810buqvshQ563tLIkfyD0rRgSUnodW01dUo4KZvrHuV5kqU8kCpaTFbnwIhNiNZcE6UH25lwZnHgdEVSBsHVRs3eRVtHFR93ORVaP2WWtOSww7tzYtwUEFLNUBca+8gHISDgCdoLpUs2h+m41+G0Ah+dR9nh68ETDZUGwdVHzfa3W0cVG3c5FWgyU7G5kb54YOM5t3yJIihul9PlaAdqPt4z0HLjvSsUvRx6VXtdVV1ddEf9NexnvF6j6304tt3Dct4XzaAu+WiMQ6y+7cSAp1/kU1xWO/w/M8NddRZwUGlKxIoHNRwvMofcZ7k3WB/hhrJBvirnHtQa5RVg5z/k/9RsqSqPgpNszyfs+u+CQrZY3O5CqW3bzpGF4mgwNmWEE2C5fk3wg9EzMORBawanmcMACKf6hIsRHgcRpB+X5zMqsHQn1UcVPQxBED0KsYEML6IAHwSWEE/IprikoPS9FEVN2UHoV1yUNn2XVBwUJeYyHHLXldtSNcSrEf1UbYYSpdgrW2VJvYgwXL6KHOCNnASLMceOAgHAU6CZbsEy0B9VMUvMKP0Uc+soz6Ub9JrfoPjJFgLA1aBByX1gRfPkGCF7RKsuqHm6JFX0C1H8K1zfdQz3Y3pL0mwSCnBotZmWm/M84evkGB1UfxPo6zQR71K8T+gL3Kbt2j9428Q8cPkolZT2/NJoCrBsvgLUEWC1dlHpjoH1bOhkPvnTmDLx9ep1kXTJpWhH5i+CpHEavgVcc8ija013hf7rTpHkVeTnGuDyROfcRrgiw1Vpphe5tNfLtTB7Ym+0FKn16Qk8lzH6iAchIN4NQhN2ZA1iZWyEzMtmqTKDieKYm+mDVaib2P3i+FY26bzN/0Y63u38RUImqIGbutxistV5i6BOAgH4SAchIOwG+InUuei+tnHxl4AAAAASUVORK5CYII=" x="408" y="52" width="312" height="192"/>
+  <text class="g3s" x="408" y="268">パッドだけになる</text>
+</svg>
+</div>
+<figcaption>スマホの幅で開いた画面の下半分（実際の画面）。ボタンをタップしてもクリックが 1 回も届かず、
+全画面にもならないことを確かめました</figcaption>
+</figure>
+
+<p>
+そこで、<b>パッドが出る端末では、全画面ボタンを隠します</b>。
+ポイントは「パッドが出る端末かどうか」を<b>どうやって見分けるか</b>です。
+Pyxel の Web 版（<code>pyxel.js</code> 2.9.9）を読むと、パッドを出すかどうかは次の 1 行で決めていました。
+</p>
+
+<pre><code>_isTouchDevice = () =&gt; window.matchMedia("(pointer: coarse)").matches</code></pre>
+
+<p>
+<code>pointer: coarse</code> は、<b>「この端末で主に使う指し示す道具は、大ざっぱ（coarse）か」</b>という問いです。
+指は大ざっぱ、マウスは細かい（<code>fine</code>）、という分け方です。
+<b>CSS にも、同じ問いをそのまま書けます</b>。
+</p>
+
+<pre><code>@media (pointer: coarse) {
+  #fs-btn { display: none; }
+}</code></pre>
+
+<p>
+「<b>指で触る端末なら</b>、<code>{ }</code> の中の指定を使う」という意味です。
+Python で書けば <code>if 指で触る端末: ボタンを隠す</code> にあたります。
+<code>display: none</code> は「表示しない（場所も取らない）」です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="この端末は指で触る端末か、という同じ問いで、pyxel.js はパッドを、足した CSS は全画面ボタンを決める。いいえならパソコンで、パッドは出さずボタンを出す。はいならスマホ・タブレットで、パッドを出してボタンを隠す">
+  <style>.g4h{fill:#e8f0ff;font-size:13px;font-weight:bold}.g4s{fill:#9aa4c4;font-size:11.5px}.g4c{fill:#ffcc44;font-family:Consolas,monospace;font-size:12px}</style>
+
+  <rect x="200" y="14" width="360" height="70" rx="6" fill="#10121c" stroke="#ffcc44" stroke-width="1.5"/>
+  <text class="g4h" x="380" y="42" text-anchor="middle">この端末は、指で触る端末？</text>
+  <text class="g4c" x="380" y="66" text-anchor="middle">(pointer: coarse)</text>
+
+  <path d="M300 84 V104 H190 V122" fill="none" stroke="#45b0e8" stroke-width="1.5"/>
+  <path d="M190 128 l-5 -10 10 0 z" fill="#45b0e8"/>
+  <path d="M460 84 V104 H570 V122" fill="none" stroke="#2ee6a8" stroke-width="1.5"/>
+  <path d="M570 128 l-5 -10 10 0 z" fill="#2ee6a8"/>
+
+  <rect x="30" y="128" width="320" height="118" rx="6" fill="#10121c" stroke="#45b0e8" stroke-width="1.5"/>
+  <text class="g4h" x="46" y="154" style="fill:#45b0e8">いいえ　→　パソコン</text>
+  <text class="g4s" x="46" y="186">パッド（pyxel.js が決める）</text>
+  <text class="g4h" x="334" y="186" text-anchor="end">出さない</text>
+  <text class="g4s" x="46" y="220">全画面ボタン（足した CSS が決める）</text>
+  <text class="g4h" x="334" y="220" text-anchor="end">出す</text>
+
+  <rect x="410" y="128" width="320" height="118" rx="6" fill="#10121c" stroke="#2ee6a8" stroke-width="1.5"/>
+  <text class="g4h" x="426" y="154" style="fill:#2ee6a8">はい　→　スマホ・タブレット</text>
+  <text class="g4s" x="426" y="186">パッド（pyxel.js が決める）</text>
+  <text class="g4h" x="714" y="186" text-anchor="end">出す</text>
+  <text class="g4s" x="426" y="220">全画面ボタン（足した CSS が決める）</text>
+  <text class="g4h" x="714" y="220" text-anchor="end">隠す</text>
+
+  <text class="g4h" x="380" y="282" text-anchor="middle">同じ問いで決めるので、パッドとボタンは必ずどちらか一方だけが出る</text>
+  <text class="g4s" x="380" y="302" text-anchor="middle">（Chrome のデバイスモードにすると「はい」の側になる）</text>
+</svg>
+</div>
+<figcaption>パッドを決める問いと、ボタンを決める問いを<b>そろえる</b>のがコツ。
+別の見分け方（画面の幅など）を使うと、「どちらも出る」「どちらも出ない」端末が生まれます</figcaption>
+</figure>
+
+<h3 id="idea-esc">1-3. Web 版でも、ESC でゲームが止まる</h3>
+
+<p>
+Pyxel は、<b>ESC キーを押すとアプリを終わらせる</b>作りになっています（パソコンで実行するとウィンドウが閉じます）。
+これが <b>Web 版でも働きます</b>。公開版を作ってブラウザで確かめたところ、1 面を遊んでいる途中で ESC を押すと、
+<b>画面が止まったまま、矢印キーも効かなくなりました</b>（<code>frame_count</code> が 105 から進まなくなった）。
+元に戻すには、ページを読み込みなおすしかありません。
+</p>
+
+<p>
+全画面ボタンを付けると、<b>「全画面から抜けるときは ESC」</b>と覚えることになります。
+ところが<b>全画面でないときに ESC を押すと、ゲームが止まってしまいます</b>。
+押しまちがえやすいキーなので、<b>Web で公開するゲームでは、ESC で終わらないようにしておきます</b>。
+</p>
+
+<p>
+やり方は、<code>pyxel.init()</code> に <code>quit_key=pyxel.KEY_NONE</code> を渡すだけです。
+</p>
+
+<pre><code>pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban", quit_key=pyxel.KEY_NONE)</code></pre>
+
+<ul>
+  <li><code>quit_key</code> は「押すとアプリが終わるキー」です。書かなければ <code>pyxel.KEY_ESCAPE</code>（ESC）になります</li>
+  <li><code>pyxel.KEY_NONE</code> は「<b>どのキーでもない</b>」という特別な値です。終わらせるキーがなくなります</li>
+  <li>同じ版で ESC を押しても、ゲームは動き続け、矢印キーで歩けることを確かめました</li>
+</ul>
+
+<div class="term">
+  <b>名前を書いて渡す引数（キーワード引数）</b>
+  <code>title="Sokoban"</code> のように、<b><code>名前=値</code> の形で渡す引数</b>をキーワード引数といいます。
+  <code>pyxel.init()</code> の引数は <code>width, height, title, fps, quit_key, …</code> の順に並んでいて、
+  順番どおりに渡すなら <code>fps</code> を飛ばせません。名前を書けば、<b>間を飛ばして、ほしいものだけを渡せます</b>。
+  <code>fps</code> は書かないので、いつもの 30 のままです。
+</div>
+
+<div class="note">
+  <b>パソコンで実行したときは、ウィンドウの × で閉じる</b>
+  ESC で閉じなくなるのは、<code>python sokoban.py</code> で動かすときも同じです。
+  閉じるときは、ウィンドウの右上の × を押します。
+</div>
+
+<h2>2. 使うコマンドと CSS</h2>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>コマンド・書き方</th><th>すること</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel package step2 step2/sokoban.py</code></td>
+        <td><code>step2</code> フォルダを <code>step2.pyxapp</code> 1 つにまとめる。<b>入れたファイルを 1 行ずつ表示する</b></td></tr>
+    <tr><td><code>pyxel play step2.pyxapp</code></td>
+        <td>できた <code>.pyxapp</code> を手元で動かして確かめる</td></tr>
+    <tr><td><code>pyxel app2html step2.pyxapp</code></td>
+        <td><code>.pyxapp</code> を HTML 1 枚（<code>step2.html</code>）にする</td></tr>
+    <tr><td><code>python -m http.server</code></td>
+        <td>手元に Web サーバーを立てて、公開前の HTML をブラウザで確かめる</td></tr>
+    <tr><td><code>@media (pointer: coarse) { … }</code>（CSS）</td>
+        <td><b>指で触る端末のときだけ</b>、<code>{ }</code> の中の指定を使う</td></tr>
+    <tr><td><code>quit_key=pyxel.KEY_NONE</code>（Python）</td>
+        <td><code>pyxel.init()</code> に渡すと、ESC でアプリが終わらなくなる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>実際に測った大きさです。コードは 23 KB ありますが、まとめると 3 分の 1 ほどになります。</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>できるもの</th><th>大きさ（バイト）</th></tr></thead>
+  <tbody>
+    <tr><td><code>step2/sokoban.py</code> ＋ <code>step2/sokoban.pyxres</code></td><td>22,960 ＋ 680</td></tr>
+    <tr><td><code>step2.pyxapp</code>（<code>pyxel package</code> のあと）</td><td>7,699</td></tr>
+    <tr><td><code>step2.html</code>（<code>pyxel app2html</code> のあと）</td><td>10,480</td></tr>
+    <tr><td><code>docs/site/step2/sokoban.html</code>（全画面ボタンを足したあと）</td><td>約 12,000</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>3. 手順</h2>
+
+<h3 id="step-code">3-1. コードを 1 か所直す</h3>
+
+<p>
+<code>__init__()</code> の最初の行に、<code>quit_key=pyxel.KEY_NONE</code> を足します（<a href="#idea-esc">1-3</a>）。
+ついでに、2 行目のコメントもフェーズ 12 にしておきます。
+</p>
+
+<pre><code># sokoban.py
+# step2 フェーズ12：パッケージ化して Web で公開する                    ← 書きかえ</code></pre>
+
+<pre><code>class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban", quit_key=pyxel.KEY_NONE)   ← 書きかえ
+        pyxel.load("sokoban.pyxres")</code></pre>
+
+<p>
+いつもどおり実行して、<b>ESC を押してもウィンドウが閉じない</b>こと、<b>× で閉じられる</b>ことを確かめます。
+</p>
+
+<h3 id="step-clean">3-2. フォルダを掃除する</h3>
+
+<p>
+アイデア置き場は、もう <code>step2/</code> の外にあります（<a href="#idea-folder">1-1</a>）。
+残っているのは一時ファイルだけです。<b><code>tempCodeRunnerFile.py</code> を消します</b>。
+</p>
+
+<pre><code>step2/
+├── sokoban.py            ← 要る
+├── sokoban.pyxres        ← 要る
+├── tempCodeRunnerFile.py ← 消す（VS Code の拡張が作った一時ファイル）
+└── __pycache__/          ← 消さなくてよい（Pyxel が自動で除く）
+
+step2_ideas/              ← step2 の外なので、入らない
+└── stage_data.txt</code></pre>
+
+<div class="note">
+  <b><code>tempCodeRunnerFile.py</code> は、また作られる</b>
+  これは、VS Code の Code Runner で<b>選んだ部分だけを実行</b>したときに作られます。
+  一度消しても、また同じ実行のしかたをすれば戻ってきます。<b>公開版を作る直前に</b>確かめてください。
+</div>
+
+<h3 id="step-package">3-3. パッケージ化する（出てくる一覧を確かめる）</h3>
+
+<p><b>リポジトリのいちばん上</b>（<code>step2</code> フォルダが見える場所）で実行します。</p>
+
+<pre><code>pyxel package step2 step2/sokoban.py</code></pre>
+
+<p>入れたファイルが 1 行ずつ表示されます。<b>この 3 行だけなら、掃除はできています</b>。</p>
+
+<pre><code>added 'step2\.pyxapp_startup_script'
+added 'step2\sokoban.py'
+added 'step2\sokoban.pyxres'</code></pre>
+
+<div class="warn">
+  <b>4 行以上出たら、やり直し</b>
+  <code>stages</code> や <code>tempCodeRunnerFile.py</code> の行が出たら、それが公開版に入っています。
+  フォルダの外へ移す・消すをしてから、もう一度 <code>pyxel package</code> を実行します
+  （<code>step2.pyxapp</code> は上書きされます）。
+</div>
+
+<h3 id="step-play">3-4. 手元で動かして確かめる</h3>
+
+<pre><code>pyxel play step2.pyxapp</code></pre>
+
+<p>
+タイトル → ステージ選択 → 1 面と進めて、歩く・押す・音を確かめます。
+<b>ESC では閉じなくなっているので、ウィンドウの × で閉じます</b>。
+</p>
+
+<h3 id="step-html">3-5. HTML にする</h3>
+
+<pre><code>pyxel app2html step2.pyxapp</code></pre>
+
+<p>リポジトリの直下に <b><code>step2.html</code></b> ができます。</p>
+
+<h3 id="step-move">3-6. 公開する場所へ移動する</h3>
+
+<p>
+<code>step2.html</code> を <b><code>docs/site/step2/sokoban.html</code></b> という名前にして、<b>移動</b>します
+（コピーではなく移動。直下に残すと <code>git status</code> に出つづけます。step1 と同じです）。
+<b>ファイル名がそのまま URL になる</b>ので、作品の名前にします。
+</p>
+
+<pre><code>https://mrgarita.github.io/learning_pyxel/site/step2/sokoban.html</code></pre>
+
+<h3 id="step-button">3-7. 文字コードと全画面ボタンを足す</h3>
+
+<p>
+<code>docs/site/step2/sokoban.html</code> を VS Code で開くと、中身は 5 行しかありません。
+<b>2 か所</b>に足します。
+</p>
+
+<ol class="steps">
+  <li><b>2 行目</b>に <code>&lt;meta charset="utf-8"&gt;</code> を足す（ボタンの「全画面」が化けないように）</li>
+  <li><b>いちばん下</b>に、全画面ボタンを足す。step1 の <code>docs/site/step1/candy_hunt.html</code> の
+      <b>9 行目から最後まで</b>が、そっくり使えます。コピーして貼り、<code>&lt;/style&gt;</code> の直前にコメントと <code>@media</code> の 4 行を足します</li>
+</ol>
+
+<p>できあがりはこうなります。</p>
+
+<pre><code>&lt;!doctype html&gt;
+&lt;meta charset="utf-8"&gt;                                                   ← 足す
+&lt;script src="https://cdn.jsdelivr.net/gh/kitao/pyxel@2.9.9/wasm/pyxel.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+launchPyxel({ command: "play", name: "step2.pyxapp", gamepad: "enabled", base64: "UEsDBBQAAAAI…（とても長い 1 行。さわらない）" });
+&lt;/script&gt;
+
+&lt;!-- 全画面ボタン（app2html の出力に手で足したもの） --&gt;                ← ここから下を足す（candy_hunt.html と同じ）
+&lt;style&gt;
+  #fs-btn {
+    position: fixed; right: 12px; bottom: 12px; z-index: 9999;
+    padding: 8px 14px; font: 14px system-ui, sans-serif;
+    color: #fff; background: rgba(40, 44, 60, .82);
+    border: 1px solid #7d86a8; border-radius: 6px; cursor: pointer;
+    opacity: .55; transition: opacity .15s;
+  }
+  #fs-btn:hover, #fs-btn:focus { opacity: 1; }
+
+  /* 全画面のあいだはボタンを隠す（抜けるときは ESC） */
+  :root:fullscreen #fs-btn { display: none; }
+  :root:-webkit-full-screen #fs-btn { display: none; }
+
+  /* 指で触る端末（パッドが出る端末）では、ボタンを出さない */         ← step1 から足す
+  @media (pointer: coarse) {                                            ← step1 から足す
+    #fs-btn { display: none; }                                          ← step1 から足す
+  }                                                                     ← step1 から足す
+&lt;/style&gt;
+&lt;button id="fs-btn" title="ゲーム画面をブラウザいっぱいに広げます（もどるときは ESC）"&gt;全画面&lt;/button&gt;
+&lt;script&gt;
+const fsBtn = document.getElementById("fs-btn");
+
+fsBtn.addEventListener("click", async () =&gt; {
+  try {
+    await document.documentElement.requestFullscreen();
+  } catch (e) {
+    console.log("[fs] 全画面にできませんでした:", e.name, e.message);
+  }
+  // クリックでボタンに移った入力先を、ゲーム画面へ戻す
+  const canvas = document.getElementById("canvas");
+  if (canvas) { canvas.focus(); }
+});
+
+// 全画面のあいだはボタンを隠す。ESC で抜けたら戻す
+document.addEventListener("fullscreenchange", () =&gt; {
+  fsBtn.hidden = !!document.fullscreenElement;
+  const canvas = document.getElementById("canvas");
+  if (canvas) { canvas.focus(); }
+});
+&lt;/script&gt;</code></pre>
+
+<div class="warn">
+  <b><code>base64: "…"</code> の 1 行には、さわらない</b>
+  ゲーム本体（7,699 バイトの <code>.pyxapp</code>）を文字にしたもので、1 万文字ほどの 1 行です。
+  1 文字でも変わると、ゲームが起動しなくなります。VS Code で横に長く伸びて見えますが、そのままにします。
+</div>
+
+<div class="note">
+  <b><code>@media</code> の 4 行は、<code>&lt;/style&gt;</code> の直前に置く</b>
+  CSS は、<b>あとに書いたものが勝ちます</b>。上の <code>#fs-btn { … }</code> より後ろに置けば、
+  指で触る端末では <code>display: none</code> が確実に効きます。
+</div>
+
+<div class="warn">
+  <b>HTML を作り直すたびに、足し直しになる</b>
+  <code>pyxel app2html</code> は、毎回まっさらな HTML を作ります（step1 と同じ）。
+  ゲームを直して公開しなおすときは、<b>上書きする前の <code>sokoban.html</code> から、9 行目より下をコピーしておく</b>と楽です。
+</div>
+
+<h3 id="step-browser">3-8. 手元のブラウザで確かめる</h3>
+
+<p><b>リポジトリのいちばん上</b>で、配る係を起動します。</p>
+
+<pre><code>python -m http.server</code></pre>
+
+<p>Chrome で次の URL を開き、7 つを確かめます。</p>
+
+<pre><code>http://localhost:8000/docs/site/step2/sokoban.html</code></pre>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>　</th><th>すること</th><th>こうなれば OK</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>開く</td><td><code>CLICK TO START</code> と、右下に「<b>全画面</b>」（文字が化けていない）</td></tr>
+    <tr><td>2</td><td>クリック → <code>Enter</code> → <code>Enter</code></td><td>タイトル → ステージ選択 → 1 面。矢印キーで歩ける</td></tr>
+    <tr><td>3</td><td>1 面で <b>ESC</b></td><td><b>何も起きない</b>。そのまま歩ける（<a href="#idea-esc">1-3</a>）</td></tr>
+    <tr><td>4</td><td>「全画面」をクリック</td><td>画面いっぱいに広がり、ボタンが消える。<b>そのまま矢印キーで歩ける</b></td></tr>
+    <tr><td>5</td><td>ESC</td><td>元の大きさに戻り、ボタンがまた出る。まだ歩ける</td></tr>
+    <tr><td>6</td><td><code>F12</code> → <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code>（デバイスモード。機種はフェーズ 11 と同じスマホ）</td>
+        <td>ボタンが<b>すぐ消える</b>。<code>F5</code> で読み込みなおすと <code>TOUCH TO START</code> とパッドが出て、丸で進める</td></tr>
+    <tr><td>7</td><td>もう一度 <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code>（デバイスモードを切る）</td>
+        <td>ボタンが<b>すぐ戻る</b>（パッドは <code>F5</code> で消える）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <b>ボタンはすぐ、パッドは読み込みなおしてから</b>
+  CSS の <code>@media</code> は、端末の状態が変わるとすぐに効き直します。
+  パッドのほうは、<code>pyxel.js</code> が<b>ページを読み込んだ瞬間に 1 回だけ</b>決めるので、<code>F5</code> が要ります。
+  本物のスマホやパソコンでは途中で入れ替わらないので、この差は確かめるときだけの話です。
+</div>
+
+<h3 id="step-link">3-9. リンクを張る</h3>
+
+<p>2 か所です。step1 と同じ並びに 1 行ずつ足します。</p>
+
+<ul>
+  <li><b>トップページ</b>（<code>docs/site/index.html</code>）の「作品を公開しています」に、倉庫番の行を足す</li>
+  <li><b>step2 概要</b>（<code>docs/site/step2/index.html</code>）の完成イメージから、遊べる場所へ案内する</li>
+</ul>
+
+<h3 id="step-publish">3-10. コミットして、スマホで公開 URL を開く</h3>
+
+<p>
+コミットするのは <code>step2/sokoban.py</code> と、<code>docs/</code> の中の <code>sokoban.html</code>（とリンクを足したページ）です。
+直下の <code>step2.pyxapp</code> は <code>.gitignore</code> 済みなので、そのままでかまいません。
+push して数分待ったら、<b>自分のスマホで公開 URL を開きます</b>。
+</p>
+
+<pre><code>https://mrgarita.github.io/learning_pyxel/site/step2/sokoban.html</code></pre>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>　</th><th>スマホで確かめること</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>TOUCH TO START</code> が出て、<b>右下に「全画面」が出ていない</b></td></tr>
+    <tr><td>2</td><td>タッチするとタイトル。パッドの案内が出て、<b>丸のどれか</b>で選択画面へ</td></tr>
+    <tr><td>3</td><td>十字キーで歩き、リンゴを押せる。歩く音と BGM が鳴る</td></tr>
+    <tr><td>4</td><td>1 面をクリアして、丸で 2 面へ。右の小さいボタンでやり直し、左の小さいボタンで選択画面へ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+フェーズ 11 では、家の中だけで通じる住所（<code>http://</code> と PC の IP アドレス）で開きました。
+今回は <b>どこからでも開ける本物の URL</b> です。家の Wi-Fi を切って、モバイル回線で開いても遊べます。
+</p>
+
+<h2 id="trouble">4. うまくいかないときは</h2>
+
+<p>
+公開まわりのトラブルは、<a href="../step1/phase10.html">step1 フェーズ 10</a> と
+<a href="../step0/phase8.html">step0 フェーズ 8</a> の表もそのまま使えます。ここでは <b>step2 で新しく出るもの</b>を挙げます。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>pyxel package</code> の一覧に <code>stages</code> や <code>tempCodeRunnerFile.py</code> が出る</td>
+      <td>公開版に入っています。外へ移す・消すをしてから、<code>pyxel package</code> からやり直します（<a href="#step-clean">3-2</a>）</td>
+    </tr>
+    <tr>
+      <td>ブラウザで ESC を押すと、<b>ゲームが止まって</b>何も効かなくなる</td>
+      <td><code>quit_key=pyxel.KEY_NONE</code> が入っていません（<a href="#step-code">3-1</a>）。
+        コードを直したら、<b><code>pyxel package</code> → <code>app2html</code> → 置きなおし → ボタンを足し直し</b>まで全部やり直します。
+        止まってしまったページは、読み込みなおせば最初から遊べます</td>
+    </tr>
+    <tr>
+      <td>手元のブラウザで、ボタンの文字が <code>蜈ｨ逕ｻ髱｢</code> のように化ける</td>
+      <td>2 行目の <code>&lt;meta charset="utf-8"&gt;</code> がありません（<a href="#step-button">3-7</a>）。
+        公開すると GitHub が「UTF-8 です」と伝えるので化けずに見えますが、手元で化けるので足しておきます</td>
+    </tr>
+    <tr>
+      <td>スマホ（またはデバイスモード）で、<b>全画面ボタンが出る</b></td>
+      <td><code>@media</code> の 4 行がないか、<code>coarse</code> のつづりが違います（<code>course</code> など）。
+        <b>つづりを間違えてもエラーは出ず</b>、「指で触る端末ではない」扱いになるだけなので、見た目で気づくしかありません</td>
+    </tr>
+    <tr>
+      <td>デバイスモードにしたら<b>ボタンは消えたのに</b>、パッドが出ない</td>
+      <td><code>F5</code> で読み込みなおします。パッドは、ページを読み込んだ瞬間に決まります（<a href="#step-browser">3-8</a>）</td>
+    </tr>
+    <tr>
+      <td>公開 URL を開くと <code>404</code></td>
+      <td>① push してから数分待ったか。② 置き場所が <code>docs/site/step2/</code> か。
+        ③ ファイル名が <code>sokoban.html</code> か（<b>大文字・小文字も区別されます</b>。<code>Sokoban.html</code> では開けません）</td>
+    </tr>
+    <tr>
+      <td>スマホで開くと、<b>前の版</b>が出る</td>
+      <td>スマホのブラウザが前の版を覚えています。アドレスバーの再読み込みで読み込みなおします</td>
+    </tr>
+    <tr>
+      <td>スマホで、音が鳴らない</td>
+      <td>① 最初の <code>TOUCH TO START</code> をタッチしたか（これが「操作」になって音が許されます）。
+        ② iPhone は、<b>消音モード（マナーモード）</b>だと Web ページの音が鳴らないことがあります</td>
+    </tr>
+    <tr>
+      <td>全画面ボタンが消えた</td>
+      <td><code>pyxel app2html</code> をやり直したためです。足し直します（<a href="#step-button">3-7</a>）</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="review">5. step2 をふりかえる</h2>
+
+<p>
+12 フェーズで、倉庫番が最後まで通りました。まず、コードの行数がどう増えてきたかです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 760 310" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="フェーズごとのコードの行数の縦棒グラフ。1・2 で 133 行、3 で 157、4 で 192、5 で 218、6 で 354、7 で 413、8 で 477、9 で 504、10 で 523、11 で 565、12 も 565。6 で地図 10 面ぶんが入って大きく増えた">
+  <style>.c5t{fill:#9aa4c4;font-size:11.5px}.c5v{fill:#e8f0ff;font-size:12px;font-weight:bold}.c5n{fill:#e8f0ff;font-size:11.5px}</style>
+  <line x1="70" y1="250.0" x2="740" y2="250.0" stroke="#2a2f4a" stroke-width="1"/>
+  <text class="c5t" x="62" y="254.0" text-anchor="end">0</text>
+  <line x1="70" y1="183.3" x2="740" y2="183.3" stroke="#2a2f4a" stroke-width="1"/>
+  <text class="c5t" x="62" y="187.3" text-anchor="end">200</text>
+  <line x1="70" y1="116.7" x2="740" y2="116.7" stroke="#2a2f4a" stroke-width="1"/>
+  <text class="c5t" x="62" y="120.7" text-anchor="end">400</text>
+  <line x1="70" y1="50.0" x2="740" y2="50.0" stroke="#2a2f4a" stroke-width="1"/>
+  <text class="c5t" x="62" y="54.0" text-anchor="end">600</text>
+  <text class="c5t" x="62" y="34" text-anchor="end">行</text>
+  <g class="bar"><title>フェーズ 1・2：133 行</title><rect x="70.0" y="50" width="60.9" height="200" fill="transparent"/><path d="M88.5 250 V209.7 Q88.5 205.7 92.5 205.7 H108.5 Q112.5 205.7 112.5 209.7 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="100.5" y="268" text-anchor="middle">1・2</text>
+  <text class="c5v" x="100.5" y="198.7" text-anchor="middle">133</text>
+  <g class="bar"><title>フェーズ 3：157 行（+24）</title><rect x="130.9" y="50" width="60.9" height="200" fill="transparent"/><path d="M149.4 250 V201.7 Q149.4 197.7 153.4 197.7 H169.4 Q173.4 197.7 173.4 201.7 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="161.4" y="268" text-anchor="middle">3</text>
+  <g class="bar"><title>フェーズ 4：192 行（+35）</title><rect x="191.8" y="50" width="60.9" height="200" fill="transparent"/><path d="M210.3 250 V190.0 Q210.3 186.0 214.3 186.0 H230.3 Q234.3 186.0 234.3 190.0 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="222.3" y="268" text-anchor="middle">4</text>
+  <g class="bar"><title>フェーズ 5：218 行（+26）</title><rect x="252.7" y="50" width="60.9" height="200" fill="transparent"/><path d="M271.2 250 V181.3 Q271.2 177.3 275.2 177.3 H291.2 Q295.2 177.3 295.2 181.3 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="283.2" y="268" text-anchor="middle">5</text>
+  <g class="bar"><title>フェーズ 6：354 行（+136）</title><rect x="313.6" y="50" width="60.9" height="200" fill="transparent"/><path d="M332.1 250 V136.0 Q332.1 132.0 336.1 132.0 H352.1 Q356.1 132.0 356.1 136.0 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="344.1" y="268" text-anchor="middle">6</text>
+  <text class="c5v" x="344.1" y="125.0" text-anchor="middle">354</text>
+  <text class="c5n" x="344.1" y="107.0" text-anchor="middle">地図 10 面ぶんで +136</text>
+  <g class="bar"><title>フェーズ 7：413 行（+59）</title><rect x="374.5" y="50" width="60.9" height="200" fill="transparent"/><path d="M393.0 250 V116.3 Q393.0 112.3 397.0 112.3 H413.0 Q417.0 112.3 417.0 116.3 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="405.0" y="268" text-anchor="middle">7</text>
+  <g class="bar"><title>フェーズ 8：477 行（+64）</title><rect x="435.5" y="50" width="60.9" height="200" fill="transparent"/><path d="M453.9 250 V95.0 Q453.9 91.0 457.9 91.0 H473.9 Q477.9 91.0 477.9 95.0 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="465.9" y="268" text-anchor="middle">8</text>
+  <g class="bar"><title>フェーズ 9：504 行（+27）</title><rect x="496.4" y="50" width="60.9" height="200" fill="transparent"/><path d="M514.8 250 V86.0 Q514.8 82.0 518.8 82.0 H534.8 Q538.8 82.0 538.8 86.0 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="526.8" y="268" text-anchor="middle">9</text>
+  <g class="bar"><title>フェーズ 10：523 行（+19）</title><rect x="557.3" y="50" width="60.9" height="200" fill="transparent"/><path d="M575.7 250 V79.7 Q575.7 75.7 579.7 75.7 H595.7 Q599.7 75.7 599.7 79.7 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="587.7" y="268" text-anchor="middle">10</text>
+  <g class="bar"><title>フェーズ 11：565 行（+42）</title><rect x="618.2" y="50" width="60.9" height="200" fill="transparent"/><path d="M636.6 250 V65.7 Q636.6 61.7 640.6 61.7 H656.6 Q660.6 61.7 660.6 65.7 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="648.6" y="268" text-anchor="middle">11</text>
+  <text class="c5v" x="648.6" y="54.7" text-anchor="middle">565</text>
+  <g class="bar"><title>フェーズ 12：565 行（増減なし）　コードの行数は変わらない</title><rect x="679.1" y="50" width="60.9" height="200" fill="transparent"/><path d="M697.5 250 V65.7 Q697.5 61.7 701.5 61.7 H717.5 Q721.5 61.7 721.5 65.7 V250 Z" fill="#45b0e8"/></g>
+  <text class="c5t" x="709.5" y="268" text-anchor="middle">12</text>
+  <line x1="70" y1="250" x2="740" y2="250" stroke="#3b4166" stroke-width="1"/>
+  <text class="c5t" x="70" y="294">フェーズ（1・2 は 1 回のコミットにまとめて記録）</text>
+</svg>
+</div>
+<figcaption>フェーズごとのコードの行数（各フェーズのコミットで数えたもの。フェーズ 1 と 2 は 1 回のコミットにまとめて記録したので 1 本）。
+棒にマウスを乗せると、増えた行数が出ます</figcaption>
+</figure>
+
+<p>
+いちばん大きく増えたのはフェーズ 6 で、<b>増えた 136 行のうち 115 行は、10 面ぶんの地図</b>です。
+それ以外は、1 フェーズでおおむね 20〜60 行ずつ、少しずつ積み上げてきました。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>フェーズ</th><th>できるようになったこと</th><th>行数</th></tr></thead>
+  <tbody>
+    <tr><td>1・2</td><td>地図を<b>二次元リスト</b>で持ち、マス目とドットを変換して並べる。<b>動かす前に、行き先を調べる</b></td><td>133</td></tr>
+    <tr><td>3</td><td>荷物を押す。<b>2 マス先まで見て</b>から動かす</td><td>157</td></tr>
+    <tr><td>4</td><td><b>マス目の位置と、見た目の位置を分ける</b>。8 フレームかけてすべらせる</td><td>192</td></tr>
+    <tr><td>5</td><td><code>all()</code> でクリア判定。<b>リストのコピー</b>の落とし穴、透過色の選び方</td><td>218</td></tr>
+    <tr><td>6</td><td><b>プログラムとデータを分ける</b>（ステージ 10 面）。早い <code>return</code>、検算ツールで解けるか確かめる</td><td>354</td></tr>
+    <tr><td>7</td><td><code>update()</code> と <code>draw()</code> を<b>振り分け係</b>にする。タイトル画面</td><td>413</td></tr>
+    <tr><td>8</td><td>ステージ選択。<b>クリア記録の持ち方</b>、<code>%</code> と <code>//</code> で並べる</td><td>477</td></tr>
+    <tr><td>9</td><td>手数とクリア演出。<b>どこで数えるか</b>、<code>frame_count</code> の引き算で「間」を作る</td><td>504</td></tr>
+    <tr><td>10</td><td>効果音と BGM。<b>チャンネルを分ける</b>、BGM の入口を 1 か所に集める</td><td>523</td></tr>
+    <tr><td>11</td><td>スマホ対応。<b>入力の組</b>と <code>any()</code>、斜めは<b>集めてから決める</b></td><td>565</td></tr>
+    <tr><td>12</td><td>公開。<b>1 枚の HTML をパソコンとスマホで共用</b>、ESC で止めない</td><td>565</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="term">
+  <b>いちばん大きいのは「データを分けた」こと</b>
+  step1 の最後に、step2 で変わるのは<b>「データを持つ」</b>と<b>「動かす前に判定」</b>の 2 つだと書きました。
+  とくに前者は、フェーズ 6 で地図を文字のリストにしたおかげで、
+  <b>ステージを増やすのに、プログラムを書き換えなくてよくなりました</b>。地図を書いて、<code>STAGES</code> に 1 つ足すだけです。
+  <code>step2_ideas/</code> に置いた自作のステージも、出来上がったら同じやり方で足せます
+  （四角くない形のステージは <a href="shape.html">こちらの手順</a>）。
+</div>
+
+<h2 id="next">6. 次の step</h2>
+
+<p>
+<b>step3 は「縦スクロールシューティング」</b>です。3 ステージ制で、中ボスとボスが出てきます。
+弾幕やパワーアップアイテムもあります。step2 から大きく変わるのは、次のところです。
+</p>
+
+<ul>
+  <li><b>マス目から、ドット単位の動きに戻る</b> … 1 マスずつではなく、step1 のように少しずつ動きます。
+      ただし、動くものの数がけた違いに増えます</li>
+  <li><b>たくさんのものを、リストで出し入れする</b> … 弾や敵が、生まれては消えていきます。
+      <b>リストを回しながら、その中身を消す</b>ときの注意が出てきます</li>
+  <li><b>敵の出方をデータにする</b> … 「何秒目に、どこから、どの敵が出るか」を表にします。
+      step2 で地図をデータにしたのと同じ考え方です</li>
+  <li><b>角度で弾を飛ばす</b> … 弾幕は、角度から向きを計算して作ります。
+      ここで初めて <code>math.sin()</code> と <code>math.cos()</code>（三角関数）を使います</li>
+</ul>
+
+<p>
+フェーズ 11 で作った<b>入力の組</b>（<code>INPUT_OK</code> など）は、step3 でははじめから使い、
+<b>最初からスマホでも遊べる</b>形で作っていきます。
+</p>
+
+<footer class="site">
+  <a href="./">← step2 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>

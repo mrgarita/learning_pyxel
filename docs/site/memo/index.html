@@ -1725,6 +1725,15 @@ document.addEventListener("fullscreenchange", () =&gt; {
   <code>pyxel.js</code> がこの API を使っていないことは確認済みです。
 </div>
 
+<div class="warn">
+  <b>全画面でないときに ESC を押すと、ゲームが止まる</b>
+  Pyxel は、ESC でアプリを終わらせる作りです。<b>これが Web 版でも働きます</b>。
+  全画面でないときに ESC を押すと、画面が止まったまま何も効かなくなり、読み込みなおすしかなくなります（実測）。
+  「全画面から抜けるのは ESC」と覚えると押しまちがえやすいので、Web で公開するゲームは
+  <code>pyxel.init(…, quit_key=pyxel.KEY_NONE)</code> にして、<b>ESC で終わらないように</b>しておきます。
+  くわしくは <a href="../step2/phase12.html#idea-esc">step2 フェーズ 12 の 1-3</a> にあります。
+</div>
+
 <figure>
 <div class="fig-box">
 <svg viewBox="0 0 640 230" role="img" aria-label="通常のブラウザ表示ではタブバーとアドレスバーの分だけゲーム画面が小さくなり、全画面にするとその分まで広がることを示す図">
@@ -3244,6 +3253,14 @@ HTML の 1 語を変えると出なくなります。
   </ul>
   それに、ボタンを置く右下は 4 つの丸とちょうど重なります。
   Candy Hunt のスマホ版には付けていません。
+</div>
+
+<div class="note">
+  <b>1 枚の HTML をパソコンとスマホで共用するなら、スマホでだけ隠す</b>
+  CSS に <code>@media (pointer: coarse) { #fs-btn { display: none; } }</code> を足すと、
+  <b>パッドが出る端末でだけ</b>ボタンが消えます。<code>pyxel.js</code> がパッドを出すかどうかを決めるのと同じ問いなので、
+  パッドとボタンは必ずどちらか一方だけになります。step2 の倉庫番はこの形で公開しました
+  （<a href="../step2/phase12.html#idea-one-html">step2 フェーズ 12 の 1-2</a>）。
 </div>
 
 <h3 id="sound-length">Q. 効果音の表に「2 フレーム」「6 フレーム」とある。どこで設定する？ 休符を入れて長さを合わせる？</h3>
