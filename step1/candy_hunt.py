@@ -99,7 +99,7 @@ class Ghost:
 class App:
     def __init__(self):
         """起動時の設定"""
-        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt")
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt", quit_key=pyxel.KEY_NONE)
         pyxel.load("candy_hunt.pyxres")
 
         self.scene = SCENE_TITLE
