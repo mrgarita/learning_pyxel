@@ -580,7 +580,8 @@ document.addEventListener("fullscreenchange", () =&gt; {
     <tr><td>3</td><td>1 面で <b>ESC</b></td><td><b>何も起きない</b>。そのまま歩ける（<a href="#idea-esc">1-3</a>）</td></tr>
     <tr><td>4</td><td>「全画面」をクリック</td><td>画面いっぱいに広がり、ボタンが消える。<b>そのまま矢印キーで歩ける</b></td></tr>
     <tr><td>5</td><td>ESC</td><td>元の大きさに戻り、ボタンがまた出る。まだ歩ける</td></tr>
-    <tr><td>6</td><td><code>F12</code> → <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code>（デバイスモード。機種はフェーズ 11 と同じスマホ）</td>
+    <tr><td>6</td><td>開発者ツールを開く（Chrome の右上の <b>⋮</b> → その他のツール → デベロッパー ツール。<b>ゲームが動いているあいだは <code>F12</code> が効きません</b>）
+        → <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code>（デバイスモード。機種はフェーズ 11 と同じスマホ）</td>
         <td>ボタンが<b>すぐ消える</b>。<code>F5</code> で読み込みなおすと <code>TOUCH TO START</code> とパッドが出て、丸で進める</td></tr>
     <tr><td>7</td><td>もう一度 <code>Ctrl</code>＋<code>Shift</code>＋<code>M</code>（デバイスモードを切る）</td>
         <td>ボタンが<b>すぐ戻る</b>（パッドは <code>F5</code> で消える）</td></tr>
@@ -593,6 +594,14 @@ document.addEventListener("fullscreenchange", () =&gt; {
   CSS の <code>@media</code> は、端末の状態が変わるとすぐに効き直します。
   パッドのほうは、<code>pyxel.js</code> が<b>ページを読み込んだ瞬間に 1 回だけ</b>決めるので、<code>F5</code> が要ります。
   本物のスマホやパソコンでは途中で入れ替わらないので、この差は確かめるときだけの話です。
+</div>
+
+<div class="note">
+  <b>ゲームが動いているあいだは <code>F12</code> が効かない</b>
+  起動したゲームは、F キーや <code>Ctrl</code> を押しながらのキーを先に受け取って打ち消します。
+  ゲーム画面をクリックしたあとは、<code>Ctrl</code>＋<code>Shift</code>＋<code>M</code> や <code>F5</code> も同じく効きません。
+  <b>開発者ツールの中を 1 回クリックしてから押せば効きます</b>（読み込みなおしは ⟳ ボタンでも）。
+  しくみは <a href="../memo/#web-devtools">備忘録</a> にあります。
 </div>
 
 <h3 id="step-link">3-9. リンクを張る</h3>
