@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step3 縦スクロールシューティング ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+<style>
+  /* 完成イメージの番号札 */
+  svg .mk circle { fill: #10121c; stroke: #ffcc44; stroke-width: 1.5; }
+  svg .mk text { fill: #ffcc44; font-size: 11px; font-weight: bold; text-anchor: middle; }
+  /* フェーズ表の見出し「フェーズ」を折り返さない */
+  th:first-child { white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">step3 </span>縦スクロールシューティング</h1>
+  <p>ワンコのプロペラ機で、どうぶつたちの空を 3 ステージ飛びぬける</p>
+</header>
+
+<p class="crumb"><a href="../">← トップページへもどる</a></p>
+
+<h2 id="goal">1. 完成イメージ</h2>
+
+<p>
+step2 のワンコが、<b>丸いプロペラ機</b>に乗って空を飛びます。
+空は上から下へ<b>流れつづけ</b>、ハチやテントウムシ、小鳥たちが次々にやってきます。
+弾を撃って落としながら進み、<b>ステージの途中で中ボス、最後にボス</b>。全 <b>3 ステージ</b>です。
+</p>
+
+<p>
+目指す雰囲気は、ファミコンの<b>ツインビーのような、明るくてファンシーな空</b>です。
+絵と音はいつもどおり<b>リソースエディタで自作</b>し、本家の絵やキャラクターはまねません。
+</p>
+
+<p>
+パワーアップは<b>ふうせん</b>です。<b>雲を撃つと、ふうせんが出てきます</b>。
+ふうせんは撃たれると<b>ぴょんと跳ねて、色が変わります</b>。色ごとに効き目がちがうので、
+<b>撃って、ほしい色にしてから取る</b>——撃つか取るか、迷うところが楽しさです。
+</p>
+
+<p>
+やられ方は<b>ライフ制</b>です。ハートが 3 つあり、当たると 1 つ減って、しばらく<b>点滅しながら無敵</b>になります。
+ボスは、体力が減るたびに<b>弾幕</b>の形を変えてきます。
+そして step2 で作った入力のしくみをはじめから使うので、<b>最初からスマホでも遊べます</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 520 344" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="完成イメージ：縦長の空の画面。上にハートとスコア、空にハチの編隊・雲・雲から出たふうせん・ねらって撃ってくる小鳥・波打って下りてくるテントウムシ、下にワンコのプロペラ機と自分の弾。右に番号つきの説明">
+  <g transform="translate(12 12) scale(2)">
+    <!-- 空 -->
+    <rect x="0" y="0" width="128" height="160" fill="#7696DE"/>
+    <!-- 島（背景。タイルマップで流れる） -->
+    <ellipse cx="22" cy="62" rx="19" ry="9" fill="#19959C"/>
+    <ellipse cx="22" cy="60" rx="18" ry="8" fill="#70C6A9"/>
+    <ellipse cx="104" cy="124" rx="17" ry="8" fill="#19959C"/>
+    <ellipse cx="104" cy="122" rx="16" ry="7" fill="#70C6A9"/>
+    <circle cx="16" cy="57" r="2.5" fill="#19959C"/><circle cx="27" cy="58" r="2" fill="#19959C"/>
+    <circle cx="99" cy="120" r="2.2" fill="#19959C"/>
+
+    <!-- ハチの編隊 -->
+    <defs>
+    <g id="bee">
+      <ellipse cx="0" cy="-3" rx="2.6" ry="2" fill="#EEEEEE" opacity=".9"/>
+      <ellipse cx="0" cy="0.5" rx="4" ry="3.6" fill="#E9C35B"/>
+      <rect x="-4" y="0" width="8" height="1.2" fill="#2B335F"/>
+      <rect x="-3.4" y="2" width="6.8" height="1" fill="#2B335F"/>
+      <circle cx="-1.4" cy="-1.2" r=".6" fill="#2B335F"/><circle cx="1.4" cy="-1.2" r=".6" fill="#2B335F"/>
+    </g>
+    <g id="heart" fill="#D4186C">
+      <circle cx="-1.4" cy="-.8" r="1.6"/><circle cx="1.4" cy="-.8" r="1.6"/>
+      <path d="M-2.9 -.2 L0 3 L2.9 -.2 Z"/>
+    </g>
+    </defs>
+    <use href="#bee" x="44" y="22"/>
+    <use href="#bee" x="56" y="14"/>
+    <use href="#bee" x="68" y="22"/>
+
+    <!-- 雲（撃つとふうせんが出る） -->
+    <g fill="#EEEEEE">
+      <circle cx="88" cy="42" r="5.5"/><circle cx="95" cy="38" r="6.5"/><circle cx="102" cy="42" r="5.5"/>
+      <rect x="88" y="42" width="14" height="5"/>
+    </g>
+    <!-- ふうせん -->
+    <path d="M95 64 q-1.5 3 0 6" stroke="#EEEEEE" stroke-width=".7" fill="none"/>
+    <circle cx="95" cy="58" r="5.5" fill="#E9C35B"/>
+    <circle cx="93" cy="56" r="1.4" fill="#EEEEEE"/>
+    <g stroke="#EEEEEE" stroke-width=".8">
+      <path d="M86 56 l-3 -1 M86 60 l-3 1 M104 56 l3 -1 M104 60 l3 1"/>
+    </g>
+
+    <!-- 小鳥と、ねらってくる弾 -->
+    <ellipse cx="106" cy="86" rx="5" ry="4" fill="#FF9798"/>
+    <ellipse cx="104" cy="83" rx="3" ry="1.6" fill="#EEEEEE"/>
+    <path d="M101 87 l-3 1 3 1 z" fill="#D38441"/>
+    <circle cx="103.5" cy="85.5" r=".7" fill="#2B335F"/>
+    <path d="M100 92 L68 136" stroke="#EEEEEE" stroke-width=".5" stroke-dasharray="1.5 1.5" opacity=".7"/>
+    <g fill="#D4186C" stroke="#EEEEEE" stroke-width=".7">
+      <circle cx="95" cy="99" r="1.7"/><circle cx="88" cy="109" r="1.7"/>
+    </g>
+
+    <!-- テントウムシ（波打って下りてくる） -->
+    <path d="M24 72 q-6 6 0 12 q6 6 0 12" stroke="#EEEEEE" stroke-width=".6" fill="none" stroke-dasharray="1.5 1.5" opacity=".8"/>
+    <circle cx="24" cy="102" r="4.2" fill="#D4186C"/>
+    <rect x="23.6" y="98" width=".8" height="8" fill="#2B335F"/>
+    <circle cx="24" cy="98.5" r="1.8" fill="#2B335F"/>
+    <circle cx="21.6" cy="102.5" r=".8" fill="#2B335F"/><circle cx="26.4" cy="102.5" r=".8" fill="#2B335F"/>
+
+    <!-- 自分の弾 -->
+    <g fill="#EEEEEE">
+      <rect x="60.5" y="114" width="1.6" height="5" rx=".8"/><rect x="66" y="114" width="1.6" height="5" rx=".8"/>
+      <rect x="60.5" y="100" width="1.6" height="5" rx=".8"/><rect x="66" y="100" width="1.6" height="5" rx=".8"/>
+    </g>
+
+    <!-- ワンコの機体 -->
+    <ellipse cx="64" cy="125.5" rx="5" ry="1.2" fill="#E9C35B"/>
+    <rect x="53" y="134" width="22" height="4" rx="2" fill="#EEEEEE"/>
+    <ellipse cx="64" cy="135" rx="6.5" ry="7" fill="#D38441"/>
+    <circle cx="64" cy="132" r="3.6" fill="#EDC7B0"/>
+    <ellipse cx="60.6" cy="131" rx="1.3" ry="2.4" fill="#8B4852"/>
+    <ellipse cx="67.4" cy="131" rx="1.3" ry="2.4" fill="#8B4852"/>
+    <circle cx="62.8" cy="131.6" r=".6" fill="#2B335F"/><circle cx="65.2" cy="131.6" r=".6" fill="#2B335F"/>
+    <circle cx="64" cy="133.4" r=".6" fill="#2B335F"/>
+    <rect x="62" y="141" width="4" height="3" rx="1" fill="#8B4852"/>
+
+    <!-- 上の表示：ハートとスコア -->
+    <use href="#heart" x="6" y="6"/>
+    <use href="#heart" x="14" y="6"/>
+    <use href="#heart" x="22" y="6"/>
+    <text x="125" y="8.5" fill="#EEEEEE" font-family="Consolas, monospace" font-size="6" text-anchor="end">SCORE 01230</text>
+  </g>
+  <rect x="12" y="12" width="256" height="320" fill="none" stroke="#3b4166" stroke-width="2"/>
+
+  <!-- 番号札 -->
+  <g class="mk">
+    <circle cx="74" cy="24" r="8"/><text x="74" y="28">1</text>
+    <circle cx="176" cy="23" r="8"/><text x="176" y="27">2</text>
+    <circle cx="78" cy="58" r="8"/><text x="78" y="62">3</text>
+    <circle cx="236" cy="74" r="8"/><text x="236" y="78">4</text>
+    <circle cx="230" cy="130" r="8"/><text x="230" y="134">5</text>
+    <circle cx="246" cy="190" r="8"/><text x="246" y="194">6</text>
+    <circle cx="84" cy="230" r="8"/><text x="84" y="234">7</text>
+    <circle cx="178" cy="284" r="8"/><text x="178" y="288">8</text>
+  </g>
+
+  <!-- 説明 -->
+  <g font-size="12" fill="#e8f0ff">
+    <g class="mk">
+      <circle cx="294" cy="40" r="8"/><text x="294" y="44">1</text>
+      <circle cx="294" cy="74" r="8"/><text x="294" y="78">2</text>
+      <circle cx="294" cy="108" r="8"/><text x="294" y="112">3</text>
+      <circle cx="294" cy="142" r="8"/><text x="294" y="146">4</text>
+      <circle cx="294" cy="176" r="8"/><text x="294" y="180">5</text>
+      <circle cx="294" cy="226" r="8"/><text x="294" y="230">6</text>
+      <circle cx="294" cy="260" r="8"/><text x="294" y="264">7</text>
+      <circle cx="294" cy="294" r="8"/><text x="294" y="298">8</text>
+    </g>
+    <text x="310" y="44">ハート（ライフ）</text>
+    <text x="310" y="78">スコア</text>
+    <text x="310" y="112">ハチ：まっすぐ下りてくる</text>
+    <text x="310" y="146">雲：撃つとふうせんが出る</text>
+    <text x="310" y="180">ふうせん：撃つと跳ねて色が変わる</text>
+    <g>
+      <circle cx="316" cy="198" r="5" fill="#E9C35B"/>
+      <circle cx="342" cy="198" r="5" fill="#A9C1FF"/>
+      <circle cx="368" cy="198" r="5" fill="#EEEEEE"/>
+      <circle cx="394" cy="198" r="5" fill="#FF9798"/>
+      <g fill="#9aa4c4" font-size="10"><text x="326" y="202">→</text><text x="352" y="202">→</text><text x="378" y="202">→</text><text x="404" y="202">→ …</text></g>
+    </g>
+    <text x="310" y="230">小鳥：ワンコをねらって撃つ</text>
+    <text x="310" y="264">テントウムシ：波打って下りる</text>
+    <text x="310" y="298">ワンコの機体</text>
+    <text x="310" y="316" fill="#9aa4c4" font-size="11">当たり判定は真ん中の小さな四角だけ</text>
+  </g>
+</svg>
+</div>
+<figcaption>完成イメージ（実際の画面は 128×160 ドットの縦長。図は概念図で、絵はリソースエディタで自作します）</figcaption>
+</figure>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>項目</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>画面サイズ</td><td><b>128 × 160 ドット（縦長）</b>。縦スクロールなので、先が見えるように縦を長くする。
+      スマホの縦向きでも、画面の下に出るパッドと重ならない大きさ（実測）</td></tr>
+    <tr><td>操作（PC）</td><td>矢印キー（または <code>W</code> <code>A</code> <code>S</code> <code>D</code>）で 8 方向に移動 ／
+      <code>Space</code> か <code>Z</code> を<b>押しっぱなしで連射</b> ／ <code>Enter</code> で決定</td></tr>
+    <tr><td>操作（スマホ）</td><td>十字キーで移動 ／ <b>4 つの丸のどれかを押しっぱなしで連射</b>・決定。
+      step2 フェーズ 11 の入力の組（<code>INPUT_OK</code> など）をはじめから使う</td></tr>
+    <tr><td>自機</td><td>ワンコが乗ったプロペラ機（16×16、プロペラが回る 2 コマ）。
+      <b>当たり判定は真ん中の 4×4 だけ</b>（<a href="#basics">土台 3</a>）</td></tr>
+    <tr><td>ライフ</td><td><b>ハート 3 つ</b>（ふうせんで増やせる。最大 5）。当たると 1 つ減り、<b>2 秒ほど点滅して無敵</b>。0 でゲームオーバー</td></tr>
+    <tr><td>パワーアップ</td><td><b>雲を撃つと、ふうせんが出る</b>。撃つたびに跳ねて色が変わる
+      （<b>黄 → 水色 → 白 → 桃 → 黄 …</b>）。取ったときの色で効き目が決まる：
+      <b>黄</b>＝点数 ／ <b>水色</b>＝スピードアップ ／ <b>白</b>＝弾が 2 方向・3 方向に ／ <b>桃</b>＝ハートが 1 つ増える</td></tr>
+    <tr><td>敵</td><td>ハチ（まっすぐ）・テントウムシ（波打つ）・小鳥（ワンコをねらって撃つ）など。
+      いつ・どこから出るかは<b>出現表</b>というデータで決める</td></tr>
+    <tr><td>中ボス・ボス</td><td>ステージの途中に<b>中ボス</b>（大きな雲のおばけ）、最後に<b>ボス</b>（空飛ぶクジラなど）。
+      ボスは<b>体力のバー</b>つきで、体力が減るたびに<b>弾幕の形が変わる</b></td></tr>
+    <tr><td>ステージ数</td><td><b>3</b>。1 ステージ 2〜3 分。あとのステージほど手ごたえを強くする</td></tr>
+    <tr><td>画面</td><td>タイトル／プレイ／ステージクリア／ゲームオーバー／エンディングの 5 画面</td></tr>
+    <tr><td>表示</td><td>ハート、スコア、ハイスコア（起動しているあいだ覚えておく）、ボスの体力バー</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="warn">
+  <b>step2 といちばん違うのは「同時に動くものの数」です</b>
+  step2 で動いていたのは<b>主人公と荷物だけ</b>でした。
+  step3 では、自分の弾・敵・敵の弾・ふうせん・爆発が、<b>多いときは数百</b>同時に動きます。
+  1 つずつ変数を作るわけにはいきません。<br>
+  そこで、<b>同じ種類のものはリストに入れ、まとめて動かし、まとめて描き、いらなくなったら消す</b>。
+  これがゲーム全体の骨組みになります（<a href="#basics">土台 1</a>）。
+  ためしに Web 版で弾を 300 発動かしてみたところ、PC でもスマホ表示でも 1 秒 30 フレームを保てました。
+</div>
+
+<div class="note">
+  <b>作品の規模感</b>
+  完成版のコードは <b>1,000 行前後</b>になる見込みです（step2 は 565 行）。
+  そのうち<b>ステージの出現表</b>は別のファイル（<code>stage_data.py</code>）に分けます。
+  <b>17 のフェーズ</b>に分けて、1 フェーズあたり 40〜80 行ずつ書き足していきます。
+</div>
+
+<div class="note">
+  <b>参考にしたもの</b>
+  step3 には参考記事はありません。雰囲気の目標は<b>ツインビー（コナミ、1986 年のファミコン版）</b>ですが、
+  <b>絵・音・キャラクター・ステージはまねずに、すべて自作</b>します。
+  「撃つと色が変わるアイテム」も、ふうせんとして形を変えて取り入れます。
+</div>
+
+<h2 id="phases">2. フェーズ分割</h2>
+
+<p>
+<b>解説ページは、フェーズを進めるたびに追加していきます。</b>
+フェーズの分け方は、作りながら見直すことがあります。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>フェーズ</th><th>やること</th><th>主に使う技術</th></tr></thead>
+  <tbody>
+    <tr><td class="phase-no">1</td>
+        <td><b>縦長の画面に、ワンコの機体を出して動かす</b><br>
+        機体の絵（プロペラが回る 2 コマ）を描く。8 方向に動き、画面の外へは出ない。
+        キーボードでもスマホの十字キーでも動かせる</td>
+        <td>縦長の画面、入力の組（step2 の復習）、小数の速さ、<code>min</code> / <code>max</code> で枠に収める</td></tr>
+    <tr><td class="phase-no">2</td>
+        <td><b>弾を撃つ</b><br>
+        押しっぱなしで、決まった間隔で連射する。弾はリストに入れ、画面の外へ出たら消す</td>
+        <td>弾のクラス、<b>リストでまとめて動かす</b>、<b>内包表記で消す</b>、連射のタイマー</td></tr>
+    <tr><td class="phase-no">3</td>
+        <td><b>空を流す</b><br>
+        空・雲・島のタイルを描き、タイルマップに並べて、ゆっくり下へ流す。終わりまで来たら最初へ</td>
+        <td><b>タイルマップ</b>（リソースエディタ）、<code>pyxel.bltm</code>、<code>%</code> でくり返す</td></tr>
+    <tr><td class="phase-no">4</td>
+        <td><b>敵を出して、撃ち落とす</b><br>
+        ハチを上から出す。弾が当たると爆発して消え、点数が入る</td>
+        <td><b>2 つのリストの当たり判定</b>（二重ループ）、爆発のアニメ、「生きているか」の旗</td></tr>
+    <tr><td class="phase-no">5</td>
+        <td><b>ハートとゲームオーバー</b><br>
+        敵にぶつかるとハートが減り、点滅しながら無敵に。0 でゲームオーバー、<code>Enter</code> でもう一度</td>
+        <td><b>当たり判定を見た目より小さく</b>、無敵時間のタイマー、点滅（step1 の復習）、画面の振り分け</td></tr>
+    <tr><td class="phase-no">6</td>
+        <td><b>敵の種類を増やす</b><br>
+        テントウムシ（波打って下りる）と小鳥（横から来て向きを変える）を足す</td>
+        <td><b>クラスの継承</b>、<code>super()</code>、<code>math.sin</code> で波打つ</td></tr>
+    <tr><td class="phase-no">7</td>
+        <td><b>敵が弾を撃つ</b><br>
+        小鳥がワンコをねらって撃つ。敵の弾に当たってもハートが減る</td>
+        <td><b>角度と <code>cos</code>・<code>sin</code></b>、<code>math.atan2</code> でねらう</td></tr>
+    <tr><td class="phase-no">8</td>
+        <td><b>出現表でステージを組む</b><br>
+        「何フレーム目に・どの敵を・どこから」を表にしてステージを作る。表は別のファイルへ。
+        手ごたえを測る表示（当たった回数・画面の弾の数）と、無敵にするスイッチも作る</td>
+        <td><b>データで敵を出す</b>、<b>ファイルを分けて <code>import</code></b>、タプルのリスト、測る道具</td></tr>
+    <tr><td class="phase-no">9</td>
+        <td><b>雲とふうせん</b><br>
+        雲を撃つとふうせんが出る。ふうせんは撃つと跳ねて、色が変わる</td>
+        <td><b>速さと重力</b>（毎フレーム速さに足す）、色を順に回す（<code>%</code>）</td></tr>
+    <tr><td class="phase-no">10</td>
+        <td><b>ふうせんでパワーアップ</b><br>
+        黄＝点数、水色＝スピード、白＝弾が 2 方向・3 方向に、桃＝ハートが増える</td>
+        <td><b>辞書</b>、パワーアップの段階、弾の向きを角度で並べる</td></tr>
+    <tr><td class="phase-no">11</td>
+        <td><b>中ボス</b><br>
+        ステージの途中に大きな雲のおばけ。何発も当てないと倒せず、当たると白く光る。扇形に撃ってくる</td>
+        <td>体力（HP）、<code>pyxel.pal</code> で色を変えて光らせる、扇形の弾、「出てくる → 戦う → 去る」の状態</td></tr>
+    <tr><td class="phase-no">12</td>
+        <td><b>ボス</b><br>
+        ステージの最後にクジラ。体力のバーを出し、空の流れが止まる。倒すと大爆発してステージクリア</td>
+        <td>大きな敵の当たり判定、体力バー、スクロールを止める、画面のゆれ</td></tr>
+    <tr><td class="phase-no">13</td>
+        <td><b>弾幕</b><br>
+        ボスが輪・うずまき・ねらい撃ちを組み合わせて撃つ。体力が減ると形が変わる</td>
+        <td><code>for</code> で輪を作る、角度を少しずつずらしてうずまき、攻撃パターンの切り替え</td></tr>
+    <tr><td class="phase-no">14</td>
+        <td><b>3 ステージにする</b><br>
+        ステージ 2・3 の出現表とボスを足す。クリアで次へ、3 つ目で全クリア</td>
+        <td>ステージの表（step2 の復習）、<code>pyxel.pal</code> で同じ絵を色ちがいに、難易度を右肩上がりに</td></tr>
+    <tr><td class="phase-no">15</td>
+        <td><b>タイトルとエンディング</b><br>
+        タイトル・ステージクリア・全クリアの画面。ハイスコアを出す</td>
+        <td>画面の振り分け（step1・2 の復習）、ハイスコア</td></tr>
+    <tr><td class="phase-no">16</td>
+        <td><b>効果音と BGM</b><br>
+        撃つ・当たる・爆発・ふうせん・パワーアップの音と、ステージとボスの BGM</td>
+        <td><code>play</code> / <code>playm</code>（復習）、<b>たくさん鳴る音のチャンネルの分け方</b></td></tr>
+    <tr><td class="phase-no">17</td>
+        <td><b>パッケージ化して Web で公開する</b><br>
+        step2 と同じ手順。今回はファイルが 2 つになる</td>
+        <td><code>pyxel package</code> / <code>app2html</code>（step2 の復習）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <b>進め方</b>
+  1 フェーズごとに「考え方 → 必要な API → コード → 解説」を読み、コードを自分で入力して
+  実行します。<b>想定どおり動くことを確認できてから</b>、次のフェーズに進みます。
+  疑問が出たときは、その内容を<a href="../memo/">備忘録</a>に残していきます。<br>
+  はじめて読むときは、この下の<a href="#topics">3. 学ぶ技術項目</a>と
+  <a href="#basics">4. 先に押さえておきたい 3 つの土台</a>に目を通してから、フェーズ 1 へ進んでください。
+</div>
+
+<div class="note">
+  <b>難易度は、測りながら決めます</b>
+  シューティングの手ごたえは、数字を少し変えるだけで大きく変わります。
+  そこで<b>フェーズ 8 で「測る道具」を先に作り</b>（当たった回数・画面にある弾の数・無敵スイッチ）、
+  通しで遊んで確かめながら調整します。<b>ステージ 1 はやさしく、ステージ 3 はしっかり手ごたえ</b>が目標です。
+</div>
+
+<h2 id="topics">3. この step で学ぶ技術項目</h2>
+
+<p>
+step1 は「ゲームとして成立させる仕組み」、step2 は「データでゲームを作る」が柱でした。
+step3 の柱は<b>「たくさんのものを、同じやり方で動かす」</b>ことです。
+弾も敵もふうせんも、<b>リストに入れて、毎フレームまとめて動かして描く</b>——
+この形さえできれば、種類が増えても、数が増えても、コードの形は変わりません。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>分類</th><th>項目</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="3">たくさんのものを動かす</td>
+        <td><b>リストに入れて、まとめて動かし、まとめて描く</b></td><td>2</td></tr>
+    <tr><td><b>いらなくなったものを消す</b>（内包表記で作りなおす）</td><td>2</td></tr>
+    <tr><td><b>2 つのリストどうしの当たり判定</b>（弾 × 敵）</td><td>4</td></tr>
+    <tr><td rowspan="5">動き</td>
+        <td>小数の速さで 8 方向に動く、枠の中に収める</td><td>1</td></tr>
+    <tr><td><code>sin</code> で波打つ</td><td>6</td></tr>
+    <tr><td><b>角度と速さから、x と y の速さを出す</b>（<code>cos</code>・<code>sin</code>）</td><td>7</td></tr>
+    <tr><td>相手の方向の角度を求める（<code>atan2</code>）</td><td>7</td></tr>
+    <tr><td><b>速さと重力</b>（跳ねて落ちる）</td><td>9</td></tr>
+    <tr><td>背景</td><td><b>タイルマップを描いて、流す</b></td><td>3</td></tr>
+    <tr><td rowspan="5">敵とステージ</td>
+        <td><b>継承で敵の種類を作る</b></td><td>6</td></tr>
+    <tr><td><b>出現表</b>（いつ・何を・どこから）で敵を出す</td><td>8</td></tr>
+    <tr><td>中ボス・ボスの「状態」（出てくる → 戦う → 倒れる）</td><td>11・12</td></tr>
+    <tr><td>弾幕のパターンと、その切り替え</td><td>13</td></tr>
+    <tr><td>3 ステージの表と、全クリア</td><td>14</td></tr>
+    <tr><td rowspan="2">パワーアップ</td>
+        <td>撃つたびに色が変わる、色を順に回す</td><td>9</td></tr>
+    <tr><td>色ごとの効き目、パワーアップの段階</td><td>10</td></tr>
+    <tr><td rowspan="2">手ざわり</td>
+        <td>爆発、無敵の点滅、当たると白く光る（<code>pyxel.pal</code>）</td><td>4・5・11</td></tr>
+    <tr><td>ボスを倒したときの大爆発と画面のゆれ</td><td>12</td></tr>
+    <tr><td>難易度</td><td><b>手ごたえを測る表示と、無敵スイッチ</b>／右肩上がりに並べる</td><td>8・14</td></tr>
+    <tr><td>画面・サウンド・公開</td><td>タイトル・エンディング・ハイスコア、効果音と BGM、Web 公開（復習）</td><td>15〜17</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>あわせて新しく出てくる Python の概念</h3>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>概念</th><th>なぜ必要になるか</th><th>登場フェーズ</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>内包表記</b><br><code>[b for b in bullets if b.alive]</code></td>
+      <td>画面の外へ出た弾を、リストから消す必要があります。
+      ところが <code>for</code> で回しながら <code>remove()</code> すると、<b>となりの弾を 1 つ飛ばしてしまいます</b>。
+      「残すものだけで、リストを作りなおす」のが安全で、それを 1 行で書くのが内包表記です。</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td><b>クラスの継承</b></td>
+      <td>ハチ・テントウムシ・小鳥は、<b>動き方だけがちがい</b>、位置・体力・描き方・当たり判定は同じです。
+      同じところを「敵」の親クラスに 1 回だけ書き、<b>ちがうところだけを子クラスに書きます</b>。</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td><b><code>math</code> モジュール</b><br>（<code>sin</code>・<code>cos</code>・<code>atan2</code>・<code>pi</code>）</td>
+      <td>ななめに飛ぶ弾、ワンコをねらう弾、輪になって広がる弾幕——
+      <b>「向き」を扱うには角度が要ります</b>。角度の単位が「度」ではなく<b>ラジアン</b>であることも、ここで押さえます。</td>
+      <td>6・7</td>
+    </tr>
+    <tr>
+      <td><b>辞書</b><br><code>{"yellow": …, "blue": …}</code></td>
+      <td>ふうせんの色と効き目のように、<b>「名前で引ける表」</b>がほしい場面があります。
+      リストは番号で引きますが、辞書は<b>名前（キー）で引けます</b>。</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <td><b>自分で作ったファイルを <code>import</code> する</b></td>
+      <td>出現表は 3 ステージぶんで長くなります。コードと混ぜると読みにくいので、
+      <code>stage_data.py</code> に分けて <code>from stage_data import STAGES</code> で読み込みます
+      （Web 版でもこのまま動くことを確かめ済み）。</td>
+      <td>8</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="term">
+  <b>step1・step2 で作ったものは、そのまま使えます</b>
+  画面の振り分け（<code>scene</code>）、<code>frame_count</code> を使った間と点滅、
+  入力の組（<code>INPUT_OK</code> と <code>held()</code>・<code>pressed()</code>）、
+  チャンネルを分けた効果音、<code>quit_key</code> 入りの Web 公開——<b>これらは学び直しません</b>。
+  step3 で頭を使うのは、<b>たくさんのものの扱い方と、向き（角度）</b>の 2 つに集中します。
+</div>
+
+<h2 id="basics">4. 先に押さえておきたい 3 つの土台</h2>
+
+<h3>土台 1：出したものはリストに入れ、いらなくなったら消す</h3>
+
+<p>
+弾 1 発・敵 1 匹は、それぞれ<b>クラスから作ったもの（オブジェクト）</b>です。
+同じ種類のものは 1 つのリストに入れておき、<b>毎フレーム「全部動かす → 全部描く」</b>をくり返します。
+撃つたび・敵が出るたびにリストへ足し、画面の外へ出たもの・やられたものは消します。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 680 250" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="弾のリストの一生を示す図。撃つとリストに足される。毎フレーム、リストの全部を動かして描く。画面の外へ出た弾は alive を False にし、残すものだけでリストを作りなおして消す">
+  <style>
+    .l1h { font-size: 13px; font-weight: bold; }
+    .l1c { font: 12px Consolas, monospace; fill: #2ee6a8; }
+    .l1d { font-size: 11.5px; fill: #9aa4c4; }
+  </style>
+
+  <!-- 3 つの段階 -->
+  <rect x="20" y="20" width="190" height="110" rx="6" fill="#232840" stroke="#45b0e8" stroke-width="2"/>
+  <text class="l1h" x="115" y="44" fill="#45b0e8" text-anchor="middle">① 生まれる</text>
+  <text class="l1d" x="115" y="68" text-anchor="middle">撃ったとき</text>
+  <text class="l1c" x="115" y="100" text-anchor="middle">bullets.append(…)</text>
+
+  <rect x="245" y="20" width="190" height="110" rx="6" fill="#232840" stroke="#ffcc44" stroke-width="2"/>
+  <text class="l1h" x="340" y="44" fill="#ffcc44" text-anchor="middle">② 動く・描かれる</text>
+  <text class="l1d" x="340" y="68" text-anchor="middle">毎フレーム、全部</text>
+  <text class="l1c" x="340" y="94" text-anchor="middle">for b in bullets:</text>
+  <text class="l1c" x="340" y="112" text-anchor="middle">    b.update()</text>
+
+  <rect x="470" y="20" width="190" height="110" rx="6" fill="#232840" stroke="#ff6b97" stroke-width="2"/>
+  <text class="l1h" x="565" y="44" fill="#ff6b97" text-anchor="middle">③ 消える</text>
+  <text class="l1d" x="565" y="68" text-anchor="middle">画面の外へ出た・当たった</text>
+  <text class="l1c" x="565" y="100" text-anchor="middle">b.alive = False</text>
+
+  <g stroke="#9aa4c4" stroke-width="2" fill="none">
+    <path d="M210 75 L239 75"/><path d="M233 69 l6 6 -6 6" fill="#9aa4c4"/>
+    <path d="M435 75 L464 75"/><path d="M458 69 l6 6 -6 6" fill="#9aa4c4"/>
+  </g>
+  <!-- ② はくり返す -->
+  <path d="M300 130 q40 26 80 0" stroke="#ffcc44" stroke-width="1.5" fill="none"/>
+  <path d="M374 126 l6 4 -7 3" stroke="#ffcc44" stroke-width="1.5" fill="none"/>
+  <text class="l1d" x="340" y="166" text-anchor="middle" fill="#ffcc44">1 秒に 30 回くり返す</text>
+
+  <!-- 片づけ -->
+  <rect x="140" y="186" width="400" height="44" rx="6" fill="#10121c" stroke="#3b4166"/>
+  <text class="l1c" x="340" y="213" text-anchor="middle">bullets = [b for b in bullets if b.alive]</text>
+  <text class="l1d" x="340" y="246" text-anchor="middle">フレームの最後に、生きているものだけでリストを作りなおす（＝消える）</text>
+  <path d="M565 130 L565 208 L540 208" stroke="#ff6b97" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+</svg>
+</div>
+<figcaption>弾も敵もふうせんも爆発も、ぜんぶこの形。種類が増えても、リストが 1 本増えるだけ</figcaption>
+</figure>
+
+<div class="note">
+  <b>消すのは「旗を立てて、あとでまとめて」</b>
+  弾が敵に当たった瞬間にリストから抜くと、まだ回している <code>for</code> の順番が狂います。
+  その場では <code>alive = False</code>（もう死んでいる、という旗）にするだけにして、
+  <b>フレームの最後にまとめて片づけます</b>。フェーズ 2 で、狂う様子を実際に見ます。
+</div>
+
+<h3>土台 2：向きは角度で持ち、<code>cos</code> と <code>sin</code> で x と y の速さに分ける</h3>
+
+<p>
+真上に飛ぶ弾なら「y を毎フレーム 4 減らす」で済みます。
+ところが、<b>ななめ 30 度に、速さ 2 で</b>飛ばしたいときは、x と y をそれぞれいくつ動かせばよいでしょう。
+答えは <b>x は「速さ × cos(角度)」、y は「速さ × sin(角度)」</b>です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="角度と速さを x と y の速さに分ける図。左は 1 発の弾：右向きを 0 度として下向きに角度をとり、速さの矢印を横の vx = 速さ×cos と縦の vy = 速さ×sin に分ける。右は 8 発の輪：0 度は右、90 度は下、180 度は左、270 度は上">
+  <style>
+    .l2t { font-size: 12px; fill: #9aa4c4; }
+    .l2c { font: 12.5px Consolas, monospace; }
+  </style>
+  <!-- 左：1 発 -->
+  <text x="20" y="24" class="l2t">1 発の弾（Pyxel は y が下向き）</text>
+  <g stroke="#3b4166" stroke-width="1.5">
+    <path d="M60 70 L320 70"/><path d="M80 50 L80 280"/>
+  </g>
+  <text x="326" y="74" class="l2t">x</text>
+  <text x="74" y="294" class="l2t">y（下が＋）</text>
+  <circle cx="80" cy="70" r="5" fill="#ff6b97"/>
+  <!-- 速さの矢印：角度 40 度、長さ 230 -->
+  <path d="M80 70 L256 218" stroke="#ffcc44" stroke-width="3"/>
+  <path d="M244 214 L256 218 L252 206" stroke="#ffcc44" stroke-width="3" fill="none"/>
+  <text x="178" y="130" fill="#ffcc44" font-size="13" transform="rotate(40 178 130)">速さ</text>
+  <!-- 分解 -->
+  <path d="M80 218 L256 218" stroke="#2ee6a8" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M256 70 L256 218" stroke="#45b0e8" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="168" y="240" class="l2c" fill="#2ee6a8" text-anchor="middle">vx = 速さ × cos(角度)</text>
+  <text x="266" y="148" class="l2c" fill="#45b0e8">vy = 速さ</text>
+  <text x="266" y="166" class="l2c" fill="#45b0e8">   × sin(角度)</text>
+  <!-- 角度の弧 -->
+  <path d="M130 70 A50 50 0 0 1 118.3 102.1" stroke="#e8f0ff" stroke-width="1.5" fill="none"/>
+  <text x="136" y="96" fill="#e8f0ff" font-size="12">角度</text>
+
+  <!-- 右：8 発の輪 -->
+  <text x="420" y="24" class="l2t">8 発の輪（角度を 45 度ずつ）</text>
+  <circle cx="540" cy="160" r="9" fill="#ff6b97"/>
+  <g stroke="#ffcc44" stroke-width="2">
+    <path d="M552 160 L610 160"/><path d="M548.5 168.5 L589.5 209.5"/><path d="M540 172 L540 230"/>
+    <path d="M531.5 168.5 L490.5 209.5"/><path d="M528 160 L470 160"/><path d="M531.5 151.5 L490.5 110.5"/>
+    <path d="M540 148 L540 90"/><path d="M548.5 151.5 L589.5 110.5"/>
+  </g>
+  <g fill="#e8f0ff">
+    <circle cx="614" cy="160" r="4"/><circle cx="592" cy="212" r="4"/><circle cx="540" cy="234" r="4"/>
+    <circle cx="488" cy="212" r="4"/><circle cx="466" cy="160" r="4"/><circle cx="488" cy="108" r="4"/>
+    <circle cx="540" cy="86" r="4"/><circle cx="592" cy="108" r="4"/>
+  </g>
+  <g font-size="12" fill="#9aa4c4">
+    <text x="624" y="164">0°</text>
+    <text x="532" y="256">90°</text>
+    <text x="424" y="164">180°</text>
+    <text x="526" y="76">270°</text>
+  </g>
+  <text x="540" y="284" class="l2t" text-anchor="middle">0° は右、そこから<tspan fill="#ffcc44">時計回り</tspan>に増える</text>
+</svg>
+</div>
+<figcaption>角度と速さを決めれば、どの向きにも同じ速さで飛ばせる。輪は「角度を少しずつ変えて、何発も作る」だけ</figcaption>
+</figure>
+
+<div class="term">
+  <b>角度の単位は「ラジアン」</b>
+  Python の <code>math.cos()</code> や <code>math.sin()</code> は、角度を<b>度ではなくラジアン</b>で受け取ります。
+  1 周 360 度が <code>2 * math.pi</code>（約 6.28）にあたります。
+  度で考えたいときは <code>math.radians(30)</code> のように直してから渡します。
+  ねらい撃ちでは逆に、「ワンコはどの角度にいるか」を <code>math.atan2(dy, dx)</code> で求めます（フェーズ 7）。
+</div>
+
+<p>
+三角関数を使うのは初めてでも大丈夫です。このステップで使うのは<b>「角度と速さから、x と y の速さを出す」</b>と
+<b>「相手のいる角度を求める」</b>の 2 つだけで、どちらも<b>決まった形の 1〜2 行</b>です。
+フェーズ 7 では、図と実際の弾を見比べながら確かめます。
+</p>
+
+<h3>土台 3：当たり判定は、見た目より小さく</h3>
+
+<p>
+step1 では、お菓子を<b>かすっただけで取れてしまう</b>のが問題になりました
+（<a href="../memo/#hitbox-size">備忘録</a>）。シューティングでは、これが<b>逆向き</b>に効きます。
+16×16 の絵全体で当たり判定をとると、<b>羽の先に弾がかすっただけでハートが減り</b>、弾幕はとても避けられません。
+そこで、ワンコの機体の当たり判定は<b>真ん中の 4×4 だけ</b>にします。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="16×16 の機体の絵の、真ん中の 4×4 だけが当たり判定であることを示す図。羽にかすった弾は当たらず、真ん中に入った弾だけが当たる">
+  <style>.l3t { font-size: 12px; fill: #9aa4c4; } .l3b { font-size: 12.5px; }</style>
+  <!-- 16×16 のマス（1 ドット 10px） -->
+  <g transform="translate(40 30)">
+    <rect x="0" y="0" width="160" height="160" fill="#10121c" stroke="#3b4166"/>
+    <!-- 機体のシルエット（ざっくり） -->
+    <g fill="#D38441">
+      <rect x="50" y="30" width="60" height="100"/><rect x="40" y="50" width="80" height="60"/>
+    </g>
+    <rect x="0" y="80" width="160" height="30" fill="#EEEEEE" opacity=".85"/>
+    <rect x="60" y="20" width="40" height="10" fill="#E9C35B"/>
+    <rect x="70" y="130" width="20" height="20" fill="#8B4852"/>
+    <!-- 当たり判定 -->
+    <rect x="60" y="70" width="40" height="40" fill="#ff6b97" opacity=".35"/>
+    <rect x="60" y="70" width="40" height="40" fill="none" stroke="#ff6b97" stroke-width="2.5"/>
+    <!-- 目盛り -->
+    <path d="M0 -8 H160 M0 -12 V-4 M160 -12 V-4" stroke="#9aa4c4" stroke-width="1"/>
+    <text x="80" y="-14" class="l3t" text-anchor="middle">16 ドット</text>
+  </g>
+  <text x="120" y="216" class="l3t" text-anchor="middle">桃色の 4×4 だけが当たり判定</text>
+
+  <!-- 右：2 つの場合 -->
+  <g transform="translate(260 30)">
+    <rect x="0" y="0" width="160" height="160" fill="#10121c" stroke="#3b4166"/>
+    <g fill="#D38441"><rect x="50" y="30" width="60" height="100"/><rect x="40" y="50" width="80" height="60"/></g>
+    <rect x="0" y="80" width="160" height="30" fill="#EEEEEE" opacity=".85"/>
+    <rect x="60" y="70" width="40" height="40" fill="none" stroke="#ff6b97" stroke-width="2"/>
+    <circle cx="16" cy="92" r="14" fill="#D4186C" stroke="#EEEEEE" stroke-width="3"/>
+    <text x="16" y="146" class="l3b" fill="#2ee6a8" text-anchor="middle">セーフ</text>
+    <path d="M16 112 L16 130" stroke="#2ee6a8" stroke-width="1.5"/>
+  </g>
+  <g transform="translate(450 30)">
+    <rect x="0" y="0" width="160" height="160" fill="#10121c" stroke="#3b4166"/>
+    <g fill="#D38441"><rect x="50" y="30" width="60" height="100"/><rect x="40" y="50" width="80" height="60"/></g>
+    <rect x="0" y="80" width="160" height="30" fill="#EEEEEE" opacity=".85"/>
+    <rect x="60" y="70" width="40" height="40" fill="none" stroke="#ff6b97" stroke-width="2"/>
+    <circle cx="88" cy="84" r="14" fill="#D4186C" stroke="#EEEEEE" stroke-width="3"/>
+    <text x="80" y="146" class="l3b" fill="#ff6b97" text-anchor="middle">当たり</text>
+  </g>
+  <text x="340" y="216" class="l3t" text-anchor="middle">羽にかすっただけ</text>
+  <text x="530" y="216" class="l3t" text-anchor="middle">真ん中に入った</text>
+</svg>
+</div>
+<figcaption>見た目では両方とも重なっているが、ハートが減るのは右だけ。「ギリギリでよけた！」という気持ちよさは、ここから生まれる</figcaption>
+</figure>
+
+<p>
+反対に、<b>敵の当たり判定は見た目と同じくらい</b>にしておきます。こちらの弾は当たりやすく、
+敵の弾には当たりにくく——<b>遊ぶ人に有利な方へ寄せる</b>のが、手ざわりのよいシューティングのコツです。
+</p>
+
+<footer class="site">
+  <a href="../">← トップページへもどる</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
