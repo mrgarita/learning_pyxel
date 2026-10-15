@@ -1,5 +1,5 @@
 # sokoban.py
-# step2 フェーズ11： スマホで遊べるようにする
+# step2 フェーズ12: パッケージ化して Web で公開する
 
 import pyxel
 
@@ -235,7 +235,7 @@ def held(inputs):
 class App:
     def __init__(self):
         """起動時の設定"""
-        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban")
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Sokoban", quit_key=pyxel.KEY_NONE)
         pyxel.load("sokoban.pyxres")
         self.scene = SCENE_TITLE        # 起動したら、まずタイトル画面
         self.stage_no = 0               # いま何番目のステージか（0 から数える）
