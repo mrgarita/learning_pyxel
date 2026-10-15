@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step3 フェーズ1：縦長の画面に、ワンコの機体を出して動かす ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+<style>
+  /* 実機の画面キャプチャを、ぼかさずにドットのまま拡大する */
+  svg image.shot { image-rendering: pixelated; image-rendering: crisp-edges; }
+  ol.steps li { margin: .35rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">フェーズ 1 </span>縦長の画面に、ワンコの機体を出して動かす</h1>
+  <p>機体の絵を 2 コマ描き、8 方向に動かす。画面の外へは出さない</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step3 概要</a> ／ フェーズ 1</p>
+
+<h2>ゴール</h2>
+
+<p>
+<b>128×160 ドットの縦長の画面</b>に、ワンコが乗った<b>プロペラ機</b>を出します。
+プロペラは 2 枚の絵を入れかえて<b>くるくる回り</b>、矢印キー（スマホなら十字キー）で<b>8 方向</b>に動きます。
+ななめでも速さは同じで、画面の端まで来たら止まります。
+このフェーズで書くコードは <b>80 行</b>（空行とコメントを除くと 49 行）です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 840 372" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="実際の画面 3 枚。起動すると、水色の縦長の画面の下のまんなかに機体が出る。左上へ動かしたところ。右下の角まで動かすと、そこで止まる">
+  <image class="shot" x="6" y="8" width="256" height="320" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACgCAIAAABL8POqAAACBElEQVR42u3ZPS9zYRjA8YtYJRaLJj6AxAcQeRaJyWTSUcJkIhKxPKQsFqnJ1p1BTJ0qlsYnIEaDhFlyVoPhUHJCWJRLfv/pvHRo798593npwMbhTejnGjQEAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgAAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAv6GhRN91ffJ/ZcvM6lBEnB88VrbvX+5m+VEDG4c3eQ+fyeGLiLgspp0B/a7dakRE+3ntLCLmlrYB9G/oj+ZvK9vrrUZGhsF0o784Wny0d3G0KHkA9GP066fjlYWMBlmvAbWVk+5K/Jtdi4hupxkRcbrmOaBPXS1PlQvdTvN59N9szFWa29DN+ki5UB71H9Xz2Dt6MAV9S91O835i691dY9c7piD90TPg7cxzHMOffibLA0HKVxHtVuP4rmqwUCsyPgynnILmlrYXasUfGP2sZ0Dvjqi8GveuvVnufNI/iL3O9bWIiHhZzXgS5H4dHf4REwAAAgBAAAAIAAABACAAAAQAgL7QEwNGYCPiY2ffAAAAAElFTkSuQmCC"/>
+  <image class="shot" x="292" y="8" width="256" height="320" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACgCAIAAABL8POqAAACAklEQVR42u3YLUsDARjA8UexCpYVD/wAgh9AxCKYlkwuCppMDmFYVKbFIjPZ1jWIaWliGX6CidEgaBauGgw35zgcBr0T5PdP9zI2eH6714nG+WPo75o0AgAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAD6cVO/+3W7C/u5LSs7UxFxe/aW237aPzb9iJhonD8W+gML03cR0U+XzLqMI2C0TrsZEZ3B2k1EVDcPTbwMgGz0F2tPue21dhND4RfhTru5UUnH7d2opBmPCgHITb92PZdbYFDeNSDZvuptx/JqPSJ63VZExHXdxEt6DrjfWswWet3WYPojG1XIbehebSZbyP714xp6nFy8AijkFNTrtl7mD77cNftwZOheRfzTI2D0zHMZ099+xgNBga8iOu3m5XPeYD1JDb2kU1B183A9SU3/z46A4R1RdjUeXnvd+ZT0IPZ5rk8iIuJj1UFQ9utouQ0FIAAABACAAAAQAAACAEAAAAgAAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAPyH3gHI1mAjg7XiEAAAAABJRU5ErkJggg=="/>
+  <image class="shot" x="578" y="8" width="256" height="320" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACgCAIAAABL8POqAAAB8UlEQVR42u3YL0sDcRjA8UexCpYVB74AYS9AxCKYlkwuCpqWFGFYdKjFIjPZ7C7I0tLEMnwFE6NB0CxcNRhOx3H4p+xOkM833e6Wns/u97vbVOviMfR3TRsBAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAIAAABACAAAAQAAACAEAAAAgAAAEAAEAAAAgAAAEAIAAABACAAABQGc0YwcTbqx3kzqzuzETE7flb7vzZ6GSqdfFoZEVXm72LiFGy7A4ou/7lUUT0Pz7dRER9qw2gvNFfrT/lzjcuj7IMNuGipr9ZSb67ullJUh4AZUy/0VvIHWQNLEHFVm1eD5uxsrYbEcNBJyKit+s9oKTut5fSg+Gg8zH9zMk0j6ETbr8xlx6kv/rvGntYgopqOOi8LB5+eWn+4dgS5K+If1p25enG7K/fsQcU+zzafc4bbFST7MuwJajA6lvtjWryw/TdASU9EaW78XjvPb16tQeUux9UIyLi82P2JngHNIla7eqmmE8AAAAASUVORK5CYII="/>
+  <g fill="none" stroke="#3b4166" stroke-width="2">
+    <rect x="6" y="8" width="256" height="320"/><rect x="292" y="8" width="256" height="320"/><rect x="578" y="8" width="256" height="320"/>
+  </g>
+  <g font-size="13" fill="#e8f0ff" text-anchor="middle">
+    <text x="134" y="354">起動したところ</text>
+    <text x="420" y="354">左上へ 1 秒</text>
+    <text x="706" y="354">右下の角で止まる</text>
+  </g>
+</svg>
+</div>
+<figcaption>本物の Pyxel で撮った画面（2 倍に拡大）。機体の絵は見本で、ご自身で描いたものになります</figcaption>
+</figure>
+
+<div class="note">
+  <b>このフェーズで作るファイル</b>
+  <code>step3/</code> フォルダを作り、その中に次の 2 つを置きます。
+  <b>フォルダとファイルはご自身で作ってください。</b>
+  <pre><code>step3/
+├── shooter.py       これから書くコード
+└── shooter.pyxres   リソースエディタで作る絵</code></pre>
+  ゲームの名前（ウィンドウの上に出る <code>Wanko Sky</code>）は仮です。タイトル画面を作るフェーズ 15 で決めなおせます。
+</div>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-screen">1-1. 画面を縦長にする</h3>
+
+<p>
+<code>pyxel.init()</code> の最初の 2 つは<b>横の幅、縦の高さ</b>の順です。
+step1・step2 は <code>160, 120</code>（横長）でしたが、今回は <b><code>128, 160</code></b> と<b>縦を長く</b>します。
+縦スクロールのシューティングでは、<b>上から来る敵や弾が早く見えるほど</b>よけやすくなるからです。
+</p>
+
+<p>
+この大きさなら、スマホの縦向きで開いたときも、画面の下に出るパッドとゲーム画面が重なりません
+（<a href="./#goal">step3 概要</a>で実測）。パソコンでは、ウィンドウが縦長で開きます。
+</p>
+
+<pre><code>pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Wanko Sky", quit_key=pyxel.KEY_NONE)</code></pre>
+
+<p>
+<code>quit_key=pyxel.KEY_NONE</code> は、step2 の最後に足した「<b>ESC で終わらない</b>」指定です
+（<a href="../step2/phase12.html#idea-esc">step2 フェーズ 12 の 1-3</a>）。
+Web で公開するとき困らないように、<b>今回ははじめから入れておきます</b>。ウィンドウはいつも右上の × で閉じます。
+</p>
+
+<h3 id="idea-sprite">1-2. 機体は 16×16 を 2 コマ。まわりは黒のまま</h3>
+
+<p>
+機体の絵は <b>16×16 ドット</b>です（step2 の主人公は 8×8 でした）。
+プロペラが回って見えるように、<b>プロペラだけがちがう絵を 2 枚</b>用意して、交互に出します。
+</p>
+
+<figure id="sprite">
+<div class="fig-box">
+<svg viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="見本の機体の絵。左の 2 枚はリソースエディタでの見え方で、まわりは黒。コマ A はプロペラが横に長く、コマ B は短い。右はゲームでの見え方で、黒いところが透明になり、空の色が見える">
+  <text x="20" y="22" fill="#9aa4c4" font-size="12">エディタでの見え方（まわりは黒のまま）</text>
+  <image class="shot" x="20" y="36" width="160" height="160" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAA3UlEQVR42mNkYGB4eTiaARU4FbAwMDDsm/AHTVzcdikDVrB48eLFixdjlWJE42sbx6OJXD27EJnLgqZ0ReAjNA0RDPHI2pjgqhNEPzPgAAmin+E2M2Gqjlgvh8ZA1sOCZph01trDWQy2roUMDAyHd/czMDAwrC9EVsCEzLmSYglhHN7dD1WNJAgNpXfv3kFYEFNxAbh+hAYGBoZnWnVYVUtda8LuJGIAI3JMrXzKi1VRuPRn7DGtbRyPqSdc+jNyZDOhpQJkwzBVo9sADwCI7+F+FRISwukkrH5AtgQA/qRQeR0BHo4AAAAASUVORK5CYII="/>
+  <image class="shot" x="210" y="36" width="160" height="160" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAA2ElEQVR42mNkwAAvD0c7FbAwMDDsm/BH3HYpAzFg8eLFixcvxirFiMbXNo5HE7l6diEylwVN6YrAR2gaIhjikbUxwVUniH7G5cIE0c9wm5kwVUesl0NjIOthQTNMOmvt4SwGW9dCBgaGw7v7GRgYGNYXIitgQuZcSbGEMA7v7oeqRhKEhtK7d+8gLIipuABcP0IDAwPDM606rKqlrjVhdxIxgBE5plY+5cWqKFz6M/aY1jaOx9QTLv0ZObKZ0FIBsmGYqtFtgAcAxPdwvwoJCeF0ElY/IFsCAO7SUHkIlHRFAAAAAElFTkSuQmCC"/>
+  <g stroke="#3b4166" stroke-width="1" fill="none">
+    <rect x="20" y="36" width="160" height="160"/><rect x="210" y="36" width="160" height="160"/>
+  </g>
+  <!-- ちがうのは 1 段目だけ -->
+  <rect x="20" y="36" width="160" height="10" fill="none" stroke="#ffcc44" stroke-width="2"/>
+  <rect x="210" y="36" width="160" height="10" fill="none" stroke="#ffcc44" stroke-width="2"/>
+  <g font-size="12" text-anchor="middle">
+    <text x="100" y="216" fill="#e8f0ff">コマ A（u=0, v=0）</text>
+    <text x="290" y="216" fill="#e8f0ff">コマ B（u=16, v=0）</text>
+  </g>
+  <text x="195" y="244" fill="#ffcc44" font-size="12" text-anchor="middle">ちがうのは、いちばん上の段（プロペラ）だけ</text>
+
+  <g stroke="#9aa4c4" stroke-width="2" fill="none">
+    <path d="M384 116 L446 116"/><path d="M440 110 l6 6 -6 6" fill="#9aa4c4"/>
+  </g>
+  <text x="415" y="104" fill="#9aa4c4" font-size="11" text-anchor="middle">blt で</text>
+  <text x="415" y="138" fill="#9aa4c4" font-size="11" text-anchor="middle">黒を透明に</text>
+
+  <text x="460" y="22" fill="#9aa4c4" font-size="12">ゲームでの見え方</text>
+  <image class="shot" x="460" y="36" width="160" height="160" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAA+klEQVR42mMsm3avWLeWARU4FbAwMDDsm/AHTbz3cjNj2bR7DBhAl/coAwPD5c/WmFIsaPytcxsZGBi2Qnl7GBgYvJPrsWuAKF0R+AjNiIi5jcjamOCqE0Q/M+AACaKfIcZBNaCpjlgvh8ZA1oPuB+mstYezGGxdCxkYGA7v7mdgYGBYX4isgAmZcyXFEsI4vLsfqhpJEAIY3717B2FBTMUF4PoRGhgYGJ5p1WFVLXWtCbuTiAGM2sbxcM7Kp7xYFYVLI8IQJWlsnduIqSdc+jNyZKM4yTu5HtkwTNXoNlRECCD7Hu7XjhUfsCc+RMhKMzAwMDDAuMiWAADULVuj79QZ7AAAAABJRU5ErkJggg=="/>
+  <rect x="460" y="36" width="160" height="160" fill="none" stroke="#3b4166" stroke-width="1"/>
+  <text x="540" y="216" fill="#e8f0ff" font-size="12" text-anchor="middle">黒のところに空が見える</text>
+</svg>
+</div>
+<figcaption>見本の絵（1 ドットを 10 倍に拡大）。顔や色は自由に描いてかまいません</figcaption>
+</figure>
+
+<p>
+描くときの約束は 3 つです。
+</p>
+
+<ol>
+  <li><b>16×16 からはみ出さない</b>（となりのコマに入ると、その絵が混ざって出ます）</li>
+  <li><b>まわり（透明にしたいところ）は、黒のまま</b>にしておく。エディタの何も描いていないところは、はじめから黒です</li>
+  <li><b>黒く見せたいところ（目・鼻・輪郭）は、紺（色番号 1）で描く</b></li>
+</ol>
+
+<p>
+<code>blt()</code> の最後に渡す色（<code>colkey</code>）は「<b>この 1 色だけは描かない</b>」という意味でした。
+step2 では、主人公の目を黒で描いたら<b>目まで透明になった</b>ので、まわりを灰色で塗って灰色を透明にしました
+（<a href="../memo/#colkey">備忘録</a>）。
+今回はその逆で、<b>まわりは黒のまま・黒は使わない</b>と決めます。まわりを塗る手間がなく、
+空の上では紺の輪郭のほうがやわらかく見えます。この決まりは、このあと描く敵やふうせんにも使います。
+</p>
+
+<pre><code>COLKEY = pyxel.COLOR_BLACK      # 透明にする色。黒く見せたいところは紺で描く</code></pre>
+
+<h3 id="idea-bank">1-3. 絵の置き場所を、先に決めておく</h3>
+
+<p>
+step2 で学んだとおり、<b>イメージバンクのどこに描くかが、そのままコードの数字になります</b>。
+step3 は描く絵がとても多いので、<b>大まかな区画を先に決めておきます</b>。
+このフェーズで描くのは、左上の 2 コマだけです。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 680 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="イメージバンク 0 の区画の予定。v=0 の段の左に機体のコマ A と B。その右は自機の弾などの予定。v=16 から下の段は敵や爆発の予定。下半分は背景のタイルの予定">
+  <text x="20" y="22" fill="#e8f0ff" font-size="13">イメージバンク 0 の左上（実線＝このフェーズで描く／点線＝あとのフェーズの予定）</text>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="middle">
+    <text x="104" y="48">u=0</text><text x="152" y="48">u=16</text><text x="200" y="48">u=32</text>
+    <text x="248" y="48">u=48</text><text x="296" y="48">u=64</text>
+  </g>
+  <g fill="#9aa4c4" font-family="Consolas, monospace" font-size="11" text-anchor="end">
+    <text x="74" y="84">v=0</text><text x="74" y="132">v=16</text><text x="74" y="180">v=32</text><text x="74" y="228">v=48</text>
+  </g>
+  <rect x="80" y="56" width="384" height="192" fill="#10121c" stroke="#3b4166"/>
+  <!-- 16 ドットごとの線 -->
+  <path d="M128 56 v192 M176 56 v192 M224 56 v192 M272 56 v192 M320 56 v192 M368 56 v192 M416 56 v192
+           M80 104 h384 M80 152 h384 M80 200 h384" stroke="#1b1f33" stroke-width="1"/>
+  <!-- このフェーズ -->
+  <image class="shot" x="80" y="56" width="48" height="48" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAA3UlEQVR42mNkYGB4eTiaARU4FbAwMDDsm/AHTVzcdikDVrB48eLFixdjlWJE42sbx6OJXD27EJnLgqZ0ReAjNA0RDPHI2pjgqhNEPzPgAAmin+E2M2Gqjlgvh8ZA1sOCZph01trDWQy2roUMDAyHd/czMDAwrC9EVsCEzLmSYglhHN7dD1WNJAgNpXfv3kFYEFNxAbh+hAYGBoZnWnVYVUtda8LuJGIAI3JMrXzKi1VRuPRn7DGtbRyPqSdc+jNyZDOhpQJkwzBVo9sADwCI7+F+FRISwukkrH5AtgQA/qRQeR0BHo4AAAAASUVORK5CYII="/>
+  <image class="shot" x="128" y="56" width="48" height="48" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAA2ElEQVR42mNkwAAvD0c7FbAwMDDsm/BH3HYpAzFg8eLFixcvxirFiMbXNo5HE7l6diEylwVN6YrAR2gaIhjikbUxwVUniH7G5cIE0c9wm5kwVUesl0NjIOthQTNMOmvt4SwGW9dCBgaGw7v7GRgYGNYXIitgQuZcSbGEMA7v7oeqRhKEhtK7d+8gLIipuABcP0IDAwPDM606rKqlrjVhdxIxgBE5plY+5cWqKFz6M/aY1jaOx9QTLv0ZObKZ0FIBsmGYqtFtgAcAxPdwvwoJCeF0ElY/IFsCAO7SUHkIlHRFAAAAAElFTkSuQmCC"/>
+  <rect x="80" y="56" width="96" height="48" fill="none" stroke="#2ee6a8" stroke-width="2.5"/>
+  <!-- 予定 -->
+  <rect x="178" y="58" width="284" height="44" fill="#1b1f33" stroke="#9aa4c4" stroke-dasharray="4 3" opacity=".9"/>
+  <text x="320" y="84" fill="#9aa4c4" font-size="12" text-anchor="middle">自機の弾など（フェーズ 2〜）</text>
+  <rect x="82" y="106" width="380" height="140" fill="#1b1f33" stroke="#9aa4c4" stroke-dasharray="4 3" opacity=".9"/>
+  <text x="272" y="172" fill="#9aa4c4" font-size="12" text-anchor="middle">敵・爆発など（フェーズ 4〜）</text>
+  <text x="272" y="192" fill="#9aa4c4" font-size="11" text-anchor="middle">16×16 の升目に 1 枚ずつ</text>
+
+  <!-- 説明 -->
+  <g font-size="12">
+    <rect x="484" y="62" width="14" height="14" fill="none" stroke="#2ee6a8" stroke-width="2"/>
+    <text x="506" y="74" fill="#e8f0ff">機体 コマ A・B</text>
+    <text x="506" y="92" fill="#9aa4c4" font-size="11">（このフェーズ）</text>
+    <text x="484" y="140" fill="#e8f0ff">下半分（v=128 から下）</text>
+    <text x="484" y="158" fill="#9aa4c4" font-size="11">背景のタイル（フェーズ 3）</text>
+    <text x="484" y="210" fill="#e8f0ff">中ボス・ボスの大きな絵</text>
+    <text x="484" y="228" fill="#9aa4c4" font-size="11">右のほうの広いところ</text>
+    <text x="484" y="246" fill="#9aa4c4" font-size="11">（フェーズ 11・12）</text>
+  </g>
+  <text x="272" y="276" fill="#ffcc44" font-size="12" text-anchor="middle">このフェーズは左上の 2 コマだけ。ほかは空けておく</text>
+</svg>
+</div>
+<figcaption>コード側では、コマ A は <code>u=0</code>、コマ B は <code>u=16</code>（どちらも <code>v=0</code>）で切り出す</figcaption>
+</figure>
+
+<h3 id="idea-input">1-4. 入力は、step2 の「入力の組」をそのまま使う</h3>
+
+<p>
+step2 のフェーズ 11 で、キーボードのキーとスマホのボタンを<b>1 つのリストにまとめ</b>、
+<code>held()</code> で「どれか 1 つでも押されているか」を調べるようにしました。
+<b>今回はこれをはじめから使います</b>。このフェーズで要るのは、上下左右の 4 組と <code>held()</code> だけです。
+</p>
+
+<pre><code>INPUT_DOWN = [pyxel.KEY_DOWN, pyxel.KEY_S, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN]
+INPUT_UP = [pyxel.KEY_UP, pyxel.KEY_W, pyxel.GAMEPAD1_BUTTON_DPAD_UP]
+INPUT_LEFT = [pyxel.KEY_LEFT, pyxel.KEY_A, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT]
+INPUT_RIGHT = [pyxel.KEY_RIGHT, pyxel.KEY_D, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT]
+
+
+def held(inputs):
+    """inputs のどれかを、押しているあいだ True を返す（btn のまとめ版）"""
+    return any(pyxel.btn(i) for i in inputs)</code></pre>
+
+<p>
+倉庫番では、十字キーのななめ（上と右が同時）で<b>進まない</b>ようにしました。
+シューティングでは逆に、<b>ななめにも進みたい</b>ので、2 つ同時に押されたら両方の向きに動かします。
+スマホのパッドも、ななめのところを押すと 2 つのボタンが同時に押された扱いになるので、そのままななめに進めます。
+</p>
+
+<h3 id="idea-dir">1-5. まず「向き」だけを決め、あとで速さを掛ける</h3>
+
+<p>
+いきなり <code>self.player_x -= 1.5</code> と書かず、<b>どちらへ進むかを <code>dx</code>・<code>dy</code> に -1・0・1 で</b>決めます。
+速さを掛けるのはそのあとです。
+</p>
+
+<pre><code>        dx = 0
+        dy = 0
+        if held(INPUT_LEFT):
+            dx -= 1
+        if held(INPUT_RIGHT):
+            dx += 1
+        ...
+        self.player_x += dx * speed</code></pre>
+
+<p>
+こうしておくと、「<b>ななめかどうか</b>」が <code>dx</code> と <code>dy</code> を見るだけで分かります（次の 1-6）。
+左と右を同時に押したときは、<code>-1 + 1</code> で <code>dx</code> が 0 になり、<b>どちらにも動きません</b>。
+</p>
+
+<h3 id="idea-diagonal">1-6. ななめは、そのままだと速すぎる</h3>
+
+<p>
+速さを 1.5 にして、右と下を同時に押すと、1 フレームで<b>横に 1.5、縦に 1.5</b> 進みます。
+ところが実際に動いた距離は、正方形の対角線なので<b>約 2.12 ドット</b>——まっすぐのときの<b>約 1.4 倍</b>です。
+ななめに逃げるだけで速くなってしまうので、<b>ななめのときだけ速さに 0.7 を掛けます</b>。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 680 330" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="1 フレームで進む先の図。まっすぐなら半径 1.5 の円の上に届く。ななめでそのまま 1.5 ずつ足すと円の外の角まで行き、距離は 2.12。0.7 を掛けると 1.05 ずつで、円の上（距離 1.48）に届く">
+  <style>.dg { font-size: 12px; fill: #9aa4c4; } .dc { font: 12.5px Consolas, monospace; }</style>
+  <!-- 1 ドット = 80px。中心 (170, 160) -->
+  <circle cx="170" cy="160" r="120" fill="none" stroke="#3b4166" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <rect x="50" y="40" width="240" height="240" fill="none" stroke="#232840" stroke-width="1"/>
+  <!-- 8 方向の行き先（0.7 を掛けたあと） -->
+  <g fill="#2ee6a8">
+    <circle cx="290" cy="160" r="5"/><circle cx="50" cy="160" r="5"/><circle cx="170" cy="40" r="5"/><circle cx="170" cy="280" r="5"/>
+    <circle cx="254" cy="244" r="5"/><circle cx="86" cy="244" r="5"/><circle cx="86" cy="76" r="5"/><circle cx="254" cy="76" r="5"/>
+  </g>
+  <!-- そのままのななめ（角） -->
+  <g fill="#ff6b97"><circle cx="290" cy="280" r="6"/></g>
+  <path d="M170 160 L284 274" stroke="#ff6b97" stroke-width="2.5" stroke-dasharray="6 4"/>
+  <path d="M170 160 L250 240" stroke="#2ee6a8" stroke-width="3"/>
+  <path d="M170 160 L284 160" stroke="#e8f0ff" stroke-width="2.5"/>
+  <circle cx="170" cy="160" r="8" fill="#ffcc44"/>
+  <text x="170" y="138" fill="#ffcc44" font-size="12" text-anchor="middle">いまの位置</text>
+
+  <!-- 説明 -->
+  <g>
+    <circle cx="350" cy="70" r="5" fill="#e8f0ff"/>
+    <text x="366" y="66" class="dc" fill="#e8f0ff">→ だけ：横 1.5</text>
+    <text x="366" y="84" class="dg">進む距離 1.5</text>
+
+    <circle cx="350" cy="140" r="6" fill="#ff6b97"/>
+    <text x="366" y="136" class="dc" fill="#ff6b97">↘ そのまま：横 1.5・縦 1.5</text>
+    <text x="366" y="154" class="dg">進む距離 約 2.12（円の外の角まで行く）</text>
+
+    <circle cx="350" cy="210" r="5" fill="#2ee6a8"/>
+    <text x="366" y="206" class="dc" fill="#2ee6a8">↘ 0.7 を掛ける：横 1.05・縦 1.05</text>
+    <text x="366" y="224" class="dg">進む距離 約 1.48（円の上にそろう）</text>
+
+    <text x="350" y="278" class="dg">点線の円＝どの向きにも 1.5 進んだときの行き先</text>
+  </g>
+</svg>
+</div>
+<figcaption>0.7 を掛けると、8 方向の行き先がほぼ同じ円の上にそろう</figcaption>
+</figure>
+
+<div class="term">
+  <b>0.7 はどこから来たのか</b>
+  1 辺が 1 の正方形の対角線は √2（約 1.414）です。ななめの距離を 1 にもどすには、
+  横と縦をそれぞれ <b>1 ÷ 1.414 ≒ 0.707</b> 倍にすればよい、というわけです。
+  ゲームでは 0.7 で十分で、10 フレームで比べると、まっすぐ 15 ドット・ななめ 14.8 ドットとほぼそろいます（実測）。
+</div>
+
+<h3 id="idea-clamp">1-7. 画面の外へ出さない（<code>min</code> と <code>max</code>）</h3>
+
+<p>
+<code>self.player_x</code>・<code>self.player_y</code> は、<b>機体の絵の左上</b>の位置です。
+左端・上端はどちらも 0 ですが、右端は <code>128</code> ではなく <b><code>128 - 16 = 112</code></b> です。
+左上が 112 のとき、絵の右はしがちょうど画面の右はし（128）に来るからです。下も同じで <b><code>160 - 16 = 144</code></b> です。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 660 330" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="画面 128×160 の中で、機体の左上が動ける範囲は横 0 から 112、縦 0 から 144。右下の角にいる機体は、左上が (112, 144) で、絵の右下がちょうど画面の角に来る">
+  <style>.cl { font-size: 12px; fill: #9aa4c4; } .cc { font: 12.5px Consolas, monospace; }</style>
+  <!-- 1 ドット = 1.6px。画面 (40,30) から 204.8×256 -->
+  <rect x="40" y="30" width="204.8" height="256" fill="#7696DE" stroke="#3b4166" stroke-width="2"/>
+  <!-- 左上が動ける範囲 0..112 × 0..144 -->
+  <rect x="40" y="30" width="179.2" height="230.4" fill="#2ee6a8" opacity=".18"/>
+  <rect x="40" y="30" width="179.2" height="230.4" fill="none" stroke="#2ee6a8" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <!-- 右下の機体 -->
+  <image class="shot" x="219.2" y="260.4" width="25.6" height="25.6" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAA+klEQVR42mMsm3avWLeWARU4FbAwMDDsm/AHTbz3cjNj2bR7DBhAl/coAwPD5c/WmFIsaPytcxsZGBi2Qnl7GBgYvJPrsWuAKF0R+AjNiIi5jcjamOCqE0Q/M+AACaKfIcZBNaCpjlgvh8ZA1oPuB+mstYezGGxdCxkYGA7v7mdgYGBYX4isgAmZcyXFEsI4vLsfqhpJEAIY3717B2FBTMUF4PoRGhgYGJ5p1WFVLXWtCbuTiAGM2sbxcM7Kp7xYFYVLI8IQJWlsnduIqSdc+jNyZKM4yTu5HtkwTNXoNlRECCD7Hu7XjhUfsCc+RMhKMzAwMDDAuMiWAADULVuj79QZ7AAAAABJRU5ErkJggg=="/>
+  <rect x="219.2" y="260.4" width="25.6" height="25.6" fill="none" stroke="#ffcc44" stroke-width="1.5"/>
+  <circle cx="219.2" cy="260.4" r="4" fill="#ffcc44"/>
+  <path d="M219.2 260.4 L300 220" stroke="#ffcc44" stroke-width="1"/>
+  <text x="304" y="216" class="cc" fill="#ffcc44">左上 = (112, 144)</text>
+  <text x="304" y="234" class="cl">絵の右下が、画面の角にぴったり</text>
+
+  <!-- 目盛り -->
+  <g class="cl">
+    <text x="40" y="22" text-anchor="middle">0</text>
+    <text x="219" y="22" text-anchor="middle">112</text>
+    <text x="245" y="22" text-anchor="start">128</text>
+    <text x="34" y="34" text-anchor="end">0</text>
+    <text x="34" y="264" text-anchor="end">144</text>
+    <text x="34" y="290" text-anchor="end">160</text>
+  </g>
+  <path d="M219.2 26 V30" stroke="#9aa4c4"/>
+
+  <text x="304" y="70" class="cl">緑の範囲＝機体の左上が動ける場所</text>
+  <text x="304" y="100" class="cc" fill="#2ee6a8">0 ≦ player_x ≦ 128 - 16</text>
+  <text x="304" y="122" class="cc" fill="#2ee6a8">0 ≦ player_y ≦ 160 - 16</text>
+  <text x="304" y="160" class="cl">これを 1 行で書くと</text>
+  <text x="304" y="182" class="cc" fill="#e8f0ff">max(0, min(x, 112))</text>
+</svg>
+</div>
+<figcaption>右と下は、絵の大きさ（16）のぶんだけ手前で止める</figcaption>
+</figure>
+
+<p>
+「0 より小さければ 0、112 より大きければ 112」を、Python の <code>min()</code>（小さいほう）と <code>max()</code>（大きいほう）で 1 行に書きます。
+読み方は 6-3 で説明します。
+</p>
+
+<pre><code>        self.player_x = max(0, min(self.player_x, SCREEN_WIDTH - PLAYER_SIZE))
+        self.player_y = max(0, min(self.player_y, SCREEN_HEIGHT - PLAYER_SIZE))</code></pre>
+
+<h3 id="idea-propeller">1-8. プロペラは、2 フレームごとに絵を入れかえる</h3>
+
+<p>
+<code>pyxel.frame_count</code>（起動してから何フレーム目か）を使い、<b>コマ A を 2 フレーム → コマ B を 2 フレーム</b>とくり返します。
+</p>
+
+<pre><code>        frame = pyxel.frame_count // PROPELLER_FRAMES % 2     # 0 と 1 をくり返す</code></pre>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th><code>frame_count</code></th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead>
+  <tbody>
+    <tr><td><code>// 2</code></td><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>2</td><td>3</td><td>3</td></tr>
+    <tr><td><code>% 2</code>（＝ <code>frame</code>）</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+    <tr><td>出す絵</td><td>A</td><td>A</td><td>B</td><td>B</td><td>A</td><td>A</td><td>B</td><td>B</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+<code>frame</code> が 0 なら <code>u = 0</code>（コマ A）、1 なら <code>u = 16</code>（コマ B）です。
+<code>frame * PLAYER_SIZE</code> でこの数が出ます。1 秒に 30 フレームなので、プロペラは 1 秒に 7〜8 回まわって見えます。
+</p>
+
+<h2>2. このフェーズで使う機能</h2>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>機能</th><th>使い方</th></tr></thead>
+  <tbody>
+    <tr><td><code>pyxel.init(w, h, title=…, quit_key=…)</code></td><td>画面を作る。<b>横・縦の順</b>。<code>quit_key=pyxel.KEY_NONE</code> で ESC で終わらない（step2 の復習）</td></tr>
+    <tr><td><code>pyxel.load("shooter.pyxres")</code></td><td>絵を読み込む。<code>shooter.py</code> と<b>同じフォルダ</b>に置く</td></tr>
+    <tr><td><code>pyxel.blt(x, y, 0, u, v, w, h, colkey)</code></td><td>イメージバンク 0 の <code>(u, v)</code> から <code>w×h</code> を切り出して <code>(x, y)</code> に描く。
+      <code>colkey</code> の色は描かない。<b><code>x</code>・<code>y</code> は小数でもよい</b>（<a href="../memo/#float-coord">備忘録</a>）</td></tr>
+    <tr><td><code>pyxel.frame_count</code></td><td>起動してから何フレーム目か。絵の入れかえに使う</td></tr>
+    <tr><td><code>held(inputs)</code></td><td>自分で作った関数。リストのどれかが押されているあいだ <code>True</code>（step2 の復習）</td></tr>
+    <tr><td><code>min(a, b)</code> ／ <code>max(a, b)</code></td><td>Python に最初からある関数。小さいほう／大きいほうを返す</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>3. 手順</h2>
+
+<h3 id="step-edit">3-1. フォルダを作り、エディタを開く</h3>
+
+<p>
+リポジトリのいちばん上に <code>step3</code> フォルダを作ったら、その中で次を実行します。
+</p>
+
+<pre><code>cd step3
+pyxel edit shooter.pyxres</code></pre>
+
+<h3 id="step-draw">3-2. コマ A を描く</h3>
+
+<p>
+イメージバンク 0 の<b>左上の 16×16</b>（<code>u=0〜15</code>・<code>v=0〜15</code>）に、機体を描きます。
+<a href="#sprite">見本</a>と同じでなくてかまいません。
+</p>
+
+<div class="term">
+  <b>描くときのコツ</b>
+  <ul>
+    <li><b>いちばん上の段はプロペラ用に空けておく</b>。ここだけをコマ B で変えます</li>
+    <li><b>顔を大きく</b>。16×16 でも、目・鼻・耳があればワンコに見えます。見本は柴犬ふうに、頭をオレンジ（9）、
+      耳を茶（4）、口のまわりを白（7）、目と鼻を紺（1）にしました</li>
+    <li><b>羽は左右いっぱいに</b>。横に広い形にすると、上から見た飛行機らしくなります</li>
+    <li><b>空の水色（12）と、うすい青（6）は、機体に使わない</b>。空にまぎれて見えなくなります</li>
+    <li><b>黒（0）は使わない</b>（<a href="#idea-sprite">1-2</a>）。暗いところは紺（1）で</li>
+  </ul>
+</div>
+
+<h3 id="step-copy">3-3. コマ B を作る</h3>
+
+<p>
+コマ A を<b>範囲選択してコピーし、すぐ右（<code>u=16</code>）に貼り付け</b>ます（step2 で歩くアニメの 2 コマ目を作ったときと同じ）。
+貼り付けたら、<b>いちばん上の段のプロペラだけ</b>を描きかえます。見本は、横に長い羽（コマ A）と、短い羽（コマ B）です。
+</p>
+
+<div class="warn">
+  <b>プロペラ以外は 1 ドットも変えない</b>
+  2 枚は 2 フレームごとに入れかわります。顔や羽が 1 ドットでもずれていると、<b>機体全体がぶるぶる震えて</b>見えます。
+</div>
+
+<h3 id="step-save">3-4. 保存して閉じる</h3>
+
+<p>
+<code>Ctrl</code> + <code>S</code> で保存し、<code>Esc</code> でエディタを閉じます。
+<code>step3</code> フォルダに <code>shooter.pyxres</code> ができていれば完了です。
+</p>
+
+<h2>4. コード</h2>
+
+<p>
+<code>step3/shooter.py</code> に次を入力してください。
+入力の組と <code>held()</code> は、step2 の <code>sokoban.py</code> と同じです。
+</p>
+
+<pre><code># shooter.py
+# step3 フェーズ1：縦長の画面に、ワンコの機体を出して動かす
+
+import pyxel
+
+SCREEN_WIDTH = 128
+SCREEN_HEIGHT = 160
+
+COLKEY = pyxel.COLOR_BLACK      # 透明にする色。黒く見せたいところは紺で描く
+
+PLAYER_SIZE = 16                # 機体の絵の大きさ（16×16）
+PLAYER_SPEED = 1.5              # 1 フレームに進むドット数（小数でよい）
+DIAGONAL = 0.7                  # ななめに進むときに速さに掛ける数
+PROPELLER_FRAMES = 2            # プロペラの絵を何フレームごとに替えるか
+
+# 入力の組。キーボードのキーと、スマホに出るボタン（仮想ゲームパッド）
+INPUT_DOWN = [pyxel.KEY_DOWN, pyxel.KEY_S, pyxel.GAMEPAD1_BUTTON_DPAD_DOWN]
+INPUT_UP = [pyxel.KEY_UP, pyxel.KEY_W, pyxel.GAMEPAD1_BUTTON_DPAD_UP]
+INPUT_LEFT = [pyxel.KEY_LEFT, pyxel.KEY_A, pyxel.GAMEPAD1_BUTTON_DPAD_LEFT]
+INPUT_RIGHT = [pyxel.KEY_RIGHT, pyxel.KEY_D, pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT]
+
+
+def held(inputs):
+    """inputs のどれかを、押しているあいだ True を返す（btn のまとめ版）"""
+    return any(pyxel.btn(i) for i in inputs)
+
+
+class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Wanko Sky", quit_key=pyxel.KEY_NONE)
+        pyxel.load("shooter.pyxres")
+        # 機体は、左右のまんなか・画面の下のほうから始める
+        self.player_x = (SCREEN_WIDTH - PLAYER_SIZE) / 2
+        self.player_y = SCREEN_HEIGHT - PLAYER_SIZE - 16
+        pyxel.run(self.update, self.draw)
+
+    def update(self):
+        """フレーム毎の更新処理"""
+        self.update_player()
+
+    def update_player(self):
+        """矢印キー（十字キー）で機体を動かす。画面の外へは出さない"""
+        # まず、どちらへ進むかだけを決める（-1・0・1）
+        dx = 0
+        dy = 0
+        if held(INPUT_LEFT):
+            dx -= 1
+        if held(INPUT_RIGHT):
+            dx += 1
+        if held(INPUT_UP):
+            dy -= 1
+        if held(INPUT_DOWN):
+            dy += 1
+
+        # ななめのときは、少し遅くして速さをそろえる
+        speed = PLAYER_SPEED
+        if dx != 0 and dy != 0:
+            speed = PLAYER_SPEED * DIAGONAL
+
+        self.player_x += dx * speed
+        self.player_y += dy * speed
+
+        # 画面の枠の中に収める
+        self.player_x = max(0, min(self.player_x, SCREEN_WIDTH - PLAYER_SIZE))
+        self.player_y = max(0, min(self.player_y, SCREEN_HEIGHT - PLAYER_SIZE))
+
+    def draw(self):
+        """描画処理"""
+        pyxel.cls(pyxel.COLOR_CYAN)
+        self.draw_player()
+
+    def draw_player(self):
+        """機体を描く。プロペラの絵 2 枚を交互に出して、回って見せる"""
+        frame = pyxel.frame_count // PROPELLER_FRAMES % 2     # 0 と 1 をくり返す
+        pyxel.blt(self.player_x, self.player_y, 0, frame * PLAYER_SIZE, 0,
+                  PLAYER_SIZE, PLAYER_SIZE, COLKEY)
+
+
+App()</code></pre>
+
+<h2>5. 実行する</h2>
+
+<pre><code>cd step3
+python shooter.py</code></pre>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>　</th><th>すること</th><th>こうなれば OK</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>起動する</td><td><b>縦長の水色の画面</b>の、下のまんなかに機体。<b>プロペラが回っている</b></td></tr>
+    <tr><td>2</td><td>矢印キー（または <code>W</code> <code>A</code> <code>S</code> <code>D</code>）で上下左右</td><td>押しているあいだ、なめらかに動く</td></tr>
+    <tr><td>3</td><td>2 つ同時に押して、ななめ</td><td>ななめに動く。<b>まっすぐのときと同じくらいの速さ</b></td></tr>
+    <tr><td>4</td><td>4 つの辺・4 つの角まで動かす</td><td><b>絵がはみ出さずに止まる</b></td></tr>
+    <tr><td>5</td><td><code>ESC</code></td><td><b>閉じない</b>。右上の × で閉じる</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <b>スマホでも確かめたいとき（やらなくてもよい）</b>
+  <a href="../step2/phase11.html#run-browser">step2 フェーズ 11 の 5-2</a> と同じ手順で、ためしに Web 版にできます。
+  名前を step3 に読みかえて、<code>pyxel package step3 step3/shooter.py</code> → <code>pyxel app2html step3.pyxapp</code> です。
+  パソコンの Chrome でデバイスモードにするときは、<code>CLICK TO START</code> を押す前に開発者ツールを開いてください
+  （ゲームが動きだすと <code>F12</code> が効きません。<a href="../memo/#web-devtools">備忘録</a>）。
+  ためしに作った <code>step3.html</code> は、確かめたら消しておきます。
+</div>
+
+<h2>6. コードの解説</h2>
+
+<h3>6-1. <code>dx</code>・<code>dy</code> は「どちらへ」だけを持つ</h3>
+
+<p>
+<code>dx</code> と <code>dy</code> に入るのは <b>-1・0・1</b> のどれかだけです。
+「どれだけ進むか」は <code>speed</code> が受け持ち、最後に <code>dx * speed</code> で合わせます。
+</p>
+
+<pre><code>        speed = PLAYER_SPEED
+        if dx != 0 and dy != 0:
+            speed = PLAYER_SPEED * DIAGONAL</code></pre>
+
+<p>
+「<code>dx</code> も <code>dy</code> も 0 でない」が<b>ななめ</b>です。
+<code>and</code> を <code>or</code> と書くと、<b>まっすぐのときまで</b>遅くなってしまいます（7 で実測）。
+向きと速さを分けておいたおかげで、この判断が 1 行で書けています。
+</p>
+
+<h3>6-2. 位置は小数のまま持つ</h3>
+
+<p>
+1 フレームに 1.5 ドット進むので、<code>self.player_x</code> は <code>56.0</code> → <code>57.5</code> → <code>59.0</code> … と<b>小数</b>になります。
+はじめの位置も <code>(128 - 16) / 2</code> で <code>56.0</code> です（<code>/</code> の答えはいつも小数）。
+<code>pyxel.blt()</code> は小数を受け取ると、<b>いちばん近いドットに四捨五入した位置</b>に描きます。
+位置そのものは小数のまま持っておくので、<b>1.5 ドットずつ、ちゃんと進みます</b>（<a href="../memo/#float-coord">備忘録</a>）。
+</p>
+
+<h3>6-3. <code>max(0, min(x, 112))</code> は内側から読む</h3>
+
+<p>
+かっこの<b>内側から</b>読みます。まず <code>min(x, 112)</code> で「<b>112 より大きければ 112</b>」、
+その答えを <code>max(0, …)</code> に渡して「<b>0 より小さければ 0</b>」です。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th><code>x</code></th><th><code>min(x, 112)</code></th><th><code>max(0, …)</code></th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><code>-1.5</code></td><td><code>-1.5</code></td><td><code>0</code></td><td>左へはみ出しかけた → 0 に戻す</td></tr>
+    <tr><td><code>50.0</code></td><td><code>50.0</code></td><td><code>50.0</code></td><td>枠の中 → そのまま</td></tr>
+    <tr><td><code>113.5</code></td><td><code>112</code></td><td><code>112</code></td><td>右へはみ出しかけた → 112 に戻す</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+<code>min</code> と <code>max</code> を逆にすると、<b>機体が左端に張りついて動かなく</b>なります（7 で実測）。
+「上の限りは <code>min</code>、下の限りは <code>max</code>」と覚えておきます。
+</p>
+
+<h3>6-4. <code>//</code> と <code>%</code> は、左から順に計算される</h3>
+
+<p>
+<code>pyxel.frame_count // PROPELLER_FRAMES % 2</code> は、<code>//</code> と <code>%</code> が<b>同じ強さ</b>なので、<b>左から</b>計算されます。
+つまり <code>(frame_count // 2) % 2</code> です（<a href="#idea-propeller">1-8 の表</a>）。
+順番を入れかえて <code>frame_count % 2 // 2</code> と書くと、答えがいつも 0 になり、<b>プロペラが止まって</b>見えます。
+</p>
+
+<h3>6-5. <code>update()</code> と <code>draw()</code> から、係に分けて呼ぶ</h3>
+
+<p>
+いまは機体しかないので、<code>update()</code> の中身は <code>self.update_player()</code> の 1 行だけです。
+わざわざ分けたのは、このあと<b>弾・敵・ふうせん……と係が増えていく</b>からです。
+</p>
+
+<pre><code>    def update(self):
+        """フレーム毎の更新処理"""
+        self.update_player()
+        # フェーズ 2 から、ここに self.update_bullets() などが並んでいく</code></pre>
+
+<p>
+<code>update()</code> と <code>draw()</code> は「<b>係を順に呼ぶだけの目次</b>」にしておくと、
+ゲームが大きくなっても、どこに何が書いてあるか迷いません。
+</p>
+
+<h2>7. うまくいかないときは</h2>
+
+<p>
+多くは、書きまちがいを 1 つずつ入れたコードを本物の Pyxel で動かして、症状を確かめたものです。
+</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>症状</th><th>原因と対処</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>Exception: Failed to open file 'shooter.pyxres'</code></td>
+      <td><code>shooter.pyxres</code> が <code>shooter.py</code> と<b>同じフォルダ</b>にありません。
+        <code>step3</code> に入らずに <code>pyxel edit</code> すると、リポジトリのいちばん上にできてしまいます。<code>step3</code> へ移してください</td>
+    </tr>
+    <tr>
+      <td>機体のまわりに<b>黒い四角</b>が出る</td>
+      <td><code>blt()</code> の最後の <code>COLKEY</code> が抜けています</td>
+    </tr>
+    <tr>
+      <td>目や輪郭のところだけ、<b>空の色が透けて</b>見える</td>
+      <td>そこを<b>黒（0）</b>で描いています。黒は透明になるので、紺（1）で描きなおしてください（<a href="#idea-sprite">1-2</a>）</td>
+    </tr>
+    <tr>
+      <td>機体が<b>チカチカ点滅</b>する（出たり消えたり）</td>
+      <td>コマ B が見つかっていません。<code>blt()</code> の <code>u</code> と <code>v</code> が逆
+        （<code>0, frame * PLAYER_SIZE</code>）だと、コマ B を<b>下の段</b>（何も描いていない所）から切り出し、
+        2 フレームおきに消えます。コマ B を <code>u=16</code> 以外に描いたときも同じです</td>
+    </tr>
+    <tr>
+      <td>機体が<b>ぶるぶる震える</b></td>
+      <td>コマ A と B で、プロペラ以外のドットがずれています（<a href="#step-copy">3-3</a>）</td>
+    </tr>
+    <tr>
+      <td>プロペラが<b>回らない</b></td>
+      <td><code>frame_count % PROPELLER_FRAMES // 2</code> と、<code>//</code> と <code>%</code> の順番が逆です（<a href="#idea-propeller">1-8</a>）。
+        コマ A と B が同じ絵のときも回りません</td>
+    </tr>
+    <tr>
+      <td>右端（または下端）まで行くと、<b>機体が画面から消える</b></td>
+      <td><code>min(self.player_x, SCREEN_WIDTH)</code> と、<code>- PLAYER_SIZE</code> が抜けています。
+        左上が 128 まで行けてしまい、絵がまるごと画面の外に出ます</td>
+    </tr>
+    <tr>
+      <td>起動すると<b>左端に張りついて</b>、左右に動かない</td>
+      <td><code>min(0, max(…))</code> と、<code>min</code> と <code>max</code> が逆です（<a href="#idea-clamp">1-7</a>）。答えがいつも 0 になります</td>
+    </tr>
+    <tr>
+      <td><b>まっすぐ進むのが遅い</b>（ななめと同じくらい）</td>
+      <td><code>if dx != 0 or dy != 0:</code> と、<code>and</code> が <code>or</code> になっています。10 フレームで 15 ドット進むはずが 10.5 ドットでした</td>
+    </tr>
+    <tr>
+      <td><b>ななめだけ速い</b></td>
+      <td>ななめのときに <code>DIAGONAL</code> を掛けていません。10 フレームで縦横 15 ドットずつ（約 21 ドット）進みます</td>
+    </tr>
+    <tr>
+      <td><code>↓</code> を押すと<b>上へ</b>行く</td>
+      <td><code>if held(INPUT_DOWN):</code> の下が <code>dy -= 1</code> になっています。下は <code>+= 1</code> です（y は下が大きい）</td>
+    </tr>
+    <tr>
+      <td>押した瞬間に<b>少し動くだけ</b>で、押しっぱなしでは進まない</td>
+      <td><code>held()</code> の中が <code>pyxel.btnp</code> になっています。<code>btnp</code> は押した瞬間だけ <code>True</code> です。<code>pyxel.btn</code> にします</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>8. 次のフェーズ</h2>
+
+<p>
+機体が飛べるようになりました。次のフェーズ 2 では<b>弾を撃ちます</b>。
+<code>Space</code>・<code>Z</code>・パッドの丸を<b>押しっぱなしにすると、決まった間隔で連射</b>します。
+</p>
+
+<div class="note">
+  <b>次に出てくる考え方</b>
+  弾は 1 発ずつクラスから作り、<b>リストに入れてまとめて動かし、画面の外へ出たら消します</b>。
+  step3 全体の骨組みになる形です。<a href="./#basics">step3 概要の土台 1</a> に目を通しておくと、理解が早くなります。
+</div>
+
+<footer class="site">
+  <a href="./">← step3 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
