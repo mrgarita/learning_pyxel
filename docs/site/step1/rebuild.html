@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>step1 公開版を作り直す ｜ learning_pyxel</title>
+<link rel="stylesheet" href="../style.css">
+<script src="../pagenav.js" defer></script>
+<style>
+  ol.steps li { margin: .35rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+  <h1><span class="mark">番外 </span>公開版を作り直す</h1>
+  <p>Candy Hunt の 2 本を、ESC でゲームが止まらないようにする</p>
+</header>
+
+<p class="crumb"><a href="../">トップページ</a> ／ <a href="./">step1 概要</a> ／ 公開版を作り直す</p>
+
+<h2>ゴール</h2>
+
+<p>
+公開している Candy Hunt の 2 本（<a target="_blank" href="candy_hunt.html">PC 版</a>・<a target="_blank" href="candy_hunt_mobile.html">スマホ版</a>）は、
+<b>遊んでいる途中で ESC を押すと、ゲームが止まります</b>。
+step2 の公開のときに見つけた問題です（<a href="../step2/phase12.html#idea-esc">step2 フェーズ 12 の 1-3</a>）。
+倉庫番と同じように直して、公開しなおします。
+</p>
+
+<p>ブラウザで 1 秒待ったあいだに、<code>pyxel.frame_count</code> がいくつ進んだかを測りました。</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>　</th><th>ESC を押す直前</th><th>押して 1 秒後</th><th>そのあと → を押す</th></tr></thead>
+  <tbody>
+    <tr><td>いまの公開版</td><td>103</td><td><b>104（止まった）</b></td><td>男の子は動かない</td></tr>
+    <tr><td>作り直した版</td><td>104</td><td><b>144（動いている）</b></td><td>右へ動く</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+直すコードは <b>2 本とも 1 行ずつ</b>です。手間がかかるのは公開版の HTML の作り直しのほうですが、
+<b>全画面ボタンを足し直さずにすむ方法</b>があるので、それを使います（<a href="#idea-one-line">1-2</a>）。
+</p>
+
+<h2>1. 考え方</h2>
+
+<h3 id="idea-quit-key">1-1. 直すのは <code>pyxel.init()</code> の 1 行</h3>
+
+<p>
+倉庫番と同じく、<code>pyxel.init()</code> に <code>quit_key=pyxel.KEY_NONE</code> を足します。
+「ESC で終わる」をやめる指定です。しくみとキーワード引数の説明は
+<a href="../step2/phase12.html#idea-esc">step2 フェーズ 12 の 1-3</a> にあります。
+</p>
+
+<pre><code>pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt", quit_key=pyxel.KEY_NONE)</code></pre>
+
+<h3 id="idea-one-line">1-2. 公開版の HTML で、ゲーム本体は 1 行だけ</h3>
+
+<p>
+<code>pyxel app2html</code> が作る HTML は 5 行しかなく、<b>ゲーム本体（<code>.pyxapp</code> を文字にしたもの）は
+<code>launchPyxel(</code> で始まる 1 行</b>に全部入っています。
+PC 版の <code>candy_hunt.html</code> は、その 5 行に<b>文字コードの 1 行と全画面ボタンを手で足したもの</b>です。
+</p>
+
+<p>
+つまり、ゲームを直して公開しなおすときは、<b><code>launchPyxel(</code> の 1 行だけを入れかえれば</b>、
+手で足した部分はそのまま残ります。
+</p>
+
+<figure>
+<div class="fig-box">
+<svg viewBox="0 0 720 330" role="img" aria-label="左は作り直した直後の step1.html で 5 行。右は公開中の candy_hunt.html で、2 行目の文字コードと 9 行目以降の全画面ボタンが手で足してある。左の 4 行目の launchPyxel の 1 行を、右の 5 行目と入れかえるだけでよいことを示す図">
+  <style>
+    .rb-h  { font: bold 13px var(--font-body); fill: var(--c-text); }
+    .rb-n  { font: 12px var(--font-code); fill: var(--c-text-dim); }
+    .rb-c  { font: 12px var(--font-code); fill: var(--c-text); }
+    .rb-g  { font: 12px var(--font-code); fill: var(--c-green); }
+    .rb-y  { font: 12px var(--font-body); fill: var(--c-accent); }
+    .rb-d  { font: 12px var(--font-body); fill: var(--c-text-dim); }
+  </style>
+
+  <!-- 左：作り直した直後 -->
+  <text class="rb-h" x="20" y="20">step1.html（作り直した直後）</text>
+  <rect x="20" y="32" width="270" height="134" rx="5" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="rb-n" x="32" y="56">1</text><text class="rb-c" x="52" y="56">&lt;!doctype html&gt;</text>
+  <text class="rb-n" x="32" y="80">2</text><text class="rb-c" x="52" y="80">&lt;script src="…pyxel.js"&gt;…</text>
+  <text class="rb-n" x="32" y="104">3</text><text class="rb-c" x="52" y="104">&lt;script&gt;</text>
+  <rect x="26" y="111" width="258" height="24" rx="3" fill="none" stroke="var(--c-green)" stroke-width="2"/>
+  <text class="rb-n" x="32" y="128">4</text><text class="rb-g" x="52" y="128">launchPyxel({ … "UEsDB…" });</text>
+  <text class="rb-n" x="32" y="152">5</text><text class="rb-c" x="52" y="152">&lt;/script&gt;</text>
+  <text class="rb-d" x="20" y="186">新しいゲーム本体が入っている</text>
+
+  <!-- 矢印 -->
+  <path d="M 290 123 C 330 123, 340 147, 384 147" stroke="var(--c-green)" stroke-width="2" fill="none"/>
+  <path d="M 376 141 L 386 147 L 376 153 Z" fill="var(--c-green)"/>
+  <text class="rb-y" x="337" y="112" text-anchor="middle">この 1 行だけ</text>
+
+  <!-- 右：公開中の candy_hunt.html -->
+  <text class="rb-h" x="390" y="20">candy_hunt.html（公開中）</text>
+  <rect x="390" y="32" width="310" height="270" rx="5" fill="var(--c-panel)" stroke="var(--c-line)"/>
+  <text class="rb-n" x="402" y="56">1</text><text class="rb-c" x="426" y="56">&lt;!doctype html&gt;</text>
+  <text class="rb-n" x="402" y="80">2</text><text class="rb-c" x="426" y="80">&lt;meta charset="utf-8"&gt;</text>
+  <text class="rb-y" x="690" y="80" text-anchor="end">手で足した</text>
+  <text class="rb-n" x="402" y="104">3</text><text class="rb-c" x="426" y="104">&lt;script src="…pyxel.js"&gt;…</text>
+  <text class="rb-n" x="402" y="128">4</text><text class="rb-c" x="426" y="128">&lt;script&gt;</text>
+  <rect x="396" y="135" width="298" height="24" rx="3" fill="none" stroke="var(--c-green)" stroke-width="2"/>
+  <text class="rb-n" x="402" y="152">5</text><text class="rb-g" x="426" y="152">launchPyxel({ … "UEsDB…" });</text>
+  <text class="rb-n" x="402" y="176">6</text><text class="rb-c" x="426" y="176">&lt;/script&gt;</text>
+  <text class="rb-n" x="402" y="200">7</text>
+  <text class="rb-n" x="402" y="224">8</text>
+  <rect x="396" y="231" width="298" height="62" rx="3" fill="none" stroke="var(--c-accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text class="rb-n" x="402" y="250">9</text><text class="rb-c" x="426" y="250">&lt;!-- 全画面ボタン … --&gt;</text>
+  <text class="rb-n" x="402" y="274">⋮</text><text class="rb-c" x="426" y="274">&lt;style&gt; … &lt;/script&gt;</text>
+  <text class="rb-y" x="690" y="286" text-anchor="end">手で足した（45 行目まで）</text>
+  <text class="rb-d" x="390" y="322">入れかえても、手で足した部分はそのまま残る</text>
+</svg>
+</div>
+<figcaption>作り直した HTML から <code>launchPyxel(</code> の 1 行だけを持ってくる。全画面ボタンを足し直さなくてよい</figcaption>
+</figure>
+
+<p>
+<b>スマホ版の <code>candy_hunt_mobile.html</code> は、手で何も足していません</b>（<code>app2html</code> が作ったそのまま）。
+こちらは、作り直した HTML で<b>そのまま上書き</b>すれば済みます。
+</p>
+
+<div class="note">
+  <b>行の場所は「何行目か」より「何で始まるか」で探す</b>
+  作り直した直後の HTML では 4 行目、<code>candy_hunt.html</code> では文字コードの 1 行が増えているので 5 行目です。
+  どちらも <b><code>launchPyxel(</code> で始まる行</b>は 1 つしかないので、それを目印にします。
+</div>
+
+<h3 id="idea-both">1-3. どちらのパッケージにも、スクリプトが 2 本入る</h3>
+
+<p>
+<code>step1/</code> には <code>candy_hunt.py</code> と <code>candy_hunt_mobile.py</code> が並んでいます。
+<code>pyxel package</code> は<b>フォルダの中身をまるごと</b>詰めて、<b>起動するスクリプトを 1 つ記録するだけ</b>なので、
+どちらを作っても 2 本とも入ります（<a href="../memo/#package-multi">備忘録</a>）。
+</p>
+
+<p>
+どちらも GitHub で公開しているコードなので、入っていてかまいません。スマホ版はいまもこの形です。
+いまの PC 版はスマホ版を作る前に作ったので、<b>作り直すと中身が 1 本増えて、HTML が 3 KB ほど大きくなります</b>（7 KB → 11 KB ほど）。
+</p>
+
+<h2>2. 手順</h2>
+
+<p>
+<b>PC 版 → スマホ版の順に、1 本ずつ</b>作ります。
+<code>pyxel package step1 …</code> は、どちらを作っても <code>step1.pyxapp</code> と <code>step1.html</code> という<b>同じ名前</b>になり、
+2 本目が 1 本目を上書きするからです。
+</p>
+
+<h3 id="step-code">2-1. コードを直す（2 ファイル）</h3>
+
+<p><code>step1/candy_hunt.py</code> の <code>__init__()</code>：</p>
+
+<pre><code>class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt", quit_key=pyxel.KEY_NONE)   ← 書きかえ
+        pyxel.load("candy_hunt.pyxres")</code></pre>
+
+<p><code>step1/candy_hunt_mobile.py</code> も同じ場所です（<code>title</code> だけちがう）。</p>
+
+<pre><code>class App:
+    def __init__(self):
+        """起動時の設定"""
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="Candy Hunt Mobile", quit_key=pyxel.KEY_NONE)   ← 書きかえ
+        pyxel.load("candy_hunt.pyxres")</code></pre>
+
+<p>
+それぞれ実行して、<b>ESC を押してもウィンドウが閉じない</b>こと、<b>右上の × で閉じられる</b>ことを確かめます。
+</p>
+
+<p>
+最後に、<code>step1/</code> に <code>tempCodeRunnerFile.py</code> があれば消します
+（<a href="../step2/phase12.html#step-clean">step2 フェーズ 12 の 3-2</a> と同じ）。
+</p>
+
+<h3 id="step-pc">2-2. PC 版を作る</h3>
+
+<p><b>リポジトリのいちばん上</b>で実行します。</p>
+
+<pre><code>pyxel package step1 step1/candy_hunt.py</code></pre>
+
+<p>一覧が<b>この 4 行</b>なら OK です（<a href="#idea-both">1-3</a>）。</p>
+
+<pre><code>added 'step1\.pyxapp_startup_script'
+added 'step1\candy_hunt.py'
+added 'step1\candy_hunt.pyxres'
+added 'step1\candy_hunt_mobile.py'</code></pre>
+
+<p>手元で動かして、<b>ESC で閉じない</b>ことを確かめてから（閉じるのは ×）、HTML にします。</p>
+
+<pre><code>pyxel play step1.pyxapp
+pyxel app2html step1.pyxapp</code></pre>
+
+<p>リポジトリの直下に <code>step1.html</code> ができます。</p>
+
+<h3 id="step-pc-line">2-3. PC 版：<code>launchPyxel(</code> の 1 行を入れかえる</h3>
+
+<ol class="steps">
+  <li>VS Code で<b>直下の <code>step1.html</code></b> を開き、<b><code>launchPyxel(</code> で始まる行</b>（4 行目）のどこかをクリックする</li>
+  <li><code>Ctrl</code>＋<code>L</code> を <b>1 回</b>押す（行全体が選ばれる）→ <code>Ctrl</code>＋<code>C</code></li>
+  <li><b><code>docs/site/step1/candy_hunt.html</code></b> を開き、<b><code>launchPyxel(</code> で始まる行</b>（5 行目）のどこかをクリックする</li>
+  <li><code>Ctrl</code>＋<code>L</code> を <b>1 回</b> → <code>Ctrl</code>＋<code>V</code> → 保存</li>
+</ol>
+
+<p>
+保存したら、<code>launchPyxel(</code> で始まる行が<b>1 つだけ</b>で、いちばん下の <code>&lt;/script&gt;</code> が<b>45 行目のまま</b>（入れかえる前と同じ）であることを確かめます。
+</p>
+
+<div class="note">
+  <b><code>Ctrl</code>＋<code>L</code> は「いまの行をまるごと選ぶ」</b>
+  行末の改行までまとめて選ぶので、コピーして貼ると、<b>行がそっくり置きかわり</b>ます。
+  とても長い 1 行（1 万文字ほど）でも、右端まで引っぱって選ぶ必要がありません。
+  2 回押すと<b>次の行まで</b>選ばれる（<code>&lt;/script&gt;</code> を消してしまう）ので、1 回だけにします。
+</div>
+
+<h3 id="step-mobile">2-4. スマホ版を作る</h3>
+
+<pre><code>pyxel package step1 step1/candy_hunt_mobile.py
+pyxel play step1.pyxapp
+pyxel app2html step1.pyxapp</code></pre>
+
+<p>
+一覧は 2-2 と<b>同じ 4 行</b>です（起動するスクリプトがちがうだけ）。
+<code>step1.pyxapp</code> と <code>step1.html</code> は、PC 版のものが<b>上書き</b>されます。
+</p>
+
+<p>
+できた <code>step1.html</code> を <b><code>docs/site/step1/candy_hunt_mobile.html</code> へ移動</b>して、上書きします
+（手で足した部分がないので、入れかえではなく上書きで済みます。<a href="#idea-one-line">1-2</a>）。
+これで直下の <code>step1.html</code> はなくなります。
+</p>
+
+<h3 id="step-browser">2-5. 手元のブラウザで確かめる</h3>
+
+<p><b>リポジトリのいちばん上</b>で <code>python -m http.server</code> を起動し、Chrome で 2 つの URL を開きます。</p>
+
+<pre><code>http://localhost:8000/docs/site/step1/candy_hunt.html
+http://localhost:8000/docs/site/step1/candy_hunt_mobile.html</code></pre>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>　</th><th>すること</th><th>こうなれば OK</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>PC 版を開く</td><td><code>CLICK TO START</code> と、右下に「<b>全画面</b>」（文字が化けていない）</td></tr>
+    <tr><td>2</td><td>クリック → <code>Enter</code> → 遊んでいる途中で <b>ESC</b></td><td><b>何も起きない</b>。そのまま矢印キーで動ける</td></tr>
+    <tr><td>3</td><td>「全画面」をクリック → ESC</td><td>広がって、元に戻る。まだ動ける</td></tr>
+    <tr><td>4</td><td>スマホ版を開く → クリック → <code>Enter</code> → 遊んでいる途中で <b>ESC</b></td><td><b>何も起きない</b>。そのまま矢印キーで動ける</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <b>古い版が出てくるときは</b>
+  ブラウザが前の版を覚えていることがあります。<code>CLICK TO START</code> の画面のうちに
+  <code>Ctrl</code>＋<code>F5</code> で読み込みなおします（ゲームが始まったあとは F キーが効きません。
+  <a href="../memo/#web-devtools">備忘録</a>）。
+</div>
+
+<h3 id="step-publish">2-6. コミットして、公開 URL を開く</h3>
+
+<p>コミットするのは次の 4 つです。</p>
+
+<pre><code>step1/candy_hunt.py
+step1/candy_hunt_mobile.py
+docs/site/step1/candy_hunt.html
+docs/site/step1/candy_hunt_mobile.html</code></pre>
+
+<p>
+push して 1〜2 分待ったら、PC で <a target="_blank" href="candy_hunt.html">PC 版</a> を、
+スマホで <a target="_blank" href="candy_hunt_mobile.html">スマホ版</a> を開いて遊べることを確かめます。
+</p>
+
+<h2 id="trouble">3. うまくいかないときは</h2>
+
+<p>2-3 の入れかえで起きやすいものを、実際にその形の HTML を作って確かめました。</p>
+
+<div class="scroll-x">
+<table>
+  <thead><tr><th>症状</th><th>原因</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>真っ白</b>で <code>CLICK TO START</code> が出ない。右下の「全画面」だけ出る</td>
+      <td>貼った 1 行が<b>途中で切れている</b>（コピーするとき右端まで選べていなかった）</td>
+    </tr>
+    <tr>
+      <td><b>真っ白</b>で、<b>何も出ない</b>（「全画面」も出ない）</td>
+      <td><code>Ctrl</code>＋<code>L</code> を 2 回押して、<b>次の <code>&lt;/script&gt;</code> の行まで</b>上書きした</td>
+    </tr>
+    <tr>
+      <td><code>CLICK TO START</code> が<b>大小 2 つ重なって</b>出る</td>
+      <td>選ばずに貼ったので、<code>launchPyxel(</code> の行が<b>古いのと新しいので 2 つ</b>ある</td>
+    </tr>
+    <tr>
+      <td>遊べるが、「全画面」ボタンがない</td>
+      <td>PC 版を、入れかえではなく<b>上書き</b>した</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+どれも、<b><code>candy_hunt.html</code> を元に戻してから、2-3 をやり直す</b>のがいちばん早いです。
+VS Code の<b>ソース管理</b>で <code>candy_hunt.html</code> を右クリック →「<b>変更を破棄</b>」で、最後にコミットした形に戻ります
+（直下の <code>step1.html</code> は PC 版のものが必要なので、2-4 より前なら残っています。2-4 のあとなら 2-2 からやり直します）。
+</p>
+
+<footer class="site">
+  <a href="./">← step1 概要にもどる</a>　｜
+  <a href="../">トップページ</a>　｜
+  リポジトリ：<a href="https://github.com/mrgarita/learning_pyxel">github.com/mrgarita/learning_pyxel</a><br>
+  グラフィック・サウンド素材は Pyxel 付属のリソースエディタで自作しています。参考記事や既存ゲームの素材は転載していません。
+</footer>
+
+</div>
+</body>
+</html>
